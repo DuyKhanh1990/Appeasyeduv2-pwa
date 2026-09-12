@@ -30,7 +30,7 @@ const navItems = [
 ];
 
 function centerUrl() {
-  return localStorage.getItem("edu_center_url") || window.location.origin;
+  return localStorage.getItem("edu_center_url") || import.meta.env.VITE_EASYEDU_API_URL || "";
 }
 function token() {
   return localStorage.getItem("edu_auth_token");
@@ -41,7 +41,9 @@ async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
   const authToken = token();
   if (authToken) headers.set("Authorization", `Bearer ${authToken}`);
-  const response = await fetch(`${centerUrl()}${path}`, { ...init, headers, credentials: "include" });
+  const baseUrl = centerUrl();
+  if (!baseUrl) throw Object.assign(new Error("Vui lòng nhập URL API của trung tâm"), { status: 0 }) as ApiError;
+  const response = await fetch(`${baseUrl}${path}`, { ...init, headers, credentials: "include" });
   if (!response.ok) {
     let message = `HTTP ${response.status}`;
     try { const body = await response.json(); if (body?.message) message = body.message; } catch { /* non-json error */ }
@@ -91,8 +93,8 @@ function useAuthState() {
     let response: any;
     try {
       response = await api<any>("/api/mobile/auth/login", { method: "POST", body: JSON.stringify({ username, password }) });
-    } catch {
-      response = await api<any>("/api/auth/login", { method: "POST", body: JSON.stringify({ username, password }) });
+    } catch (error) {
+      throw error;
     }
     if (response?.token) localStorage.setItem("edu_auth_token", response.token);
     const me = response?.user ? response : await api<any>("/api/mobile/auth/me");
@@ -397,7 +399,7 @@ function Settings({ auth }: { auth: ReturnType<typeof useAuthState> }) {
 
 function Login({ auth }: { auth: ReturnType<typeof useAuthState> }) {
   const [, setLocation] = useLocation();
-  const [url, setUrl] = useState(localStorage.getItem("edu_center_url") || window.location.origin);
+  const [url, setUrl] = useState(localStorage.getItem("edu_center_url") || import.meta.env.VITE_EASYEDU_API_URL || "");
   const [username, setUsername] = useState(localStorage.getItem("edu_last_username") || "");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
