@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db, usersTable, classesTable, classSessionsTable, studentEnrollmentsTable, scoreSheetsTable, scoreSheetItemsTable, scoreCategoriesTable, gradeBooksTable, gradeBookScoresTable, notificationsTable } from "@workspace/db";
 import { eq, and, inArray, sql, count, countDistinct } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
+import { sendPushToUser } from "../lib/push";
 
 const router = Router();
 
@@ -30,6 +31,13 @@ async function notifyStudentsGradeBookPublished(gb: typeof gradeBooksTable.$infe
   }));
 
   await db.insert(notificationsTable).values(rows);
+  await Promise.allSettled(enrollments.map((enrollment) => sendPushToUser(enrollment.studentId, {
+    title: "Bảng điểm mới",
+    body: `Bảng điểm "${gb.title}"${className ? ` của lớp ${className}` : ""} đã được công bố.`,
+    url: "./grades",
+    tag: `grade-book-${gb.id}`,
+    notificationId: gb.id,
+  })));
 }
 
 async function getStaffClassIds(staffId: string): Promise<string[]> {

@@ -18,6 +18,7 @@ import mobileChatRouter from "./mobile-chat";
 import mobileMeRouter from "./mobile-me";
 import mobileNewsFeedRouter from "./mobile-news-feed";
 import convertRouter from "./convert";
+import pushRouter from "./push";
 
 const router: IRouter = Router();
 
@@ -39,6 +40,7 @@ router.use(mobileChatRouter);
 router.use(mobileMeRouter);
 router.use(mobileNewsFeedRouter);
 router.use(convertRouter);
+router.use(pushRouter);
 router.use(mobileRouter);
 
 export default router;
