@@ -3,7 +3,9 @@ import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "dist/public");
+const root = path.resolve(
+  process.env.STATIC_DIR || path.resolve(path.dirname(fileURLToPath(import.meta.url)), "dist/public"),
+);
 const port = Number(process.env.PORT || 3000);
 const version = process.env.APP_VERSION || "dev";
 
