@@ -10,7 +10,6 @@ uses the internal Expo source in `artifacts/edu-mobile`.
 
 ```bash
 docker build \
-  -f k8s-appeduv2pwa/Dockerfile \
   --build-arg APP_VERSION=0.0.1 \
   -t harbor.emso.vn/emso-common/appeduv2pwa:0.0.1 \
   .
