@@ -321,16 +321,78 @@ function InstallPrompt() {
   const install = async () => { await event.prompt(); await event.userChoice; setEvent(null); };
   return <div data-testid="card-install-prompt" className="mt-7 flex flex-col gap-4 rounded-[24px] border border-[#e7b18b] bg-[#fff0e5] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"><div className="flex gap-4"><div className="rounded-2xl bg-[#e7b18b]/40 p-3"><Smartphone className="h-5 w-5 text-[#9a563b]" /></div><div><p className="text-sm font-bold">Mang EasyEdu theo bạn</p><p className="mt-1 text-xs text-[#865a47]">Cài đặt ứng dụng để mở nhanh lịch học mỗi ngày.</p></div></div><button data-testid="button-install-app" onClick={install} className="button-primary rounded-xl px-4 py-2.5 text-sm font-bold">Cài đặt ứng dụng</button></div>;
 }
+
+function decodeVapidKey(value: string) {
+  const padding = "=".repeat((4 - (value.length % 4)) % 4);
+  const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = window.atob(base64);
+  return Uint8Array.from([...raw].map((character) => character.charCodeAt(0)));
+}
+
 function Settings({ auth }: { auth: ReturnType<typeof useAuthState> }) {
   const user = auth.user;
   const [permission, setPermission] = useState(typeof Notification !== "undefined" ? Notification.permission : "default");
   const [installEvent, setInstallEvent] = useState<InstallEvent | null>(null);
+  const [pushConfig, setPushConfig] = useState<{ enabled: boolean; publicKey: string | null } | null>(null);
+  const [subscribed, setSubscribed] = useState(false);
   const [message, setMessage] = useState("");
   useEffect(() => { const handler = (e: Event) => { e.preventDefault(); setInstallEvent(e as InstallEvent); }; window.addEventListener("beforeinstallprompt", handler); return () => window.removeEventListener("beforeinstallprompt", handler); }, []);
-  const requestNotifications = async () => { if (!("Notification" in window)) { setMessage("Trình duyệt này chưa hỗ trợ thông báo."); return; } const result = await Notification.requestPermission(); setPermission(result); setMessage(result === "granted" ? "Đã bật thông báo trên trình duyệt này." : "Quyền thông báo chưa được bật."); };
+  useEffect(() => {
+    if (!user) return;
+    api<{ enabled: boolean; publicKey: string | null }>("/api/mobile/push/config")
+      .then(setPushConfig)
+      .catch(() => setPushConfig({ enabled: false, publicKey: null }));
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.ready.then((registration) => registration.pushManager.getSubscription())
+        .then((subscription) => setSubscribed(Boolean(subscription)))
+        .catch(() => setSubscribed(false));
+    }
+  }, [user]);
+  const requestNotifications = async () => {
+    if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+      setMessage("Trình duyệt này chưa hỗ trợ thông báo đẩy.");
+      return;
+    }
+    if (!pushConfig?.enabled || !pushConfig.publicKey) {
+      setMessage("Trung tâm chưa cấu hình thông báo đẩy. Vui lòng liên hệ quản trị viên.");
+      return;
+    }
+    try {
+      const result = await Notification.requestPermission();
+      setPermission(result);
+      if (result !== "granted") {
+        setMessage("Quyền thông báo chưa được bật.");
+        return;
+      }
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: decodeVapidKey(pushConfig.publicKey),
+      });
+      await api("/api/mobile/push/subscription", { method: "POST", body: JSON.stringify(subscription.toJSON()) });
+      setSubscribed(true);
+      setMessage("Đã bật thông báo đẩy trên trình duyệt này.");
+    } catch (error: any) {
+      setMessage(error?.message || "Không thể bật thông báo đẩy.");
+    }
+  };
+  const disableNotifications = async () => {
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      if (subscription) {
+        await api("/api/mobile/push/subscription", { method: "DELETE", body: JSON.stringify({ endpoint: subscription.endpoint }) });
+        await subscription.unsubscribe();
+      }
+      setSubscribed(false);
+      setMessage("Đã tắt thông báo đẩy trên trình duyệt này.");
+    } catch (error: any) {
+      setMessage(error?.message || "Không thể tắt thông báo đẩy.");
+    }
+  };
   const install = async () => { if (installEvent) { await installEvent.prompt(); await installEvent.userChoice; setInstallEvent(null); } else setMessage("Ứng dụng đã được cài đặt hoặc trình duyệt chưa hỗ trợ."); };
   if (!user) return <Protected auth={auth}>{null}</Protected>;
-  return <Protected auth={auth}><PageTitle eyebrow="Không gian cá nhân" title="Cài đặt" detail="Kiểm soát hồ sơ, quyền truy cập và cách EasyEdu liên lạc với bạn." /><div className="grid gap-5 lg:grid-cols-[1fr_360px]"><section className="space-y-5"><div data-testid="panel-profile" className="panel rounded-[24px] bg-[hsl(var(--card))] p-6 sm:p-7"><div className="flex items-center gap-4"><Avatar user={user} /><div><p data-testid="text-profile-name" className="text-lg font-bold">{user.name || user.username}</p><p data-testid="text-profile-role" className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">{roleLabels[user.role]} · {user.username}</p></div></div><div className="mt-7 grid gap-3 sm:grid-cols-3"><div className="rounded-2xl bg-[hsl(var(--muted))] p-4"><p className="mono text-[10px] uppercase tracking-[.14em] text-[hsl(var(--muted-foreground))]">Mã hồ sơ</p><p className="mt-2 text-sm font-bold">{user.profileCode || "Chưa cập nhật"}</p></div><div className="rounded-2xl bg-[hsl(var(--muted))] p-4"><p className="mono text-[10px] uppercase tracking-[.14em] text-[hsl(var(--muted-foreground))]">Trung tâm</p><p className="mt-2 truncate text-sm font-bold">{user.centerUrl.replace(/^https?:\/\//, "")}</p></div><div className="rounded-2xl bg-[hsl(var(--muted))] p-4"><p className="mono text-[10px] uppercase tracking-[.14em] text-[hsl(var(--muted-foreground))]">Quyền truy cập</p><p data-testid="text-permission-status" className="mt-2 text-sm font-bold">{auth.permissions?.isSuperAdmin ? "Quản trị toàn hệ thống" : "Theo vai trò"}</p></div></div></div><div data-testid="panel-notification-settings" className="panel rounded-[24px] bg-[hsl(var(--card))] p-6 sm:p-7"><div className="flex items-start gap-4"><div className="rounded-2xl bg-[#d7ebe9] p-3 text-[hsl(var(--primary))]"><Bell className="h-5 w-5" /></div><div className="flex-1"><h2 className="text-sm font-bold">Thông báo trên trình duyệt</h2><p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">Nhận nhắc lịch học và cập nhật mới, khi bạn cho phép.</p></div><Badge tone={permission === "granted" ? "good" : "warn"}>{permission === "granted" ? "Đã bật" : "Chưa bật"}</Badge></div><button data-testid="button-request-notification" onClick={requestNotifications} disabled={permission === "granted"} className="button-primary mt-6 rounded-xl px-4 py-2.5 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50">{permission === "granted" ? "Đã cấp quyền" : "Bật thông báo"}</button></div></section><aside className="space-y-5"><div data-testid="panel-install-settings" className="panel rounded-[24px] bg-[#dcefe7] p-6 text-[#23634f]"><Smartphone className="h-6 w-6" /><h2 className="display mt-6 text-3xl font-semibold">Ứng dụng web</h2><p className="mt-2 text-sm opacity-75">Mở EasyEdu như một ứng dụng riêng, không cần tìm lại trong trình duyệt.</p><button data-testid="button-install-settings" onClick={install} className="mt-6 rounded-xl bg-[#23634f] px-4 py-2.5 text-sm font-bold text-[#e6f5ee]">{installEvent ? "Cài đặt ngay" : "Kiểm tra cài đặt"}</button></div><div className="panel rounded-[24px] bg-[hsl(var(--card))] p-6"><button data-testid="button-sign-out" onClick={auth.logout} className="flex w-full items-center gap-3 rounded-xl px-1 py-2 text-left text-sm font-bold text-[hsl(var(--destructive))] hover:bg-[hsl(var(--muted))]"><LogOut className="h-4 w-4" />Đăng xuất khỏi EasyEdu</button>{message && <p data-testid="status-settings-message" className="mt-4 flex gap-2 text-xs text-[hsl(var(--muted-foreground))]"><Info className="h-4 w-4 shrink-0" />{message}</p>}</div></aside></div></Protected>;
+  return <Protected auth={auth}><PageTitle eyebrow="Không gian cá nhân" title="Cài đặt" detail="Kiểm soát hồ sơ, quyền truy cập và cách EasyEdu liên lạc với bạn." /><div className="grid gap-5 lg:grid-cols-[1fr_360px]"><section className="space-y-5"><div data-testid="panel-profile" className="panel rounded-[24px] bg-[hsl(var(--card))] p-6 sm:p-7"><div className="flex items-center gap-4"><Avatar user={user} /><div><p data-testid="text-profile-name" className="text-lg font-bold">{user.name || user.username}</p><p data-testid="text-profile-role" className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">{roleLabels[user.role]} · {user.username}</p></div></div><div className="mt-7 grid gap-3 sm:grid-cols-3"><div className="rounded-2xl bg-[hsl(var(--muted))] p-4"><p className="mono text-[10px] uppercase tracking-[.14em] text-[hsl(var(--muted-foreground))]">Mã hồ sơ</p><p className="mt-2 text-sm font-bold">{user.profileCode || "Chưa cập nhật"}</p></div><div className="rounded-2xl bg-[hsl(var(--muted))] p-4"><p className="mono text-[10px] uppercase tracking-[.14em] text-[hsl(var(--muted-foreground))]">Trung tâm</p><p className="mt-2 truncate text-sm font-bold">{user.centerUrl.replace(/^https?:\/\//, "")}</p></div><div className="rounded-2xl bg-[hsl(var(--muted))] p-4"><p className="mono text-[10px] uppercase tracking-[.14em] text-[hsl(var(--muted-foreground))]">Quyền truy cập</p><p data-testid="text-permission-status" className="mt-2 text-sm font-bold">{auth.permissions?.isSuperAdmin ? "Quản trị toàn hệ thống" : "Theo vai trò"}</p></div></div></div><div data-testid="panel-notification-settings" className="panel rounded-[24px] bg-[hsl(var(--card))] p-6 sm:p-7"><div className="flex items-start gap-4"><div className="rounded-2xl bg-[#d7ebe9] p-3 text-[hsl(var(--primary))]"><Bell className="h-5 w-5" /></div><div className="flex-1"><h2 className="text-sm font-bold">Thông báo đẩy trên trình duyệt</h2><p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">{pushConfig?.enabled ? "Nhận nhắc lịch học và cập nhật mới, khi bạn cho phép." : "Trung tâm chưa sẵn sàng cho thông báo đẩy."}</p></div><Badge tone={subscribed ? "good" : "warn"}>{subscribed ? "Đã bật" : "Chưa bật"}</Badge></div><div className="mt-6 flex flex-wrap gap-3"><button data-testid="button-request-notification" onClick={requestNotifications} disabled={subscribed} className="button-primary rounded-xl px-4 py-2.5 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50">{subscribed ? "Đã cấp quyền" : "Bật thông báo"}</button>{subscribed && <button data-testid="button-disable-notification" onClick={disableNotifications} className="button-quiet rounded-xl border border-[hsl(var(--border))] px-4 py-2.5 text-sm font-bold">Tắt thông báo</button>}</div></div></section><aside className="space-y-5"><div data-testid="panel-install-settings" className="panel rounded-[24px] bg-[#dcefe7] p-6 text-[#23634f]"><Smartphone className="h-6 w-6" /><h2 className="display mt-6 text-3xl font-semibold">Ứng dụng web</h2><p className="mt-2 text-sm opacity-75">Mở EasyEdu như một ứng dụng riêng, không cần tìm lại trong trình duyệt.</p><button data-testid="button-install-settings" onClick={install} className="mt-6 rounded-xl bg-[#23634f] px-4 py-2.5 text-sm font-bold text-[#e6f5ee]">{installEvent ? "Cài đặt ngay" : "Kiểm tra cài đặt"}</button></div><div className="panel rounded-[24px] bg-[hsl(var(--card))] p-6"><button data-testid="button-sign-out" onClick={auth.logout} className="flex w-full items-center gap-3 rounded-xl px-1 py-2 text-left text-sm font-bold text-[hsl(var(--destructive))] hover:bg-[hsl(var(--muted))]"><LogOut className="h-4 w-4" />Đăng xuất khỏi EasyEdu</button>{message && <p data-testid="status-settings-message" className="mt-4 flex gap-2 text-xs text-[hsl(var(--muted-foreground))]"><Info className="h-4 w-4 shrink-0" />{message}</p>}</div></aside></div></Protected>;
 }
 
 function Login({ auth }: { auth: ReturnType<typeof useAuthState> }) {
