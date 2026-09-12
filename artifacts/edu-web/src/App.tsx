@@ -29,8 +29,20 @@ const navItems = [
   { href: "/tuition", label: "Học phí", icon: WalletCards },
 ];
 
+function normalizeCenterUrl(value?: string | null) {
+  const trimmed = value?.trim() || "";
+  if (!trimmed) return "";
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const parsed = new URL(withProtocol);
+    if (!parsed.hostname || !["http:", "https:"].includes(parsed.protocol)) return "";
+    return withProtocol.replace(/\/+$/, "");
+  } catch {
+    return "";
+  }
+}
 function centerUrl() {
-  return localStorage.getItem("edu_center_url") || import.meta.env.VITE_EASYEDU_API_URL || "";
+  return normalizeCenterUrl(localStorage.getItem("edu_center_url") || import.meta.env.VITE_EASYEDU_API_URL);
 }
 function token() {
   return localStorage.getItem("edu_auth_token");
@@ -75,7 +87,7 @@ function useAuthState() {
   const [permissions, setPermissions] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    const savedUrl = localStorage.getItem("edu_center_url");
+    const savedUrl = centerUrl();
     if (!savedUrl && !token()) { setLoading(false); return; }
     api<any>("/api/mobile/auth/me").then((data) => {
       const resolved = resolveUser(data, savedUrl || centerUrl());
@@ -87,8 +99,8 @@ function useAuthState() {
     }).finally(() => setLoading(false));
   }, []);
   const login = async (url: string, username: string, password: string) => {
-    const normalized = url.trim().replace(/\/$/, "");
-    if (!normalized) throw new Error("Vui lòng nhập URL trung tâm");
+    const normalized = normalizeCenterUrl(url);
+    if (!normalized) throw new Error("URL trung tâm không hợp lệ. Hãy nhập dạng https://ten-trung-tam.vn");
     localStorage.setItem("edu_center_url", normalized);
     let response: any;
     try {
@@ -399,7 +411,7 @@ function Settings({ auth }: { auth: ReturnType<typeof useAuthState> }) {
 
 function Login({ auth }: { auth: ReturnType<typeof useAuthState> }) {
   const [, setLocation] = useLocation();
-  const [url, setUrl] = useState(localStorage.getItem("edu_center_url") || import.meta.env.VITE_EASYEDU_API_URL || "");
+  const [url, setUrl] = useState(centerUrl());
   const [username, setUsername] = useState(localStorage.getItem("edu_last_username") || "");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
