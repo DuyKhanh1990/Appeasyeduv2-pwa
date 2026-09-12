@@ -30,4 +30,4 @@ echo "Ingress:"
 kubectl get ingress -n "$NAMESPACE" -l "app=${APP_NAME}"
 
 echo "=== Deploy completed ==="
-echo "Service: https://appeduv2pwa.easyedu.vn"
+echo "Service: https://app.easyedu.vn"

@@ -10,7 +10,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: appeduv2pwa.easyedu.vn
+    - host: app.easyedu.vn
       http:
         paths:
           - path: /
@@ -22,8 +22,8 @@ spec:
                   name: http
   tls:
     - hosts:
-        - appeduv2pwa.easyedu.vn
-      secretName: appeduv2pwa-tls-secret
+        - app.easyedu.vn
+      secretName: app-easyedu-vn-tls-secret
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -32,12 +32,12 @@ metadata:
   namespace: production
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-sn-prod
-    nginx.ingress.kubernetes.io/permanent-redirect: "https://appeduv2pwa.easyedu.vn$request_uri"
+    nginx.ingress.kubernetes.io/permanent-redirect: "https://app.easyedu.vn$request_uri"
     nginx.ingress.kubernetes.io/permanent-redirect-code: "301"
 spec:
   ingressClassName: nginx
   rules:
-    - host: www.appeduv2pwa.easyedu.vn
+    - host: www.app.easyedu.vn
       http:
         paths:
           - path: /
@@ -49,5 +49,5 @@ spec:
                   name: http
   tls:
     - hosts:
-        - www.appeduv2pwa.easyedu.vn
-      secretName: appeduv2pwa-www-tls-secret
+        - www.app.easyedu.vn
+      secretName: app-easyedu-vn-www-tls-secret

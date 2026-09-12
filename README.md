@@ -45,14 +45,14 @@ kubectl rollout status deployment/appeduv2pwa -n production --timeout=120s
 The default Ingress host is:
 
 ```text
-appeduv2pwa.easyedu.vn
+app.easyedu.vn
 ```
 
 Point DNS to the cluster ingress and add the exact public origin to the
 EasyEdu Backend CORS allowlist:
 
 ```text
-https://appeduv2pwa.easyedu.vn
+https://app.easyedu.vn
 ```
 
 The PWA calls each center backend directly from the browser. Kubernetes does
