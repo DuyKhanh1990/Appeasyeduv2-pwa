@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/edu-web/"
+title = "EasyEdu Web"
+description = "A React web and PWA experience for EasyEdu learners, teachers, and staff to manage schedules, classes, attendance, grades, tuition, and notifications using the existing education API."
+version = "1.0.0"
+id = "artifacts/edu-web"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/edu-web/" ]
+localPort = 21338
+
+[services.development]
+run = "pnpm --filter @workspace/edu-web run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/edu-web", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/edu-web/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21338"
+BASE_PATH = "/edu-web/"
