@@ -3,3 +3,4 @@
 - [Chat channel list vs Tinode source of truth](chat-list-vs-tinode-source-of-truth.md) — channel list can miss a topic that unread badge already counts; reconcile against Tinode's own topic list, not just Postgres
 - [PWA backend boundary](pwa-backend-boundary.md) — edu-web is frontend-only; production auth, tenant DB, push subscriptions, and delivery stay in EasyEdu Backend chính
 - [Expo Web base path preview](expo-web-base-path.md) — serve the static export for path-mounted PWA previews; Expo Router dev mode does not strip baseUrl
+- [PWA Expo build boundary](pwa-expo-build-boundary.md) — edu-web's export still depends on the internal Expo source and local shell-quote firewall stub
