@@ -87,7 +87,7 @@ function TBtn({ active, onPress, children, title, colors }: TBtnProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
-      title={title}
+      accessibilityLabel={title}
       style={{
         width: 30,
         height: 30,
