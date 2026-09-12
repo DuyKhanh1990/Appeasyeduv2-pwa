@@ -1,7 +1,6 @@
 packages:
   - artifacts/*
   - lib/*
-  - lib/integrations/*
   - scripts
 
 autoInstallPeers: false
@@ -18,7 +17,6 @@ catalog:
   '@vitejs/plugin-react': ^5.0.4
   class-variance-authority: ^0.7.1
   clsx: ^2.1.1
-  drizzle-orm: ^0.45.1
   framer-motion: ^12.23.24
   lucide-react: ^0.545.0
   react: 19.1.0
@@ -123,5 +121,4 @@ overrides:
   rollup>@rollup/rollup-win32-ia32-msvc: '-'
   rollup>@rollup/rollup-win32-x64-gnu: '-'
   rollup>@rollup/rollup-win32-x64-msvc: '-'
-  shell-quote: 'workspace:*'
   tar: 7.5.20
