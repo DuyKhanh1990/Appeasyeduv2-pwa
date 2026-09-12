@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: appeduv2pwa
+  namespace: production
+spec:
+  type: ClusterIP
+  selector:
+    app: appeduv2pwa
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: http
