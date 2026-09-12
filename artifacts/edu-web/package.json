@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --config vite.config.ts --host 0.0.0.0",
-    "build": "vite build --config vite.config.ts",
+    "dev": "node scripts/dev-native-web.mjs",
+    "build": "node scripts/build-native-web.mjs",
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "pnpm --filter @workspace/edu-mobile run typecheck"
   },
   "devDependencies": {
     "@hookform/resolvers": "^3.10.0",

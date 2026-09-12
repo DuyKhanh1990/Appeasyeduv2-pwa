@@ -43,6 +43,7 @@
       ]
     ],
     "experiments": {
+      "baseUrl": "/edu-web",
       "typedRoutes": true,
       "reactCompiler": true
     },
