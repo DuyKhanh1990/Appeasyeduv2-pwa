@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
-import { getProjectId } from "@/lib/pushNotifications";
+import { getProjectId } from "@/lib/pushProject";
 
 const CENTER_URL_KEY = "edu_center_url";
 const LAST_CENTER_KEY = "edu_last_center_url";
@@ -147,11 +147,12 @@ export async function apiPut<T>(path: string, body: unknown): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function apiDelete<T = void>(path: string): Promise<T> {
+export async function apiDelete<T = void>(path: string, body?: unknown): Promise<T> {
   if (!centerUrl) throw new Error("Center URL chưa được cài đặt");
   const response = await fetch(`${centerUrl}${path}`, {
     method: "DELETE",
     headers: buildHeaders(),
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
   if (!response.ok) {
     handleUnauthorized(response.status);
@@ -186,14 +187,20 @@ export interface SendPushTokenResult {
 let _activePushToken: string | null = null;
 
 export async function sendPushTokenToBackend(pushToken: string): Promise<SendPushTokenResult> {
-  // Backend (do team web xây dựng riêng) cần cung cấp endpoint này.
-  // Xem tài liệu API tại: artifacts/edu-mobile/docs/push-notification-api.md
   try {
-    await apiPost("/api/mobile/push-token", {
-      pushToken,
-      platform: Platform.OS,
-      expoProjectId: getProjectId(),
-    });
+    if (Platform.OS === "web") {
+      const subscription = JSON.parse(pushToken) as PushSubscriptionJSON;
+      if (!subscription.endpoint || !subscription.keys?.p256dh || !subscription.keys.auth) {
+        throw new Error("Web Push subscription không hợp lệ");
+      }
+      await apiPost("/api/mobile/push/subscription", subscription);
+    } else {
+      await apiPost("/api/mobile/push-token", {
+        pushToken,
+        platform: Platform.OS,
+        expoProjectId: getProjectId(),
+      });
+    }
     _activePushToken = pushToken;
     return { ok: true };
   } catch (err) {
@@ -206,7 +213,14 @@ export async function sendPushTokenToBackend(pushToken: string): Promise<SendPus
 export async function unregisterPushToken(): Promise<void> {
   if (!_activePushToken) return;
   try {
-    await apiDelete(`/api/mobile/push-token?pushToken=${encodeURIComponent(_activePushToken)}`);
+    if (Platform.OS === "web") {
+      const subscription = JSON.parse(_activePushToken) as PushSubscriptionJSON;
+      if (subscription.endpoint) {
+        await apiDelete("/api/mobile/push/subscription", { endpoint: subscription.endpoint });
+      }
+    } else {
+      await apiDelete(`/api/mobile/push-token?pushToken=${encodeURIComponent(_activePushToken)}`);
+    }
   } catch {
     // Bỏ qua lỗi — backend có thể chưa có endpoint này.
     // Token sẽ tự hết hạn hoặc bị ghi đè khi user đăng nhập lại.

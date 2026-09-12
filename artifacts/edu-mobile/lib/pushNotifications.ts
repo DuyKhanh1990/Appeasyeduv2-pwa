@@ -1,33 +1,36 @@
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
-import Constants from "expo-constants";
 import { Platform } from "react-native";
 
 import { getActiveChatTopic } from "@/lib/activeChatTopic";
+import { apiGet } from "@/lib/api";
+import { getProjectId as getExpoProjectId } from "@/lib/pushProject";
 
-Notifications.setNotificationHandler({
-  handleNotification: async (notification) => {
-    const data = (notification.request.content.data ?? {}) as Record<string, any>;
+if (Platform.OS !== "web") {
+  Notifications.setNotificationHandler({
+    handleNotification: async (notification) => {
+      const data = (notification.request.content.data ?? {}) as Record<string, any>;
 
-    // Tin nhắn chat của đúng kênh đang mở sẵn trên màn hình: tin nhắn đã tới qua
-    // Tinode WebSocket rồi, ẩn banner/badge để tránh hiện thông báo trùng.
-    if (data.type === "chat" && data.referenceId && data.referenceId === getActiveChatTopic()) {
+      // Tin nhắn chat của đúng kênh đang mở sẵn trên màn hình: tin nhắn đã tới qua
+      // Tinode WebSocket rồi, ẩn banner/badge để tránh hiện thông báo trùng.
+      if (data.type === "chat" && data.referenceId && data.referenceId === getActiveChatTopic()) {
+        return {
+          shouldShowBanner: false,
+          shouldShowList: false,
+          shouldPlaySound: false,
+          shouldSetBadge: false,
+        };
+      }
+
       return {
-        shouldShowBanner: false,
-        shouldShowList: false,
-        shouldPlaySound: false,
-        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true, // OS tự tăng badge icon khi có push mới
       };
-    }
-
-    return {
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true, // OS tự tăng badge icon khi có push mới
-    };
-  },
-});
+    },
+  });
+}
 
 export interface PushRegistrationResult {
   token: string | null;
@@ -35,15 +38,12 @@ export interface PushRegistrationResult {
 }
 
 export function getProjectId(): string | undefined {
-  return (
-    Constants?.expoConfig?.extra?.eas?.projectId ??
-    (Constants as any)?.easConfig?.projectId
-  );
+  return getExpoProjectId();
 }
 
 export async function registerForPushNotificationsAsync(): Promise<PushRegistrationResult> {
   if (Platform.OS === "web") {
-    return { token: null, error: "Push notification không hỗ trợ trên bản web, chỉ chạy trên app Android/iOS thật." };
+    return registerForWebPush();
   }
 
   if (!Device.isDevice) {
@@ -88,6 +88,64 @@ export async function registerForPushNotificationsAsync(): Promise<PushRegistrat
       };
     }
     return { token: null, error: `Không lấy được Push Token: ${message}` };
+  }
+}
+
+type WebPushConfig = {
+  enabled: boolean;
+  publicKey: string | null;
+};
+
+function base64UrlToUint8Array(value: string): Uint8Array {
+  const padding = "=".repeat((4 - (value.length % 4)) % 4);
+  const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = globalThis.atob(base64);
+  return Uint8Array.from(raw, (character) => character.charCodeAt(0));
+}
+
+async function registerForWebPush(): Promise<PushRegistrationResult> {
+  if (
+    typeof window === "undefined" ||
+    !("Notification" in window) ||
+    !("serviceWorker" in navigator) ||
+    !("PushManager" in window)
+  ) {
+    return { token: null, error: "Trình duyệt này chưa hỗ trợ Web Push." };
+  }
+
+  if (Notification.permission === "denied") {
+    return { token: null, error: "Bạn đã chặn thông báo. Hãy bật lại quyền thông báo cho EasyEdu trong cài đặt trình duyệt." };
+  }
+
+  try {
+    const config = await apiGet<WebPushConfig>("/api/mobile/push/config");
+    if (!config.enabled || !config.publicKey) {
+      return { token: null, error: "Trung tâm chưa bật thông báo Web Push." };
+    }
+
+    if (Notification.permission === "default") {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        return { token: null, error: "Bạn chưa cấp quyền nhận thông báo trên trình duyệt." };
+      }
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: base64UrlToUint8Array(config.publicKey) as BufferSource,
+      });
+    }
+
+    return {
+      token: JSON.stringify(subscription.toJSON()),
+      error: null,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { token: null, error: `Không đăng ký được Web Push: ${message}` };
   }
 }
 
