@@ -3,9 +3,6 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "codegen": "orval --config ./orval.config.ts"
-  },
-  "devDependencies": {
-    "orval": "^8.5.2"
+    "codegen": "pnpm dlx orval@8.6.2 --config ./orval.config.ts"
   }
 }
