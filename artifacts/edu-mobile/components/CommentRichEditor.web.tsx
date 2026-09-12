@@ -95,7 +95,7 @@ function ToolbarBtn({ active, onPress, children, title, colors }: ToolbarButtonP
   return (
     <TouchableOpacity
       onPress={onPress}
-      title={title}
+      accessibilityLabel={title}
       style={{
         width: 32,
         height: 32,

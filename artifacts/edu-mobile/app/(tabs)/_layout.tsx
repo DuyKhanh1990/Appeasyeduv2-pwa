@@ -2,6 +2,7 @@ import { BlurView } from "expo-blur";
 import { Redirect, Tabs } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
+import type { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
 import { Platform, StyleSheet, TouchableOpacity, View, useColorScheme } from "react-native";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
@@ -13,10 +14,10 @@ import { usePermissions } from "@/hooks/usePermissions";
 const TAB_BAR_HEIGHT = 49;
 
 /** Renders a tab that is visible but dimmed and non-interactive. */
-function disabledTabButton(props: React.ComponentProps<typeof TouchableOpacity>) {
+function disabledTabButton(props: BottomTabBarButtonProps) {
   return (
     <TouchableOpacity
-      {...props}
+      {...(props as React.ComponentProps<typeof TouchableOpacity>)}
       disabled
       onPress={() => {}}
       activeOpacity={1}
