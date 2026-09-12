@@ -4,22 +4,21 @@ const port = process.env.PORT || "21338";
 const child = spawn(
   "pnpm",
   [
-    "--filter",
-    "@workspace/edu-mobile",
     "exec",
-    "expo",
-    "start",
-    "--web",
-    "--localhost",
+    "vite",
+    "preview",
+    "--config",
+    "vite.config.ts",
+    "--host",
+    "0.0.0.0",
     "--port",
     port,
   ],
   {
     stdio: "inherit",
+    cwd: process.cwd(),
     env: {
       ...process.env,
-      EXPO_PUBLIC_DOMAIN: process.env.REPLIT_DEV_DOMAIN || "localhost",
-      EXPO_PUBLIC_REPL_ID: process.env.REPL_ID || "",
     },
   },
 );
