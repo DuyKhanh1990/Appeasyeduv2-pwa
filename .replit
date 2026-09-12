@@ -1,12 +1,6 @@
 modules = ["nodejs-24", "python-base-3.13", "postgresql-16"]
 
 [[artifacts]]
-id = "artifacts/api-server"
-
-[[artifacts]]
-id = "artifacts/mockup-sandbox"
-
-[[artifacts]]
 id = "artifacts/edu-web"
 
 [deployment]
