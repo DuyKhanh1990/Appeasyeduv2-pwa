@@ -37,7 +37,7 @@ ENV PORT=3000
 ENV APP_VERSION=$APP_VERSION
 
 COPY --from=builder /app/artifacts/edu-web/dist/public ./dist/public
-COPY k8s-appeduv2pwa/server.mjs ./server.mjs
+COPY server.mjs ./server.mjs
 
 # Run as non-root, matching Kubernetes security best practices.
 RUN addgroup -S nodejs && adduser -S nodejs -G nodejs

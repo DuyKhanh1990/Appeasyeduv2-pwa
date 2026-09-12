@@ -50,8 +50,13 @@ async function serveFile(req, res, filePath) {
     "Content-Type": contentTypes[extension] || "application/octet-stream",
   };
 
-  if (extension === ".js" || extension === ".css" || extension === ".ttf" ||
-      extension === ".woff" || extension === ".woff2") {
+  if (
+    extension === ".js" ||
+    extension === ".css" ||
+    extension === ".ttf" ||
+    extension === ".woff" ||
+    extension === ".woff2"
+  ) {
     headers["Cache-Control"] = "public, max-age=31536000, immutable";
   }
 
@@ -96,7 +101,7 @@ const server = createServer(async (req, res) => {
   // Expo Router needs SPA fallback for client-side routes, but missing assets
   // should remain 404s instead of returning HTML.
   const acceptsHtml = String(req.headers.accept || "").includes("text/html");
-  if (acceptsHtml && await fileExists(path.join(root, "index.html"))) {
+  if (acceptsHtml && (await fileExists(path.join(root, "index.html")))) {
     return serveFile(req, res, path.join(root, "index.html"));
   }
 
