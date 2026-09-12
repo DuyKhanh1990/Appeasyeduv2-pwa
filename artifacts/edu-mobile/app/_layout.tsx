@@ -152,31 +152,22 @@ function WebRootLayout() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    async function prepare() {
-      try {
-        // Preload icon/text fonts up-front on web too. Without this, each
-        // <Feather>/<Ionicons>/<MaterialCommunityIcons> instance triggers its
-        // own lazy font load with a fixed 6s timeout; under the proxied
-        // Replit preview that timer can expire before the font arrives,
-        // producing an uncaught "6000ms timeout exceeded" error. Loading once
-        // here (and swallowing failures) means icons fall back gracefully
-        // instead of crashing.
-        await Font.loadAsync({
-          Inter_400Regular: require("../assets/fonts/Inter_400Regular.ttf"),
-          Inter_500Medium: require("../assets/fonts/Inter_500Medium.ttf"),
-          Inter_600SemiBold: require("../assets/fonts/Inter_600SemiBold.ttf"),
-          Inter_700Bold: require("../assets/fonts/Inter_700Bold.ttf"),
-          Feather: require("../assets/fonts/Feather.ttf"),
-          Ionicons: require("../assets/fonts/Ionicons.ttf"),
-          MaterialCommunityIcons: require("../assets/fonts/MaterialCommunityIcons.ttf"),
-        });
-      } catch {
-        // timeout hoặc lỗi load — tiếp tục với system fonts
-      }
-      SplashScreen.hideAsync().catch(() => {});
-      setReady(true);
-    }
-    prepare();
+    // Do not gate the web router on font loading. Through the Replit proxy,
+    // a font request can stay pending even though the app bundle is ready;
+    // waiting here would leave the whole PWA blank indefinitely.
+    void Font.loadAsync({
+      Inter_400Regular: require("../assets/fonts/Inter_400Regular.ttf"),
+      Inter_500Medium: require("../assets/fonts/Inter_500Medium.ttf"),
+      Inter_600SemiBold: require("../assets/fonts/Inter_600SemiBold.ttf"),
+      Inter_700Bold: require("../assets/fonts/Inter_700Bold.ttf"),
+      Feather: require("../assets/fonts/Feather.ttf"),
+      Ionicons: require("../assets/fonts/Ionicons.ttf"),
+      MaterialCommunityIcons: require("../assets/fonts/MaterialCommunityIcons.ttf"),
+    }).catch(() => {
+      // Continue with system fonts if a web font cannot be loaded.
+    });
+    SplashScreen.hideAsync().catch(() => {});
+    setReady(true);
   }, []);
 
   if (!ready) {
