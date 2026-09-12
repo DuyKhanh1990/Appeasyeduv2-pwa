@@ -1,0 +1,27 @@
+kind = "mobile"
+previewPath = "/"
+title = "EduApp Mobile"
+version = "1.0.0"
+id = "artifacts/edu-mobile"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+name = "expo"
+paths = [ "/" ]
+localPort = 18897
+
+[services.development]
+run = "pnpm --filter @workspace/edu-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/edu-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/edu-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "18897"
+BASE_PATH = "/"

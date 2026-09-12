@@ -1,0 +1,3 @@
+- [Tinode seq gating](tinode-seq-gating.md) — all lastMessages preview writes must gate on seq>=cachedSeq or backfill overwrites newest preview
+- [Android RefreshControl box artifact](android-refresh-control-box-artifact.md) — unstyled RefreshControl can mimic a per-card shadow bug; check both before assuming which cause
+- [Chat channel list vs Tinode source of truth](chat-list-vs-tinode-source-of-truth.md) — channel list can miss a topic that unread badge already counts; reconcile against Tinode's own topic list, not just Postgres

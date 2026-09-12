@@ -1,0 +1,44 @@
+import { Router, type IRouter } from "express";
+import healthRouter from "./health";
+import authRouter from "./auth";
+import mobileRouter from "./mobile";
+import mobileAuthRouter from "./mobile-auth";
+import studentSessionsRouter from "./student-sessions";
+import staffSessionsRouter from "./staff-sessions";
+import mobileTasksRouter from "./mobile-tasks";
+import staffGradeBooksRouter from "./staff-grade-books";
+import studentsEndingSoonRouter from "./students-ending-soon";
+import learningOverviewRouter from "./learning-overview";
+import parentRouter from "./parent";
+import studentNotificationsRouter from "./student-notifications";
+import staffNotificationsRouter from "./staff-notifications";
+import storageRouter from "./storage";
+import uploadRouter from "./upload";
+import mobileChatRouter from "./mobile-chat";
+import mobileMeRouter from "./mobile-me";
+import mobileNewsFeedRouter from "./mobile-news-feed";
+import convertRouter from "./convert";
+
+const router: IRouter = Router();
+
+router.use(healthRouter);
+router.use(authRouter);
+router.use(mobileAuthRouter);
+router.use(parentRouter);
+router.use(studentNotificationsRouter);
+router.use(staffNotificationsRouter);
+router.use(studentSessionsRouter);
+router.use(staffSessionsRouter);
+router.use(mobileTasksRouter);
+router.use(staffGradeBooksRouter);
+router.use(studentsEndingSoonRouter);
+router.use(learningOverviewRouter);
+router.use(storageRouter);
+router.use(uploadRouter);
+router.use(mobileChatRouter);
+router.use(mobileMeRouter);
+router.use(mobileNewsFeedRouter);
+router.use(convertRouter);
+router.use(mobileRouter);
+
+export default router;

@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "5FprG_FBB54G7yiex2X2J"
+uri = "file://artifacts/edu-mobile/assets/images/icon.png"
+type = "image"
+title = "edu app icon"
