@@ -41,10 +41,10 @@ execFileSync(
   },
 );
 
-for (const filename of ["index.html", "favicon.ico", "metadata.json"]) {
-  const source = path.join(exportDir, filename);
-  if (existsSync(source)) cpSync(source, path.join(outputDir, filename));
-}
+// Expo keeps the JavaScript bundle and all hashed assets under `_expo/` and
+// `assets/`. Copy the full export tree; copying only index.html makes the
+// static server fall back to HTML for the bundle URL and leaves a blank app.
+cpSync(exportDir, outputDir, { recursive: true });
 
 for (const filename of ["manifest.webmanifest", "sw.js", "icon.svg"]) {
   const source = path.join(artifactDir, "public", filename);
