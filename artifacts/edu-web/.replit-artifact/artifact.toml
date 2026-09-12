@@ -1,5 +1,5 @@
 kind = "web"
-previewPath = "/edu-web/"
+previewPath = "/"
 title = "EasyEdu Web"
 description = "A React web and PWA experience for EasyEdu learners, teachers, and staff to manage schedules, classes, attendance, grades, tuition, and notifications using the existing education API."
 version = "1.0.0"
@@ -8,7 +8,7 @@ router = "path"
 
 [[services]]
 name = "web"
-paths = [ "/edu-web/" ]
+paths = [ "/" ]
 localPort = 21338
 
 [services.development]
@@ -25,4 +25,4 @@ to = "/index.html"
 
 [services.env]
 PORT = "21338"
-BASE_PATH = "/edu-web/"
+BASE_PATH = "/"

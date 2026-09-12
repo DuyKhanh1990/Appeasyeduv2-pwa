@@ -7,7 +7,7 @@ id = "artifacts/api-server"
 id = "artifacts/mockup-sandbox"
 
 [[artifacts]]
-id = "artifacts/edu-mobile"
+id = "artifacts/edu-web"
 
 [deployment]
 router = "application"
