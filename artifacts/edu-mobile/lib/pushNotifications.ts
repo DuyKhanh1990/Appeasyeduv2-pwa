@@ -41,6 +41,18 @@ export function getProjectId(): string | undefined {
   return getExpoProjectId();
 }
 
+export async function registerWebServiceWorker(): Promise<ServiceWorkerRegistration | null> {
+  if (
+    Platform.OS !== "web" ||
+    typeof navigator === "undefined" ||
+    !("serviceWorker" in navigator)
+  ) {
+    return null;
+  }
+
+  return navigator.serviceWorker.register("./sw.js", { scope: "./" });
+}
+
 export async function registerForPushNotificationsAsync(): Promise<PushRegistrationResult> {
   if (Platform.OS === "web") {
     return registerForWebPush();
@@ -118,6 +130,11 @@ async function registerForWebPush(): Promise<PushRegistrationResult> {
   }
 
   try {
+    const serviceWorker = await registerWebServiceWorker();
+    if (!serviceWorker) {
+      return { token: null, error: "Không đăng ký được Service Worker cho Web Push." };
+    }
+
     const config = await apiGet<WebPushConfig>("/api/mobile/push/config");
     if (!config.enabled || !config.publicKey) {
       return { token: null, error: "Trung tâm chưa bật thông báo Web Push." };

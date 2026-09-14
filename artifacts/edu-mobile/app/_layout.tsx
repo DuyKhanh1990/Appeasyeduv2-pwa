@@ -16,6 +16,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import {
   addNotificationReceivedListener,
   addNotificationResponseReceivedListener,
+  registerWebServiceWorker,
 } from "@/lib/pushNotifications";
 import { sendPushTokenToBackend } from "@/lib/api";
 import { navigateDeeplink, deeplinkFromPushData } from "@/lib/deeplinkNavigator";
@@ -31,7 +32,55 @@ function useNotificationListeners() {
   const tokenSub = useRef<ReturnType<typeof Notifications.addPushTokenListener> | null>(null);
 
   useEffect(() => {
-    if (Platform.OS === "web") return;
+    if (Platform.OS === "web") {
+      const handleWebPushData = (data: Record<string, any>) => {
+        if (data.screen === "push-test") {
+          router.push("/push-test");
+          return;
+        }
+
+        const deeplink = deeplinkFromPushData(data);
+        if (deeplink) {
+          navigateDeeplink(deeplink);
+        } else {
+          router.push("/notifications");
+        }
+      };
+
+      const handleServiceWorkerMessage = (event: MessageEvent) => {
+        if (event.data?.type !== "EASYEDU_PUSH_CLICK") return;
+        handleWebPushData((event.data.data ?? {}) as Record<string, any>);
+      };
+
+      navigator.serviceWorker?.addEventListener("message", handleServiceWorkerMessage);
+      void registerWebServiceWorker().catch((error) => {
+        console.warn("[push] Không đăng ký được Service Worker:", error);
+      });
+
+      // Khi notification click mở một tab mới, service worker truyền payload
+      // qua query string để xử lý sau khi Expo Router khởi động.
+      const initialPush = new URL(window.location.href).searchParams.get("push");
+      if (initialPush) {
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete("push");
+          window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+          window.setTimeout(() => {
+            try {
+              handleWebPushData(JSON.parse(initialPush) as Record<string, any>);
+            } catch {
+              router.push("/notifications");
+            }
+          }, 0);
+        } catch {
+          router.push("/notifications");
+        }
+      }
+
+      return () => {
+        navigator.serviceWorker?.removeEventListener("message", handleServiceWorkerMessage);
+      };
+    }
 
     // App đang mở (foreground): notification vẫn hiện được nhờ setNotificationHandler
     // trong lib/pushNotifications.ts, ở đây chỉ log lại để debug/xử lý thêm nếu cần.

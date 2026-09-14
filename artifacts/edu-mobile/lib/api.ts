@@ -211,14 +211,27 @@ export async function sendPushTokenToBackend(pushToken: string): Promise<SendPus
 }
 
 export async function unregisterPushToken(): Promise<void> {
-  if (!_activePushToken) return;
   try {
     if (Platform.OS === "web") {
-      const subscription = JSON.parse(_activePushToken) as PushSubscriptionJSON;
-      if (subscription.endpoint) {
-        await apiDelete("/api/mobile/push/subscription", { endpoint: subscription.endpoint });
+      let subscriptionPayload: PushSubscriptionJSON | null = null;
+
+      if (_activePushToken) {
+        subscriptionPayload = JSON.parse(_activePushToken) as PushSubscriptionJSON;
+      } else if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration();
+        const subscription = registration
+          ? await registration.pushManager.getSubscription()
+          : null;
+        subscriptionPayload = subscription?.toJSON() ?? null;
+      }
+
+      if (subscriptionPayload?.endpoint) {
+        await apiDelete("/api/mobile/push/subscription", {
+          endpoint: subscriptionPayload.endpoint,
+        });
       }
     } else {
+      if (!_activePushToken) return;
       await apiDelete(`/api/mobile/push-token?pushToken=${encodeURIComponent(_activePushToken)}`);
     }
   } catch {

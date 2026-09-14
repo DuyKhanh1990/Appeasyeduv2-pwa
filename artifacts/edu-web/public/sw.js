@@ -1,4 +1,4 @@
-const VERSION = "easyedu-web-v1";
+const VERSION = "easyedu-web-v2";
 const APP_SHELL = [
   "./",
   "./manifest.webmanifest",
@@ -45,13 +45,25 @@ self.addEventListener("push", (event) => {
     payload = { body: event.data ? event.data.text() : "" };
   }
 
-  const title = payload.title || "EasyEdu";
+  let pushData = payload.data;
+  if (typeof pushData === "string") {
+    try {
+      pushData = JSON.parse(pushData);
+    } catch {
+      pushData = {};
+    }
+  }
+  if (!pushData || typeof pushData !== "object" || Array.isArray(pushData)) {
+    pushData = payload;
+  }
+
+  const title = payload.title || pushData.title || "EasyEdu";
   const options = {
-    body: payload.body || payload.content || "Bạn có một cập nhật mới.",
+    body: payload.body || payload.content || pushData.body || "Bạn có một cập nhật mới.",
     icon: "./icon.svg",
     badge: "./icon.svg",
     tag: payload.tag || "easyedu-notification",
-    data: payload.data || { url: "./notifications" }
+    data: pushData
   };
 
   event.waitUntil(self.registration.showNotification(title, options));
@@ -59,15 +71,21 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const destination = event.notification.data?.url || "./";
+  const data = event.notification.data || {};
+  const destination = new URL("./", self.registration.scope);
+  destination.searchParams.set("push", JSON.stringify(data));
+
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
-      const existing = clients.find((client) => "focus" in client);
+      const existing = clients.find((client) => client.url.startsWith(self.registration.scope));
       if (existing) {
-        existing.navigate(destination);
+        existing.postMessage({
+          type: "EASYEDU_PUSH_CLICK",
+          data
+        });
         return existing.focus();
       }
-      return self.clients.openWindow(destination);
+      return self.clients.openWindow(destination.toString());
     })
   );
 });
