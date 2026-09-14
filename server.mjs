@@ -46,11 +46,15 @@ async function fileExists(filePath) {
 async function serveFile(req, res, filePath) {
   const body = await readFile(filePath);
   const extension = path.extname(filePath).toLowerCase();
+  const filename = path.basename(filePath);
   const headers = {
     "Content-Type": contentTypes[extension] || "application/octet-stream",
+    "Cache-Control": "no-cache",
   };
 
-  if (
+  if (/^sw(?:-[a-z0-9.-]+)?\.js$/i.test(filename)) {
+    headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+  } else if (
     extension === ".js" ||
     extension === ".css" ||
     extension === ".ttf" ||
