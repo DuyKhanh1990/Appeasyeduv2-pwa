@@ -12,6 +12,7 @@ import type { EventSubscription } from "expo-modules-core";
 import * as Notifications from "expo-notifications";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { PwaUpdatePrompt } from "@/components/PwaUpdatePrompt";
 import { AuthProvider } from "@/context/AuthContext";
 import {
   addNotificationReceivedListener,
@@ -142,13 +143,16 @@ function RootLayoutNav() {
   useNotificationListeners();
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="login" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="session-detail/[id]" options={{ headerShown: false, animation: "slide_from_right" }} />
-      <Stack.Screen name="news-post/[id]" options={{ headerShown: false, animation: "slide_from_right" }} />
-      <Stack.Screen name="push-test" options={{ headerShown: false, presentation: "modal" }} />
-    </Stack>
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="session-detail/[id]" options={{ headerShown: false, animation: "slide_from_right" }} />
+        <Stack.Screen name="news-post/[id]" options={{ headerShown: false, animation: "slide_from_right" }} />
+        <Stack.Screen name="push-test" options={{ headerShown: false, presentation: "modal" }} />
+      </Stack>
+      <PwaUpdatePrompt />
+    </>
   );
 }
 

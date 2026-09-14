@@ -1,4 +1,4 @@
-const VERSION = "easyedu-web-v2";
+const VERSION = "easyedu-web-__EASYEDU_BUILD_VERSION__";
 const APP_SHELL = [
   "./",
   "./manifest.webmanifest",
@@ -7,7 +7,7 @@ const APP_SHELL = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(VERSION).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
+    caches.open(VERSION).then((cache) => cache.addAll(APP_SHELL))
   );
 });
 
@@ -17,6 +17,12 @@ self.addEventListener("activate", (event) => {
       .then((keys) => Promise.all(keys.filter((key) => key !== VERSION).map((key) => caches.delete(key))))
       .then(() => self.clients.claim())
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("fetch", (event) => {

@@ -59,6 +59,9 @@ for (const filename of [
 
 const indexPath = path.join(outputDir, "index.html");
 let index = readFileSync(indexPath, "utf8");
+const bundleVersion =
+  index.match(/_expo\/static\/js\/web\/entry-([a-z0-9]+)\.js/i)?.[1] ||
+  "unknown";
 index = index
   .replace("<html>", '<html lang="vi">')
   .replace(
@@ -80,5 +83,14 @@ index = index
     "</body>",
   ].join("\n"));
 writeFileSync(indexPath, index);
+
+const serviceWorkerPath = path.join(outputDir, "sw.js");
+if (existsSync(serviceWorkerPath)) {
+  const serviceWorker = readFileSync(serviceWorkerPath, "utf8").replaceAll(
+    "__EASYEDU_BUILD_VERSION__",
+    bundleVersion,
+  );
+  writeFileSync(serviceWorkerPath, serviceWorker);
+}
 
 console.log(`Expo Web PWA exported to ${outputDir}`);
