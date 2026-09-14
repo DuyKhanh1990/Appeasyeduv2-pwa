@@ -61,6 +61,10 @@ const indexPath = path.join(outputDir, "index.html");
 let index = readFileSync(indexPath, "utf8");
 index = index
   .replace("<html>", '<html lang="vi">')
+  .replace(
+    'content="width=device-width, initial-scale=1, shrink-to-fit=no"',
+    'content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"',
+  )
   .replace("</head>", [
     '    <meta name="theme-color" content="#173f3d" />',
     '    <link rel="manifest" type="application/manifest+json" href="./manifest.webmanifest" />',

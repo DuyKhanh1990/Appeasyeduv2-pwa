@@ -10,7 +10,8 @@ import { ChatUnreadProvider, useChatUnread } from "@/context/ChatUnreadContext";
 import { useColors } from "@/hooks/useColors";
 import { usePermissions } from "@/hooks/usePermissions";
 
-const TAB_BAR_HEIGHT = 49;
+const TAB_BAR_CONTENT_HEIGHT = 64;
+const WEB_BOTTOM_INSET_FALLBACK = 16;
 
 /** Renders a tab that is visible but dimmed and non-interactive. */
 function disabledTabButton(props: any) {
@@ -31,7 +32,12 @@ function TabLayoutInner() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const isIOS = Platform.OS === "ios";
+  const isWeb = Platform.OS === "web";
   const insets = useSafeAreaInsets();
+  const bottomInset = Math.max(
+    insets.bottom,
+    isWeb ? WEB_BOTTOM_INSET_FALLBACK : 0,
+  );
   const { totalUnread } = useChatUnread();
   const perms = usePermissions();
 
@@ -53,8 +59,8 @@ function TabLayoutInner() {
           borderTopWidth: StyleSheet.hairlineWidth,
           borderTopColor: colors.border,
           elevation: 0,
-          height: TAB_BAR_HEIGHT + insets.bottom,
-          paddingBottom: insets.bottom,
+          height: TAB_BAR_CONTENT_HEIGHT + bottomInset,
+          paddingBottom: bottomInset,
           paddingTop: 6,
         },
         tabBarBackground: () =>
@@ -71,7 +77,12 @@ function TabLayoutInner() {
           ),
         tabBarLabelStyle: {
           fontSize: 10,
+          lineHeight: 14,
           fontFamily: "Inter_500Medium",
+          marginBottom: 2,
+        },
+        tabBarIconStyle: {
+          marginTop: 2,
         },
       }}
     >
