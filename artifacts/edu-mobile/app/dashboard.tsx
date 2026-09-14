@@ -640,7 +640,7 @@ const ALL_TABS = [
 export default function DashboardScreen() {
   const colors  = useColors();
   const insets  = useSafeAreaInsets();
-  const topPad  = Platform.OS === "web" ? 67 : 0;
+  const topPad = insets.top;
   const perms   = usePermissions();
 
   // Lọc các tab theo quyền từ API permissions

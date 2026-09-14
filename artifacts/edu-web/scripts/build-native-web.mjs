@@ -49,9 +49,9 @@ cpSync(exportDir, outputDir, { recursive: true });
 for (const filename of [
   "manifest.webmanifest",
   "sw.js",
-  "icon.svg",
   "icon-192.png",
   "icon-512.png",
+  "icon-maskable-512.png",
 ]) {
   const source = path.join(artifactDir, "public", filename);
   if (existsSync(source)) cpSync(source, path.join(outputDir, filename));
@@ -71,7 +71,7 @@ index = index
   .replace("</head>", [
     '    <meta name="theme-color" content="#173f3d" />',
     '    <link rel="manifest" type="application/manifest+json" href="./manifest.webmanifest" />',
-    '    <link rel="icon" type="image/svg+xml" href="./icon.svg" />',
+    '    <link rel="icon" type="image/png" href="./icon-192.png" />',
     "</head>",
   ].join("\n"))
   .replace("</body>", [

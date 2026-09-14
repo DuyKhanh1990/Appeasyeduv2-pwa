@@ -789,7 +789,7 @@ export default function HomeworkScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
 
-  const topPad = Platform.OS === "web" ? 67 : 0;
+  const topPad = insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
 
   const today = new Date();
@@ -1057,7 +1057,7 @@ export default function HomeworkScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View
-        style={[styles.header, { paddingTop: (Platform.OS === "web" ? topPad : insets.top) + 16, backgroundColor: colors.gradientStart }]}
+        style={[styles.header, { paddingTop: topPad + 16, backgroundColor: colors.gradientStart }]}
       >
         <View style={styles.monthNav}>
           <TouchableOpacity onPress={() => goMonth(-1)} style={styles.navBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -1138,7 +1138,7 @@ export default function HomeworkScreen() {
           </View>
         ) : filtered.length === 0 ? (
           <View style={styles.center}>
-            <MaterialCommunityIcons name="book-open-outline" size={48} color={colors.mutedForeground} />
+            <Feather name="book-open" size={48} color={colors.mutedForeground} />
             <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_500Medium", fontSize: 15, marginTop: 10 }}>Không có bài tập</Text>
             <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 4 }}>Tháng này chưa có bài tập nào</Text>
           </View>

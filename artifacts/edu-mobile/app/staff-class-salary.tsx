@@ -123,7 +123,7 @@ function SalaryCard({
 export default function StaffClassSalaryScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : 0;
+  const topPad = insets.top;
 
   const [tables, setTables] = useState<SalarySummary[]>([]);
   const [loading, setLoading] = useState(true);

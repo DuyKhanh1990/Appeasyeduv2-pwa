@@ -482,7 +482,7 @@ function StudentCard({ item, colors }: { item: Student; colors: ReturnType<typeo
 export default function StaffExpiringStudentsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : 0;
+  const topPad = insets.top;
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");

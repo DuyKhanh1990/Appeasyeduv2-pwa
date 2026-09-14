@@ -413,7 +413,7 @@ function AttendanceCalendar({
 export default function StaffSalarySummaryScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : 0;
+  const topPad = insets.top;
 
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -460,7 +460,7 @@ export default function StaffSalarySummaryScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
       <View
-        style={{ backgroundColor: colors.gradientStart, paddingTop: (Platform.OS === "web" ? topPad : insets.top) + 12, paddingHorizontal: 16, paddingBottom: 8 }}
+        style={{ backgroundColor: colors.gradientStart, paddingTop: topPad + 12, paddingHorizontal: 16, paddingBottom: 8 }}
       >
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 6 }}>
           <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>

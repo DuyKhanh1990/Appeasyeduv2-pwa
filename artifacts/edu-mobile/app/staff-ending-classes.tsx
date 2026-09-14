@@ -477,7 +477,7 @@ function ClassCard({ item, colors }: { item: ClassItem; colors: ReturnType<typeo
 export default function StaffEndingClassesScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : 0;
+  const topPad = insets.top;
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");

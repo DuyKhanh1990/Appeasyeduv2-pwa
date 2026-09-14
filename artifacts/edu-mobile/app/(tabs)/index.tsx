@@ -318,7 +318,7 @@ export default function HomeScreen() {
   const [studentStars, setStudentStars] = useState<number | null>(null);
   const [staffStats, setStaffStats] = useState<StaffDashboardStats | null>(null);
 
-  const topPad = Platform.OS === "web" ? 67 : 0;
+  const topPad = insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
 
   const today = new Date();
@@ -502,7 +502,7 @@ export default function HomeScreen() {
       <View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top, backgroundColor: "#6c63ff", zIndex: 10 }} />
     {/* ── Fixed header + stats — stays on screen while content scrolls under ── */}
     <View
-      style={[styles.header, { paddingTop: (Platform.OS === "web" ? topPad : insets.top) + 16, backgroundColor: "#6c63ff" }]}
+      style={[styles.header, { paddingTop: topPad + 16, backgroundColor: "#6c63ff" }]}
     >
       <View style={styles.headerRow}>
         <View style={styles.userInfo}>

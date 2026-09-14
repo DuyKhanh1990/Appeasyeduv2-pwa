@@ -302,7 +302,7 @@ function ClassRow({
 export default function StaffClassSalaryDetailScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : 0;
+  const topPad = insets.top;
 
   const { id } = useLocalSearchParams<{ id: string }>();
   const [table, setTable] = useState<SalaryBreakdown | null>(null);

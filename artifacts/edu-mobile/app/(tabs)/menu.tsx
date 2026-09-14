@@ -123,7 +123,7 @@ export default function MenuScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Fixed purple header — not part of ScrollView */}
       <View
-        style={[styles.profileHeader, { paddingTop: Platform.OS === "web" ? 67 + 12 : insets.top + 16, backgroundColor: colors.gradientStart }]}
+        style={[styles.profileHeader, { paddingTop: insets.top + 16, backgroundColor: colors.gradientStart }]}
       >
         <View style={styles.avatarLarge}>
           <Text style={styles.avatarLargeText}>{(user?.username || "H")[0].toUpperCase()}</Text>

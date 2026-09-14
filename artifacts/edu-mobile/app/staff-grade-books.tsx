@@ -139,7 +139,7 @@ interface PaginatedResponse {
 export default function StaffGradeBooksScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : 0;
+  const topPad = insets.top;
 
   const [classes, setClasses] = useState<StaffClass[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<string>(ALL_TAB);

@@ -2,7 +2,7 @@ const VERSION = "easyedu-web-__EASYEDU_BUILD_VERSION__";
 const APP_SHELL = [
   "./",
   "./manifest.webmanifest",
-  "./icon.svg"
+  "./icon-192.png"
 ];
 
 self.addEventListener("install", (event) => {
@@ -66,8 +66,7 @@ self.addEventListener("push", (event) => {
   const title = payload.title || pushData.title || "EasyEdu";
   const options = {
     body: payload.body || payload.content || pushData.body || "Bạn có một cập nhật mới.",
-    icon: "./icon.svg",
-    badge: "./icon.svg",
+    icon: "./icon-192.png",
     tag: payload.tag || "easyedu-notification",
     data: pushData
   };

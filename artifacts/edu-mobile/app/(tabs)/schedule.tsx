@@ -685,7 +685,7 @@ export default function ScheduleScreen() {
   const today = new Date();
   const todayYMD = toYMD(today);
 
-  const topPad = Platform.OS === "web" ? 67 : 0;
+  const topPad = insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
 
   const [viewYear, setViewYear] = useState(today.getFullYear());
@@ -1096,7 +1096,7 @@ export default function ScheduleScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View
-        style={[styles.header, { paddingTop: (Platform.OS === "web" ? topPad : insets.top) + 16, backgroundColor: colors.gradientStart }]}
+        style={[styles.header, { paddingTop: topPad + 16, backgroundColor: colors.gradientStart }]}
         {...panResponder.panHandlers}
       >
         <View style={styles.monthNav}>

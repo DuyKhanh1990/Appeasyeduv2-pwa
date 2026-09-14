@@ -1589,7 +1589,7 @@ function CreateTaskModal({
 
           {/* ── Header ── */}
           <View
-            style={[ctStyles.header, { paddingTop: (Platform.OS === "web" ? 67 : insets.top) + 10, backgroundColor: colors.gradientStart }]}
+            style={[ctStyles.header, { paddingTop: insets.top + 10, backgroundColor: colors.gradientStart }]}
           >
             <TouchableOpacity onPress={onClose} style={ctStyles.headerClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <Feather name="x" size={20} color="#1e1b4b" />
@@ -2206,7 +2206,7 @@ const ctStyles = StyleSheet.create({
 export default function TasksScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : 0;
+  const topPad = insets.top;
 
   const [kanban, setKanban] = useState<KanbanResponse | null>(null);
   const [metaPermissions, setMetaPermissions] = useState<Permissions | null>(null);
@@ -2367,7 +2367,7 @@ export default function TasksScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View
-        style={{ backgroundColor: colors.gradientStart, paddingTop: (Platform.OS === "web" ? topPad : insets.top) + 16, paddingBottom: 16, paddingHorizontal: 20 }}
+        style={{ backgroundColor: colors.gradientStart, paddingTop: topPad + 16, paddingBottom: 16, paddingHorizontal: 20 }}
       >
         <View style={styles.headerRow}>
           <View>

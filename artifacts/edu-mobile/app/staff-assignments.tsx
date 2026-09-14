@@ -112,7 +112,7 @@ function AssignmentCard({
 export default function StaffAssignmentsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : 0;
+  const topPad = insets.top;
 
   const now = new Date();
   const [viewYear, setViewYear] = useState(now.getFullYear());

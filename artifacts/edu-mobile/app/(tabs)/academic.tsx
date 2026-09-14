@@ -155,7 +155,7 @@ function CardGrid({ cards, colors, onPress }: {
 export default function AcademicScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : 0;
+  const topPad = insets.top;
   const perms = usePermissions();
 
   const [summary, setSummary] = useState<LearningOverviewSummary | null>(null);
@@ -212,7 +212,7 @@ export default function AcademicScreen() {
       <View
         style={{
           backgroundColor: colors.gradientStart,
-          paddingTop: (Platform.OS === "web" ? topPad : insets.top) + 16,
+          paddingTop: topPad + 16,
           paddingBottom: 20,
           paddingHorizontal: 20,
         }}

@@ -320,7 +320,7 @@ export default function StaffGradeBookEditScreen() {
     >
       {/* Header */}
       <View
-        style={{ backgroundColor: colors.gradientStart, paddingTop: (Platform.OS === "web" ? 67 : insets.top) + 12, paddingBottom: 16, paddingHorizontal: 16 }}
+        style={{ backgroundColor: colors.gradientStart, paddingTop: insets.top + 12, paddingBottom: 16, paddingHorizontal: 16 }}
       >
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <TouchableOpacity

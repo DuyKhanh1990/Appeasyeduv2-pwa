@@ -498,7 +498,7 @@ function MessageBubble({ msg, msgs, reactions, colors, onLongPress, tinodeHttpUr
 export default function ChatScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : insets.top + 16;
+  const topPad = insets.top + 16;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
   const { user } = useAuth();
 

@@ -298,7 +298,7 @@ const MONTH_NAMES = ["Tháng 1","Tháng 2","Tháng 3","Tháng 4","Tháng 5","Th�
 export default function GradesScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
 
   const today = new Date();

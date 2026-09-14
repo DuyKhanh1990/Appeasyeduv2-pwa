@@ -121,7 +121,7 @@ const sec = StyleSheet.create({
 export default function StaffAssignmentDetailScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : 0;
+  const topPad = insets.top;
 
   const [row, setRow] = useState<AssignmentRow | null>(null);
   const [score, setScore] = useState("");

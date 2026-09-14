@@ -160,7 +160,7 @@ function PostCard({ post, colors, onReact }: { post: Post; colors: ReturnType<ty
 export default function NewsFeedScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : 0;
+  const topPad = insets.top;
 
   const perms = usePermissions();
   const [selectedCategory, setSelectedCategory] = useState("");

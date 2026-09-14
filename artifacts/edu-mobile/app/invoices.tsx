@@ -420,7 +420,7 @@ export default function InvoicesScreen() {
   const colors = useColors();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const topPad = insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   const { invoiceId: highlightInvoiceId } = useLocalSearchParams<{ invoiceId?: string }>();
