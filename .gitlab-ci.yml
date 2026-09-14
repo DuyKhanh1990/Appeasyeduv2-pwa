@@ -1,7 +1,6 @@
 image: docker:27-cli
 
-stages:
-  - build_images
+stages: [build_images]
 
 variables:
   DOCKER_BUILDKIT: "1"
@@ -10,22 +9,16 @@ variables:
   DOCKER_REGISTRY: harbor.emso.vn
   REGISTRY_PROJECT: emso-common
   REGISTRY_IMAGE: appeduv2pwa
-  DOCKER_IMAGE: "$DOCKER_REGISTRY/$REGISTRY_PROJECT/$REGISTRY_IMAGE"
+  DOCKER_IMAGE: $DOCKER_REGISTRY/$REGISTRY_PROJECT/$REGISTRY_IMAGE
   REGISTRY_TAG: "0.0.3"
 
-build-appeduv2pwa-image:
+appeduv2pwa-build-image:
   stage: build_images
-  tags:
-    - emso-runner
+  tags: [emso-runner]
   script:
     - echo "Login to Docker Registry"
     - echo "$HARBOR_ROBOT_TOKEN" | docker login --username "$HARBOR_ROBOT_USER" --password-stdin "$DOCKER_REGISTRY"
-    - >
-      DOCKER_BUILDKIT=1 docker build
-      --build-arg APP_VERSION="${CI_COMMIT_SHA:-$REGISTRY_TAG}"
-      --progress=plain
-      -t "$DOCKER_IMAGE:$REGISTRY_TAG"
-      .
+    - DOCKER_BUILDKIT=1 docker build --build-arg APP_VERSION="${CI_COMMIT_SHA:-$REGISTRY_TAG}" --build-arg APP_DISPLAY_VERSION="$REGISTRY_TAG" --progress=plain -t "$DOCKER_IMAGE:$REGISTRY_TAG" .
     - |
       push_status=1
       for attempt in 1 2 3 4 5; do
@@ -39,8 +32,10 @@ build-appeduv2pwa-image:
         fi
       done
       exit "$push_status"
-    - echo "Image pushed: $DOCKER_IMAGE:$REGISTRY_TAG"
+    - echo "Build xong rồi !"
+
   after_script:
-    - docker image prune -af || true
-    - docker builder prune -af || true
-    - docker logout "$DOCKER_REGISTRY" || true
+    - docker image prune -af
+    - docker builder prune -af
+    - docker logout "$DOCKER_REGISTRY"
+    - echo "Build xong rồi !"
