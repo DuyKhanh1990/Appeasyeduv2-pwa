@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -80,6 +81,12 @@ const STATUS_META: Record<string, { label: string; color: string; background: st
   rejected: { label: "Từ chối", color: "#b91c1c", background: "#fee2e2" },
 };
 
+const MONTH_NAMES = [
+  "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
+  "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12",
+];
+const WEEKDAY_NAMES = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+
 function todayIso() {
   const now = new Date();
   const y = now.getFullYear();
@@ -90,8 +97,16 @@ function todayIso() {
 
 function isIsoDate(value: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const date = new Date(`${value}T00:00:00`);
-  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  // Compare local date parts so the user's timezone does not turn midnight
+  // into the previous UTC date.
+  return (
+    !Number.isNaN(date.getTime()) &&
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  );
 }
 
 function formatDate(value?: string) {
@@ -263,6 +278,10 @@ export default function StudentLeaveRequestsScreen() {
   const [selectedScheduleIds, setSelectedScheduleIds] = useState<Set<string>>(new Set());
   const [loadingSchedules, setLoadingSchedules] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [datePickerTarget, setDatePickerTarget] = useState<"from" | "to" | null>(null);
+  const now = new Date();
+  const [pickerYear, setPickerYear] = useState(now.getFullYear());
+  const [pickerMonth, setPickerMonth] = useState(now.getMonth());
 
   const isParent = context?.viewerType === "parent" || user?.role === "parent";
   const students = context?.students ?? [];
@@ -389,6 +408,50 @@ export default function StudentLeaveRequestsScreen() {
     });
   };
 
+  const openDatePicker = (target: "from" | "to") => {
+    const value = target === "from" ? startDate : endDate;
+    if (isIsoDate(value)) {
+      const [year, month] = value.split("-").map(Number);
+      setPickerYear(year);
+      setPickerMonth(month - 1);
+    } else {
+      const current = new Date();
+      setPickerYear(current.getFullYear());
+      setPickerMonth(current.getMonth());
+    }
+    setDatePickerTarget(target);
+  };
+
+  const goPickerMonth = (delta: number) => {
+    setPickerMonth((currentMonth) => {
+      let nextMonth = currentMonth + delta;
+      if (nextMonth < 0) {
+        setPickerYear((year) => year - 1);
+        nextMonth = 11;
+      } else if (nextMonth > 11) {
+        setPickerYear((year) => year + 1);
+        nextMonth = 0;
+      }
+      return nextMonth;
+    });
+  };
+
+  const selectPickerDate = (date: string) => {
+    if (datePickerTarget === "from") setStartDate(date);
+    if (datePickerTarget === "to") setEndDate(date);
+    setDatePickerTarget(null);
+  };
+
+  const pickerCells = useMemo(() => {
+    const firstDay = new Date(pickerYear, pickerMonth, 1).getDay();
+    const daysInMonth = new Date(pickerYear, pickerMonth + 1, 0).getDate();
+    const cells: Array<string | null> = Array.from({ length: firstDay }, () => null);
+    for (let day = 1; day <= daysInMonth; day += 1) {
+      cells.push(`${pickerYear}-${String(pickerMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`);
+    }
+    return cells;
+  }, [pickerMonth, pickerYear]);
+
   if (user && user.role !== "student" && user.role !== "parent") {
     return (
       <View style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -508,27 +571,25 @@ export default function StudentLeaveRequestsScreen() {
                 <View style={styles.dateRow}>
                   <View style={styles.dateField}>
                     <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Từ ngày</Text>
-                    <TextInput
-                      value={startDate}
-                      onChangeText={setStartDate}
-                      placeholder="YYYY-MM-DD"
-                      placeholderTextColor={colors.mutedForeground}
-                      keyboardType="numbers-and-punctuation"
-                      style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.muted }]}
-                      maxLength={10}
-                    />
+                    <TouchableOpacity
+                      onPress={() => openDatePicker("from")}
+                      style={[styles.dateButton, { borderColor: colors.border, backgroundColor: colors.muted }]}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={[styles.dateButtonText, { color: colors.foreground }]}>{formatDate(startDate)}</Text>
+                      <Feather name="calendar" size={16} color={colors.primary} />
+                    </TouchableOpacity>
                   </View>
                   <View style={styles.dateField}>
                     <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Đến ngày</Text>
-                    <TextInput
-                      value={endDate}
-                      onChangeText={setEndDate}
-                      placeholder="YYYY-MM-DD"
-                      placeholderTextColor={colors.mutedForeground}
-                      keyboardType="numbers-and-punctuation"
-                      style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.muted }]}
-                      maxLength={10}
-                    />
+                    <TouchableOpacity
+                      onPress={() => openDatePicker("to")}
+                      style={[styles.dateButton, { borderColor: colors.border, backgroundColor: colors.muted }]}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={[styles.dateButtonText, { color: colors.foreground }]}>{formatDate(endDate)}</Text>
+                      <Feather name="calendar" size={16} color={colors.primary} />
+                    </TouchableOpacity>
                   </View>
                 </View>
 
@@ -622,31 +683,96 @@ export default function StudentLeaveRequestsScreen() {
               </View>
             ) : null}
 
-            <View style={styles.listSection}>
-              <View style={styles.listHeader}>
-                <SectionTitle icon="file-text" title="Đơn đã gửi" colors={colors} />
-                <Text style={[styles.listCount, { color: colors.mutedForeground }]}>{requests.length} đơn</Text>
-              </View>
-
-              {requests.length === 0 ? (
-                <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <View style={[styles.emptyIcon, { backgroundColor: colors.muted }]}>
-                    <Feather name="calendar" size={24} color={colors.mutedForeground} />
-                  </View>
-                  <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Chưa có đơn xin nghỉ</Text>
-                  <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                    Nhấn “Tạo đơn” để gửi thông tin xin nghỉ học.
-                  </Text>
+            {!formVisible ? (
+              <View style={styles.listSection}>
+                <View style={styles.listHeader}>
+                  <SectionTitle icon="file-text" title="Đơn đã gửi" colors={colors} />
+                  <Text style={[styles.listCount, { color: colors.mutedForeground }]}>{requests.length} đơn</Text>
                 </View>
-              ) : (
-                requests.map((request) => (
-                  <RequestCard key={request.id} request={request} colors={colors} isParent={!!isParent} />
-                ))
-              )}
-            </View>
+
+                {requests.length === 0 ? (
+                  <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <View style={[styles.emptyIcon, { backgroundColor: colors.muted }]}>
+                      <Feather name="calendar" size={24} color={colors.mutedForeground} />
+                    </View>
+                    <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Chưa có đơn xin nghỉ</Text>
+                    <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+                      Nhấn “Tạo đơn” để gửi thông tin xin nghỉ học.
+                    </Text>
+                  </View>
+                ) : (
+                  requests.map((request) => (
+                    <RequestCard key={request.id} request={request} colors={colors} isParent={!!isParent} />
+                  ))
+                )}
+              </View>
+            ) : null}
           </>
         )}
       </KeyboardAwareScrollViewCompat>
+
+      <Modal
+        visible={datePickerTarget !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setDatePickerTarget(null)}
+      >
+        <TouchableOpacity
+          style={styles.calendarOverlay}
+          activeOpacity={1}
+          onPress={() => setDatePickerTarget(null)}
+        />
+        <View style={[styles.calendarSheet, { backgroundColor: colors.card, borderColor: colors.border, paddingBottom: insets.bottom + 16 }]}>
+          <View style={[styles.calendarHeader, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.calendarTitle, { color: colors.foreground }]}>
+              {datePickerTarget === "from" ? "Chọn từ ngày" : "Chọn đến ngày"}
+            </Text>
+            <TouchableOpacity onPress={() => setDatePickerTarget(null)} hitSlop={8}>
+              <Feather name="x" size={20} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.calendarMonthRow}>
+            <TouchableOpacity onPress={() => goPickerMonth(-1)} hitSlop={8}>
+              <Feather name="chevron-left" size={22} color={colors.foreground} />
+            </TouchableOpacity>
+            <Text style={[styles.calendarMonthTitle, { color: colors.foreground }]}>
+              {MONTH_NAMES[pickerMonth]} {pickerYear}
+            </Text>
+            <TouchableOpacity onPress={() => goPickerMonth(1)} hitSlop={8}>
+              <Feather name="chevron-right" size={22} color={colors.foreground} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.calendarWeekRow}>
+            {WEEKDAY_NAMES.map((day) => (
+              <Text key={day} style={[styles.calendarWeekday, { color: colors.mutedForeground }]}>{day}</Text>
+            ))}
+          </View>
+          <View style={styles.calendarGrid}>
+            {pickerCells.map((date, index) => {
+              const activeDate = datePickerTarget === "from" ? startDate : endDate;
+              const selected = date !== null && date === activeDate;
+              return date ? (
+                <TouchableOpacity
+                  key={date}
+                  onPress={() => selectPickerDate(date)}
+                  style={styles.calendarDayCell}
+                  activeOpacity={0.75}
+                >
+                  <View style={[styles.calendarDay, { backgroundColor: selected ? colors.primary : "transparent" }]}>
+                    <Text style={[styles.calendarDayText, { color: selected ? "#fff" : colors.foreground }]}>
+                      {Number(date.slice(-2))}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ) : (
+                <View key={`blank-${index}`} style={styles.calendarDayCell} />
+              );
+            })}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -705,6 +831,8 @@ const styles = StyleSheet.create({
   dateRow: { flexDirection: "row", gap: 10 },
   dateField: { flex: 1, gap: 7 },
   input: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 11, paddingVertical: 10, fontSize: 16, fontFamily: "Inter_400Regular" },
+  dateButton: { minHeight: 45, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderWidth: 1, borderRadius: 10, paddingHorizontal: 11 },
+  dateButtonText: { fontSize: 14, fontFamily: "Inter_500Medium" },
   inlineError: { color: "#dc2626", fontSize: 11, fontFamily: "Inter_400Regular", lineHeight: 16 },
   scheduleHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   selectedCount: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
@@ -744,4 +872,16 @@ const styles = StyleSheet.create({
   rejectionBox: { borderRadius: 10, padding: 10, gap: 3 },
   rejectionLabel: { color: "#b91c1c", fontSize: 10, fontFamily: "Inter_700Bold" },
   rejectionText: { color: "#991b1b", fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
+  calendarOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)" },
+  calendarSheet: { position: "absolute", bottom: 0, left: 0, right: 0, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderWidth: 1, paddingTop: 4 },
+  calendarHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: 1 },
+  calendarTitle: { fontSize: 16, fontFamily: "Inter_700Bold" },
+  calendarMonthRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 24, paddingVertical: 14 },
+  calendarMonthTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  calendarWeekRow: { flexDirection: "row", paddingHorizontal: 12, marginBottom: 4 },
+  calendarWeekday: { width: "14.28%", textAlign: "center", fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  calendarGrid: { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 12 },
+  calendarDayCell: { width: "14.28%", aspectRatio: 1, alignItems: "center", justifyContent: "center", marginBottom: 2 },
+  calendarDay: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center" },
+  calendarDayText: { fontSize: 14, fontFamily: "Inter_500Medium" },
 });
