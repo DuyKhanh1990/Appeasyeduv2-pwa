@@ -2051,7 +2051,9 @@ const styles = StyleSheet.create({
   replyBarLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", marginBottom: 2 },
   replyBarText: { fontSize: 12, fontFamily: "Inter_400Regular" },
   inputBar: { flexDirection: "row", padding: 10, borderTopWidth: 1, alignItems: "flex-end", gap: 8 },
-  msgInput: { flex: 1, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 9, fontSize: 14, fontFamily: "Inter_400Regular", maxHeight: 100 },
+  // iOS Safari zooms the whole viewport when a text input is below 16px.
+  // Keep Android's existing compact size, while using the safe minimum on iOS/web.
+  msgInput: { flex: 1, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 9, fontSize: Platform.OS === "android" ? 14 : 16, fontFamily: "Inter_400Regular", maxHeight: 100 },
   sendBtn: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
   menuOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "center", alignItems: "center" },
   menuBox: { width: 240, borderRadius: 16, borderWidth: 1, overflow: "hidden" },
