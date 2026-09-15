@@ -152,11 +152,11 @@ const WEEKDAY_DISPLAY = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 const ROW_HEIGHT = 46;
 const MONTH_NAMES = ["Tháng 1","Tháng 2","Tháng 3","Tháng 4","Tháng 5","Tháng 6","Tháng 7","Tháng 8","Tháng 9","Tháng 10","Tháng 11","Tháng 12"];
 
-// Shared with the approved Modern Cards session detail direction.
-const SCHEDULE_AQUA = "#167c80";
-const SCHEDULE_AQUA_DARK = "#153d49";
-const SCHEDULE_AQUA_SOFT = "#d9f1ee";
-const SCHEDULE_PAGE_TINT = "#f3faf8";
+// Soft lavender schedule palette inspired by the selected visual references.
+const SCHEDULE_AQUA = "#7653d6";
+const SCHEDULE_AQUA_DARK = "#30205f";
+const SCHEDULE_AQUA_SOFT = "#e7dcff";
+const SCHEDULE_PAGE_TINT = "#f7f4ff";
 // Session dots need stronger contrast than the warm decorative accent.
 const SCHEDULE_SESSION_DOT = "#f97316";
 
@@ -1130,7 +1130,15 @@ export default function ScheduleScreen() {
               const ymd = toYMD(d);
               const isToday = ymd === todayYMD;
               const isSelected = ymd === selectedDate;
-              const hasSessions = daysWithSessions.has(ymd);
+              const hasSessions = daysWithSessions.has(ymd)
+                || (
+                  ymd === selectedDate
+                  && (
+                    isStaff
+                      ? sessionsForDay.some((session) => extractDateStr(session.sessionDate) === ymd)
+                      : extractDateStr(daySchedule?.date ?? "") === ymd && !!daySchedule?.sessions.length
+                  )
+                );
               return (
                 <TouchableOpacity
                   key={ymd}
@@ -1329,10 +1337,12 @@ const styles = StyleSheet.create({
     color: "#527b80",
   },
   sessionDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     backgroundColor: SCHEDULE_SESSION_DOT,
+    borderWidth: 1,
+    borderColor: "#ffffff",
   },
   dragHandle: {
     alignItems: "center",
