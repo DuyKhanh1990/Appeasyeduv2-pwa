@@ -9,9 +9,10 @@ import { useAuth } from "@/context/AuthContext";
 import { ChatUnreadProvider, useChatUnread } from "@/context/ChatUnreadContext";
 import { useColors } from "@/hooks/useColors";
 import { usePermissions } from "@/hooks/usePermissions";
-
-const TAB_BAR_CONTENT_HEIGHT = 64;
-const WEB_BOTTOM_INSET_FALLBACK = 16;
+import {
+  getTabBarStyle,
+  WEB_BOTTOM_INSET_FALLBACK,
+} from "@/lib/tabBarStyle";
 
 /** Renders a tab that is visible but dimmed and non-interactive. */
 function disabledTabButton(props: any) {
@@ -53,16 +54,12 @@ function TabLayoutInner() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
         headerShown: false,
-        tabBarStyle: {
-          position: "absolute",
-          backgroundColor: isIOS ? "transparent" : colors.background,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: colors.border,
-          elevation: 0,
-          height: TAB_BAR_CONTENT_HEIGHT + bottomInset,
-          paddingBottom: bottomInset,
-          paddingTop: 6,
-        },
+        tabBarStyle: getTabBarStyle({
+          backgroundColor: colors.background,
+          borderColor: colors.border,
+          bottomInset,
+          transparent: isIOS,
+        }),
         tabBarBackground: () =>
           isIOS ? (
             <BlurView

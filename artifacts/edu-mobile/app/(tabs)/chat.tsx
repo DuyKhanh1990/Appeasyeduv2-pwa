@@ -34,6 +34,10 @@ import { useChatUnread } from "@/context/ChatUnreadContext";
 import { apiDelete, apiGet, apiPost, apiPut, getCenterUrl, getAuthToken } from "@/lib/api";
 import { popChatDeeplink } from "@/lib/deeplinkStore";
 import { setActiveChatTopic } from "@/lib/activeChatTopic";
+import {
+  getTabBarStyle,
+  WEB_BOTTOM_INSET_FALLBACK,
+} from "@/lib/tabBarStyle";
 
 const EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "👎", "🔥", "🎉"];
 
@@ -557,10 +561,27 @@ export default function ChatScreen() {
   // hoàn toàn trên bản build APK thật (nơi insets.bottom lớn hơn 0). Ẩn tab bar
   // khi đang trong màn hình chat để giải phóng toàn bộ vùng đáy cho input.
   useEffect(() => {
+    const bottomInset = Math.max(
+      insets.bottom,
+      Platform.OS === "web" ? WEB_BOTTOM_INSET_FALLBACK : 0,
+    );
     navigation.setOptions({
-      tabBarStyle: selectedConv ? { display: "none" } : undefined,
+      tabBarStyle: selectedConv
+        ? { display: "none" }
+        : getTabBarStyle({
+            backgroundColor: colors.background,
+            borderColor: colors.border,
+            bottomInset,
+            transparent: Platform.OS === "ios",
+          }),
     });
-  }, [selectedConv, navigation]);
+  }, [
+    colors.background,
+    colors.border,
+    insets.bottom,
+    navigation,
+    selectedConv,
+  ]);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [reactions, setReactions] = useState<ReactionsMap>({});
   const [wsStatus, setWsStatus] = useState<"connecting" | "connected" | "error">("connecting");

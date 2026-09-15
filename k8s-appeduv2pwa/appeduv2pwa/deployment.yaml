@@ -19,7 +19,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: appeduv2pwa
-          image: harbor.emso.vn/emso-common/appeduv2pwa:0.0.9
+          image: harbor.emso.vn/emso-common/appeduv2pwa:0.0.10
           imagePullPolicy: IfNotPresent
           resources:
             requests:
