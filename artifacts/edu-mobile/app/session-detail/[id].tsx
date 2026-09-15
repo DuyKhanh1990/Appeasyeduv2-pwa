@@ -140,6 +140,15 @@ const ATTENDANCE_MAP: Record<string, { bg: string; text: string; label: string }
   cancelled:             { bg: "#f3f4f6", text: "#9ca3af", label: "Đã huỷ" },
 };
 
+function goBackFromSessionDetail() {
+  if (router.canGoBack()) {
+    router.back();
+  } else {
+    // Direct web URLs have no in-app history entry.
+    router.replace("/schedule" as any);
+  }
+}
+
 // ─── Shared components ────────────────────────────────────────────────────────
 
 function ContentModal({ item, onClose, colors }: {
