@@ -686,7 +686,7 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {user?.role === "student" && (
+        {(user?.role === "student" || user?.role === "parent") && (
           <View style={{ marginTop: 24 }}>
             <View style={{ paddingHorizontal: 20, marginBottom: 10 }}>
               <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Lối tắt</Text>
