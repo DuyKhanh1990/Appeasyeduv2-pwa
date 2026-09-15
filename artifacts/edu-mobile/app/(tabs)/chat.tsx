@@ -11,7 +11,6 @@ import {
   Alert,
   FlatList,
   Image,
-  KeyboardAvoidingView,
   Linking,
   Modal,
   Platform,
@@ -25,6 +24,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useColors } from "@/hooks/useColors";
@@ -1303,7 +1303,11 @@ export default function ChatScreen() {
             </TouchableOpacity>
           </View>
         ) : (
-          <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={0}>
+          <KeyboardAvoidingView
+            style={{ flex: 1, minHeight: 0 }}
+            behavior="padding"
+            keyboardVerticalOffset={0}
+          >
             {wsStatus === "connecting" && messages.length > 0 && (
               <View style={[styles.reconnectBanner, { backgroundColor: colors.muted }]}>
                 <ActivityIndicator size="small" color={colors.primary} style={{ marginRight: 8 }} />
@@ -1318,11 +1322,14 @@ export default function ChatScreen() {
             )}
             <FlatList
               ref={flatRef}
+              style={{ flex: 1, minHeight: 0 }}
               data={messages}
               keyExtractor={m => String(m.seq)}
               renderItem={({ item }) => <MessageBubble msg={item} msgs={messages} reactions={reactions} colors={colors} onLongPress={handleLongPress} tinodeHttpUrl={tinodeHttpUrlRef.current} tinodeApiKey={tinodeApiKeyRef.current} onOpenDoc={setActiveDocFile} />}
               contentContainerStyle={[styles.messagesList, { paddingBottom: 12 }]}
               showsVerticalScrollIndicator={false}
+              keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+              keyboardShouldPersistTaps="handled"
               ListEmptyComponent={
                 <View style={{ alignItems: "center", paddingTop: 60, gap: 8 }}>
                   <Feather name="message-circle" size={36} color={colors.mutedForeground} />
