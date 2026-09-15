@@ -397,8 +397,8 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
   // retaining the app theme for text, cards, and interactive controls.
   const aqua = "#167c80";
   const aquaDark = "#153d49";
-  const aquaSoft = "#d9f1ee";
-  const pageTint = "#f3faf8";
+  const aquaSoft = "#e7dcff";
+  const pageTint = "#f7f4ff";
   const warmYellow = "#f7d98d";
   const warmCard = "#fffaf0";
   const warmBorder = "#f0dfad";
@@ -486,7 +486,7 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
       >
         {/* Soft decorative circles from the approved Modern Cards hero. */}
         <View style={{ position: "absolute", width: 160, height: 160, borderRadius: 80, right: -38, top: -58, backgroundColor: warmYellow, opacity: 0.45 }} />
-        <View style={{ position: "absolute", width: 112, height: 112, borderRadius: 56, left: 102, bottom: -58, backgroundColor: "#b9e2ed", opacity: 0.6 }} />
+        <View style={{ position: "absolute", width: 112, height: 112, borderRadius: 56, left: 102, bottom: -58, backgroundColor: "#cdbbfa", opacity: 0.6 }} />
         <View style={{ position: "relative" }}>
           <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
             <TouchableOpacity
