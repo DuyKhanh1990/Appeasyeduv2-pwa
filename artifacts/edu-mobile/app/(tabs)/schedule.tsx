@@ -152,6 +152,13 @@ const WEEKDAY_DISPLAY = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 const ROW_HEIGHT = 46;
 const MONTH_NAMES = ["Tháng 1","Tháng 2","Tháng 3","Tháng 4","Tháng 5","Tháng 6","Tháng 7","Tháng 8","Tháng 9","Tháng 10","Tháng 11","Tháng 12"];
 
+// Shared with the approved Modern Cards session detail direction.
+const SCHEDULE_AQUA = "#167c80";
+const SCHEDULE_AQUA_DARK = "#153d49";
+const SCHEDULE_AQUA_SOFT = "#d9f1ee";
+const SCHEDULE_PAGE_TINT = "#f3faf8";
+const SCHEDULE_WARM_YELLOW = "#f7d98d";
+
 function toYMD(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -359,7 +366,7 @@ function StudentSessionCard({
   const isCancelledSession = session.sessionStatus === "cancelled";
   const effectiveAttendanceStatus = session.attendanceStatus || "pending";
   const attendanceColor = ATTENDANCE_MAP[effectiveAttendanceStatus]?.text || colors.primary;
-  const borderColor = isCancelledSession ? "#d1d5db" : attendanceColor;
+  const borderColor = isCancelledSession ? "#d1d5db" : "#dceceb";
 
   return (
     <TouchableOpacity
@@ -367,19 +374,17 @@ function StudentSessionCard({
       onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress?.(); }}
       onLayout={highlighted && onLayout ? (e) => onLayout(e.nativeEvent.layout.y) : undefined}
       style={[styles.sessionCard, {
-        backgroundColor: highlighted ? colors.primary + "10" : colors.card,
+        backgroundColor: highlighted ? SCHEDULE_AQUA_SOFT + "80" : colors.card,
         borderRadius: colors.radius + 4,
-        borderLeftWidth: 4,
-        borderLeftColor: highlighted ? colors.primary : borderColor,
-        borderWidth: highlighted ? 1.5 : undefined,
-        borderColor: highlighted ? colors.primary : undefined,
+        borderWidth: highlighted ? 1.5 : 1,
+        borderColor: highlighted ? SCHEDULE_AQUA : borderColor,
         opacity: isCancelledSession ? 0.65 : 1,
       }]}
     >
       <View style={styles.sessionTop}>
-        <View style={[styles.sessionTimeBadge, { backgroundColor: (isCancelledSession ? "#9ca3af" : colors.primary) + "15" }]}>
-          <Text style={[styles.sessionTimeText, { color: isCancelledSession ? "#9ca3af" : colors.primary }]}>{session.startTime}</Text>
-          <Text style={[styles.sessionTimeEnd, { color: (isCancelledSession ? "#9ca3af" : colors.primary) + "90" }]}>{session.endTime}</Text>
+        <View style={[styles.sessionTimeBadge, { backgroundColor: (isCancelledSession ? "#9ca3af" : SCHEDULE_AQUA) + "15" }]}>
+          <Text style={[styles.sessionTimeText, { color: isCancelledSession ? "#9ca3af" : SCHEDULE_AQUA }]}>{session.startTime}</Text>
+          <Text style={[styles.sessionTimeEnd, { color: (isCancelledSession ? "#9ca3af" : SCHEDULE_AQUA) + "90" }]}>{session.endTime}</Text>
         </View>
 
         <View style={{ flex: 1 }}>
@@ -394,15 +399,15 @@ function StudentSessionCard({
 
           {session.locationName ? (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4 }}>
-              <Feather name="map-pin" size={11} color="#555" />
-              <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: "#111" }}>{session.locationName}</Text>
+              <Feather name="map-pin" size={11} color="#6f9699" />
+              <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: SCHEDULE_AQUA_DARK }}>{session.locationName}</Text>
             </View>
           ) : null}
 
           {session.teacherNames && session.teacherNames.length > 0 ? (
             <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 3 }}>
-              <Feather name="user" size={11} color="#555" />
-              <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: "#111", flex: 1 }} numberOfLines={2}>
+              <Feather name="user" size={11} color="#6f9699" />
+              <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: SCHEDULE_AQUA_DARK, flex: 1 }} numberOfLines={2}>
                 {session.teacherNames.join(", ")}
               </Text>
             </View>
@@ -411,8 +416,8 @@ function StudentSessionCard({
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 5, flexWrap: "wrap" }}>
             {session.student?.name ? (
               <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                <Feather name="user" size={11} color={colors.primary} />
-                <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.primary }}>
+                <Feather name="user" size={11} color={SCHEDULE_AQUA} />
+                <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: SCHEDULE_AQUA }}>
                   {session.student.name}
                 </Text>
               </View>
@@ -438,8 +443,8 @@ function StudentSessionCard({
             {!isCancelledSession ? (() => {
               const _isOnline = session.learningFormat === "online" || !!session.onlineLink;
               return (
-                <View style={{ backgroundColor: _isOnline ? "#dbeafe" : "#f0f9ff", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
-                  <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: _isOnline ? "#1d4ed8" : "#0369a1" }}>
+                <View style={{ backgroundColor: _isOnline ? "#e6f4ff" : SCHEDULE_AQUA_SOFT, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+                  <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: _isOnline ? "#2a6d9c" : SCHEDULE_AQUA }}>
                     {_isOnline ? "Online" : (session.learningFormat === "hybrid" ? "Hybrid" : "Offline")}
                   </Text>
                 </View>
@@ -479,7 +484,7 @@ function StudentSessionCard({
                     flexDirection: "row",
                     alignItems: "center",
                     gap: 5,
-                    backgroundColor: canJoin ? "#1d4ed8" : "#4b5563",
+                  backgroundColor: canJoin ? SCHEDULE_AQUA : "#9ca3af",
                     paddingVertical: 6,
                     paddingHorizontal: 12,
                     borderRadius: 20,
@@ -1094,20 +1099,20 @@ export default function ScheduleScreen() {
   const selectedDisplayStr = selectedDateObj.toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: SCHEDULE_PAGE_TINT }}>
       <View
-        style={[styles.header, { paddingTop: topPad + 16, backgroundColor: colors.gradientStart }]}
+        style={[styles.header, { paddingTop: topPad + 16, backgroundColor: SCHEDULE_AQUA_SOFT }]}
         {...panResponder.panHandlers}
       >
         <View style={styles.monthNav}>
           <TouchableOpacity onPress={() => goMonth(-1)} style={styles.navBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Feather name="chevron-left" size={22} color="#ffffff" />
+            <Feather name="chevron-left" size={22} color={SCHEDULE_AQUA_DARK} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setMode(calendarMode === 2 ? 0 : 2)}>
             <Text style={styles.monthTitle}>{MONTH_NAMES[viewMonth]}, {viewYear}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => goMonth(1)} style={styles.navBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Feather name="chevron-right" size={22} color="#ffffff" />
+            <Feather name="chevron-right" size={22} color={SCHEDULE_AQUA_DARK} />
           </TouchableOpacity>
         </View>
 
@@ -1130,17 +1135,17 @@ export default function ScheduleScreen() {
                   key={ymd}
                   style={[
                     styles.dayCell,
-                    isSelected && { backgroundColor: "rgba(30,27,75,0.18)", borderRadius: 8 },
-                    isToday && !isSelected && { borderWidth: 1.5, borderColor: "rgba(30,27,75,0.4)", borderRadius: 8 },
+                    isSelected && { backgroundColor: "#ffffffb8", borderWidth: 1, borderColor: SCHEDULE_AQUA, borderRadius: 10 },
+                    isToday && !isSelected && { borderWidth: 1.5, borderColor: "#72aaa8", borderRadius: 10 },
                   ]}
                   onPress={() => selectDate(ymd)}
                   activeOpacity={0.7}
                 >
                   <Text style={[
                     styles.dayNum,
-                    isSelected && { color: "#1e1b4b", fontFamily: "Inter_700Bold" },
-                    isToday && !isSelected && { color: "#1e1b4b", fontFamily: "Inter_600SemiBold" },
-                    !isSelected && !isToday && { color: "rgba(30,27,75,0.7)" },
+                    isSelected && { color: SCHEDULE_AQUA_DARK, fontFamily: "Inter_700Bold" },
+                    isToday && !isSelected && { color: SCHEDULE_AQUA_DARK, fontFamily: "Inter_600SemiBold" },
+                    !isSelected && !isToday && { color: "#527b80" },
                   ]}>
                     {d.getDate()}
                   </Text>
@@ -1160,7 +1165,7 @@ export default function ScheduleScreen() {
           <Feather
             name={calendarMode === 2 ? "chevron-up" : "chevron-down"}
             size={13}
-            color="rgba(255,255,255,0.6)"
+            color="#6f9699"
           />
         </TouchableOpacity>
       </View>
@@ -1177,11 +1182,11 @@ export default function ScheduleScreen() {
         scrollEventThrottle={400}
       >
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 14 }}>
-          <Feather name="calendar" size={15} color={colors.primary} />
+          <Feather name="calendar" size={15} color={SCHEDULE_AQUA} />
           <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.foreground, flex: 1, textTransform: "capitalize" }}>
             {selectedDisplayStr}
           </Text>
-          {(loadingMonth || loadingStaffDay) && <ActivityIndicator size="small" color={colors.primary} />}
+          {(loadingMonth || loadingStaffDay) && <ActivityIndicator size="small" color={SCHEDULE_AQUA} />}
         </View>
 
         {/* Staff view */}
@@ -1288,10 +1293,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 18,
-    backgroundColor: "rgba(30,27,75,0.1)",
+    backgroundColor: "#ffffff99",
   },
   monthTitle: {
-    color: "#1e1b4b",
+    color: SCHEDULE_AQUA_DARK,
     fontSize: 17,
     fontFamily: "Inter_700Bold",
   },
@@ -1302,7 +1307,7 @@ const styles = StyleSheet.create({
   weekLabel: {
     flex: 1,
     textAlign: "center",
-    color: "rgba(30,27,75,0.55)",
+    color: "#6b9294",
     fontSize: 11,
     fontFamily: "Inter_500Medium",
   },
@@ -1320,13 +1325,13 @@ const styles = StyleSheet.create({
   dayNum: {
     fontSize: 13,
     fontFamily: "Inter_400Regular",
-    color: "rgba(30,27,75,0.7)",
+    color: "#527b80",
   },
   sessionDot: {
     width: 5,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: "#f97316",
+    backgroundColor: SCHEDULE_WARM_YELLOW,
   },
   dragHandle: {
     alignItems: "center",
@@ -1337,14 +1342,13 @@ const styles = StyleSheet.create({
     width: 32,
     height: 3,
     borderRadius: 2,
-    backgroundColor: "rgba(30,27,75,0.2)",
+    backgroundColor: "#6f969966",
     marginBottom: 2,
   },
   sessionCard: {
     padding: 14,
-    // boxShadow (not legacy shadow*/elevation) so Android's Fabric renderer clips the
-    // shadow to borderRadius instead of drawing a detached box past the left accent border.
-    boxShadow: "0px 2px 8px rgba(0,0,0,0.06)",
+    // Keep the same soft teal-tinted elevation as Modern Cards detail cards.
+    boxShadow: "0px 3px 9px rgba(25,91,99,0.07)",
   },
   sessionTop: {
     flexDirection: "row",
