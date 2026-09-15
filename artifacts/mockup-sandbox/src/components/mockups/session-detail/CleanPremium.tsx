@@ -17,7 +17,6 @@ type ContentItem = {
   id: string;
   type: string;
   title: string;
-  description?: string;
   attachments?: string[];
 };
 
@@ -26,16 +25,12 @@ const contents: ContentItem[] = [
     id: "lesson-12",
     type: "Lesson",
     title: "Talking about daily routines",
-    description:
-      "Practice vocabulary and simple present questions about everyday activities.",
     attachments: ["Lesson 12 · Daily routines.pdf"],
   },
   {
     id: "activity-12",
     type: "Activity",
     title: "Speaking practice: My day",
-    description:
-      "Work with a partner to ask and answer questions about your day.",
   },
 ];
 
@@ -90,11 +85,10 @@ function ContentRow({
       </button>
       {expanded ? (
         <div className="animate-[fadeIn_180ms_ease-out] border-t border-[#edf0ed] pb-4 pl-11 pr-1 pt-3">
-          <p className="text-[12px] leading-[19px] text-[#657279]">{item.description}</p>
           {item.attachments?.map((attachment) => (
             <div
               key={attachment}
-              className="mt-3 flex items-center gap-2.5 rounded-xl border border-[#d8e4df] bg-[#f5f8f6] px-3 py-2.5 text-[11px] font-medium text-[#416b68]"
+              className="flex items-center gap-2.5 rounded-xl border border-[#d8e4df] bg-[#f5f8f6] px-3 py-2.5 text-[11px] font-medium text-[#416b68]"
             >
               <FileText size={15} strokeWidth={1.7} />
               <span className="min-w-0 flex-1 truncate">{attachment}</span>
@@ -108,7 +102,7 @@ function ContentRow({
 }
 
 export function CleanPremium() {
-  const [openContent, setOpenContent] = useState<string | null>("lesson-12");
+  const [openContent, setOpenContent] = useState<string | null>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [teachersOpen, setTeachersOpen] = useState(false);
 

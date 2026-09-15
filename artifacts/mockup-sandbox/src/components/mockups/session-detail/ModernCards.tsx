@@ -26,16 +26,12 @@ const contents: ContentItem[] = [
     id: "lesson-12",
     type: "Lesson",
     title: "Talking about daily routines",
-    description:
-      "Practice vocabulary and simple present questions about everyday activities.",
     attachments: ["Lesson 12 · Daily routines.pdf"],
   },
   {
     id: "activity-12",
     type: "Activity",
     title: "Speaking practice: My day",
-    description:
-      "Work with a partner to ask and answer questions about your day.",
   },
 ];
 
@@ -96,14 +92,11 @@ function ContentCard({
       </button>
       {expanded ? (
         <div className="border-t border-[#d9eeeb] px-3.5 pb-3.5 pl-[62px] pt-3">
-          <p className="text-[12px] leading-[18px] text-[#58717a]">
-            {item.description}
-          </p>
           {item.attachments?.map((attachment) => (
             <button
               key={attachment}
               type="button"
-              className="mt-3 flex min-h-[42px] w-full items-center gap-2 rounded-xl border border-[#bfdfed] bg-white px-2.5 text-left text-[11px] font-bold text-[#276c9b] transition-transform hover:-translate-y-0.5"
+              className="flex min-h-[42px] w-full items-center gap-2 rounded-xl border border-[#bfdfed] bg-white px-2.5 text-left text-[11px] font-bold text-[#276c9b] transition-transform hover:-translate-y-0.5"
             >
               <FileText size={15} />
               <span className="min-w-0 flex-1 truncate">{attachment}</span>
@@ -117,7 +110,7 @@ function ContentCard({
 }
 
 export function ModernCards() {
-  const [openContent, setOpenContent] = useState<string | null>("lesson-12");
+  const [openContent, setOpenContent] = useState<string | null>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [teachersOpen, setTeachersOpen] = useState(false);
 

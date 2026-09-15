@@ -5,3 +5,4 @@
 - [Expo Web base path preview](expo-web-base-path.md) — serve the static export for path-mounted PWA previews; Expo Router dev mode does not strip baseUrl
 - [PWA Expo build boundary](pwa-expo-build-boundary.md) — edu-web's export still depends on the internal Expo source and local shell-quote firewall stub
 - [PWA production asset serving](pwa-production-asset-serving.md) — verify public manifest MIME and Service Worker version because static deployment can serve stale assets or text/plain webmanifests
+- [Session detail visual direction](session-detail-visual-direction.md) — use the approved Modern Cards direction for student session details while preserving existing behavior

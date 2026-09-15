@@ -381,6 +381,27 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
   const dateStr = sessionDate
     ? sessionDate.split("-").reverse().join("/")
     : (session.sessionDate ? session.sessionDate.split("T")[0].split("-").reverse().join("/") : "");
+  const weekdayLabel = session.weekday != null
+    ? ["Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"][session.weekday % 7]
+    : null;
+  const primaryTeacher = session.teacherNames?.[0] || "";
+  const teacherInitials = primaryTeacher
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(-2)
+    .map((part) => part.charAt(0))
+    .join("")
+    .toUpperCase() || "GV";
+
+  // The approved session-detail palette is intentionally aqua-forward while
+  // retaining the app theme for text, cards, and interactive controls.
+  const aqua = "#167c80";
+  const aquaDark = "#153d49";
+  const aquaSoft = "#d9f1ee";
+  const pageTint = "#f3faf8";
+  const warmYellow = "#f7d98d";
+  const warmCard = "#fffaf0";
+  const warmBorder = "#f0dfad";
 
   // isOnline: learningFormat OR presence of a link
   const isOnline = session.learningFormat === "online" || !!session.onlineLink;
@@ -452,95 +473,111 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: pageTint }}>
       <View
-        style={{ backgroundColor: colors.gradientStart + "28", paddingTop: insets.top + (Platform.OS === "web" ? 16 : 8), paddingBottom: 20, paddingHorizontal: 16 }}
+        style={{
+          backgroundColor: aquaSoft,
+          paddingTop: insets.top + (Platform.OS === "web" ? 16 : 8),
+          paddingBottom: 20,
+          paddingHorizontal: 16,
+          overflow: "hidden",
+          position: "relative",
+        }}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 14 }}>
-          <TouchableOpacity
-            onPress={() => { router.back(); Haptics.selectionAsync(); }}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: colors.primary + "18", alignItems: "center", justifyContent: "center" }}
-          >
-            <Feather name="arrow-left" size={20} color={colors.primary} />
-          </TouchableOpacity>
-        </View>
-
-        <View style={{ gap: 10 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <Text style={{ fontSize: 22, fontFamily: "Inter_700Bold", color: colors.foreground }}>
-              {session.classCode || session.className}
-            </Text>
-            {session.isTestSession && (
-              <View style={{ backgroundColor: "#fef3c7", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, borderWidth: 1, borderColor: "#fde68a" }}>
-                <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#92400e" }}>Kiểm tra</Text>
-              </View>
-            )}
-            {!isCancelledSession && session.learningFormat ? (
-              <View style={{ backgroundColor: colors.primary + "18", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 1, borderColor: colors.primary + "30" }}>
-                <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: colors.primary }}>
-                  {isOnline ? "Online" : (session.learningFormat === "hybrid" ? "Hybrid" : "Offline")}
-                </Text>
-              </View>
-            ) : null}
-            {isCancelledSession ? (
-              <View style={{ backgroundColor: "#fee2e2", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 }}>
-                <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#991b1b" }}>Đã huỷ</Text>
-              </View>
-            ) : session.attendanceStatus ? (
-              <View style={{ backgroundColor: attendanceInfo.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 }}>
-                <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: attendanceInfo.text }}>
-                  {attendanceInfo.label}
-                </Text>
-              </View>
-            ) : null}
+        {/* Soft decorative circles from the approved Modern Cards hero. */}
+        <View style={{ position: "absolute", width: 160, height: 160, borderRadius: 80, right: -38, top: -58, backgroundColor: warmYellow, opacity: 0.45 }} />
+        <View style={{ position: "absolute", width: 112, height: 112, borderRadius: 56, left: 102, bottom: -58, backgroundColor: "#b9e2ed", opacity: 0.6 }} />
+        <View style={{ position: "relative" }}>
+          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
+            <TouchableOpacity
+              onPress={() => { router.back(); Haptics.selectionAsync(); }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: "#ffffffbf", alignItems: "center", justifyContent: "center", shadowColor: aqua, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 5, elevation: 1 }}
+            >
+              <Feather name="arrow-left" size={20} color={aqua} />
+            </TouchableOpacity>
           </View>
 
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-              <Feather name="clock" size={14} color={colors.mutedForeground} />
-              <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>
-                {session.startTime} – {session.endTime}
-              </Text>
+          <View style={{ gap: 12 }}>
+            <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: "#488287", marginBottom: 4, textTransform: "uppercase", letterSpacing: 1.6 }}>
+                  {session.sessionIndex != null ? `Buổi học ${session.sessionIndex}` : "Buổi học"}
+                </Text>
+                <Text style={{ fontSize: 25, lineHeight: 31, fontFamily: "Inter_700Bold", color: aquaDark }} numberOfLines={2}>
+                  {session.classCode || session.className}
+                </Text>
+              </View>
+              {isCancelledSession ? (
+                <View style={{ backgroundColor: "#fee2e2", paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20 }}>
+                  <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#991b1b" }}>Đã huỷ</Text>
+                </View>
+              ) : session.attendanceStatus ? (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: session.attendanceStatus === "present" ? "#198a72" : attendanceInfo.bg, paddingHorizontal: 11, paddingVertical: 7, borderRadius: 20, shadowColor: session.attendanceStatus === "present" ? "#198a72" : "transparent", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.18, shadowRadius: 6, elevation: session.attendanceStatus === "present" ? 2 : 0 }}>
+                  {session.attendanceStatus === "present" ? <Feather name="check" size={13} color="#fff" /> : null}
+                  <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: session.attendanceStatus === "present" ? "#fff" : attendanceInfo.text }}>{attendanceInfo.label}</Text>
+                </View>
+              ) : null}
             </View>
-            {session.locationName ? (
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <Feather name="map-pin" size={14} color={colors.mutedForeground} />
-                <Text style={{ fontSize: 14, fontFamily: "Inter_400Regular", color: colors.foreground }}>{session.locationName}</Text>
-              </View>
-            ) : null}
-          </View>
 
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-            {dateStr ? (
-              <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
-                {dateStr}
-              </Text>
-            ) : null}
-            {session.sessionIndex != null ? (
-              <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
-                Buổi {session.sessionIndex}
-              </Text>
-            ) : null}
-          </View>
-
-          {session.isParent && session.student ? (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-              <Feather name="user" size={13} color="#f97316" />
-              <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#f97316" }}>
-                {session.student.name}
-                {session.student.code ? (
-                  <Text style={{ fontFamily: "Inter_400Regular", opacity: 0.8 }}>{" · "}{session.student.code}</Text>
+            {session.isTestSession || (!isCancelledSession && session.learningFormat) ? (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+                {session.isTestSession ? (
+                  <View style={{ backgroundColor: "#fef3c7", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: "#fde68a" }}>
+                    <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#92400e" }}>Kiểm tra</Text>
+                  </View>
                 ) : null}
-              </Text>
+                {!isCancelledSession && session.learningFormat ? (
+                  <View style={{ backgroundColor: "#ffffffa6", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 }}>
+                    <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#4c7078" }}>
+                      {isOnline ? "Online" : (session.learningFormat === "hybrid" ? "Hybrid" : "Offline")}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            ) : null}
+
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <Feather name="clock" size={15} color={aqua} />
+                <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#416070" }}>
+                  {session.startTime} – {session.endTime}
+                </Text>
+              </View>
+              {session.locationName ? (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, minWidth: 0, flexShrink: 1 }}>
+                  <Feather name="map-pin" size={15} color={aqua} />
+                  <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: "#416070", flexShrink: 1 }} numberOfLines={1}>{session.locationName}</Text>
+                </View>
+              ) : null}
             </View>
-          ) : null}
+
+            {(dateStr || weekdayLabel) ? (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                {dateStr ? <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#5b7d83" }}>{dateStr}</Text> : null}
+                {dateStr && weekdayLabel ? <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: "#7fa9a8" }} /> : null}
+                {weekdayLabel ? <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#5b7d83" }}>{weekdayLabel}</Text> : null}
+              </View>
+            ) : null}
+
+            {session.isParent && session.student ? (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+                <Feather name="user" size={13} color="#f97316" />
+                <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#f97316" }}>
+                  {session.student.name}
+                  {session.student.code ? (
+                    <Text style={{ fontFamily: "Inter_400Regular", opacity: 0.8 }}>{" · "}{session.student.code}</Text>
+                  ) : null}
+                </Text>
+              </View>
+            ) : null}
+          </View>
         </View>
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: insets.bottom + 40 }}
+        contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: insets.bottom + 40 }}
       >
         {/* Online link button — only for online sessions with a link */}
         {isOnline && session.onlineLink && !isCancelledSession ? (
@@ -617,59 +654,72 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
           <TouchableOpacity
             activeOpacity={0.75}
             onPress={() => { setTeachersOpen(true); Haptics.selectionAsync(); }}
-            style={{ backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2, overflow: "hidden" }}
+            style={{ backgroundColor: "#fff", borderRadius: 16, borderWidth: 1, borderColor: "#dceceb", shadowColor: "#195b63", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.07, shadowRadius: 9, elevation: 2, overflow: "hidden" }}
           >
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, padding: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-              <Feather name="user" size={15} color={colors.primary} />
-              <Text style={{ fontSize: 13, fontFamily: "Inter_700Bold", color: colors.foreground, textTransform: "uppercase", letterSpacing: 0.7, flex: 1 }}>Giáo viên</Text>
-              <View style={{ backgroundColor: colors.primary + "15", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 }}>
-                <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.primary }}>{session.teacherNames.length}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 14 }}>
+              <View style={{ width: 32, height: 32, borderRadius: 11, backgroundColor: "#e4f5f2", alignItems: "center", justifyContent: "center" }}>
+                <Feather name="user" size={15} color={aqua} />
               </View>
+              <Text style={{ fontSize: 12, fontFamily: "Inter_700Bold", color: "#294e59", textTransform: "uppercase", letterSpacing: 1.1, flex: 1 }}>Giáo viên</Text>
+              <View style={{ backgroundColor: "#e4f5f2", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10 }}>
+                <Text style={{ fontSize: 10, fontFamily: "Inter_700Bold", color: aqua }}>{session.teacherNames.length}</Text>
+              </View>
+              <Feather name="chevron-right" size={17} color="#719499" />
             </View>
-            <View style={{ paddingHorizontal: 14, paddingVertical: 12, flexDirection: "row", alignItems: "center", gap: 10 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.foreground, lineHeight: 19 }} numberOfLines={1}>
-                  {session.teacherNames.join(", ")}
-                </Text>
+            <View style={{ paddingHorizontal: 14, paddingBottom: 13, flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: warmYellow, alignItems: "center", justifyContent: "center" }}>
+                <Text style={{ fontSize: 12, fontFamily: "Inter_700Bold", color: "#765b1e" }}>{teacherInitials}</Text>
               </View>
-              <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 13, fontFamily: "Inter_700Bold", color: "#244651", lineHeight: 19 }} numberOfLines={1}>
+                  {primaryTeacher}
+                </Text>
+                {session.teacherNames.length > 1 ? (
+                  <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: "#88a1a5" }} numberOfLines={1}>
+                    +{session.teacherNames.length - 1} giáo viên khác
+                  </Text>
+                ) : (
+                  <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: "#88a1a5" }}>Giáo viên chính</Text>
+                )}
+              </View>
             </View>
           </TouchableOpacity>
         )}
 
         {/* Session content */}
         {allContents.length > 0 && (
-          <View style={{ backgroundColor: colors.card, borderRadius: 16, overflow: "hidden", borderWidth: 1, borderColor: colors.border }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, padding: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-              <Feather name="book-open" size={15} color={colors.primary} />
-              <Text style={{ fontSize: 13, fontFamily: "Inter_700Bold", color: colors.foreground, textTransform: "uppercase", letterSpacing: 0.7 }}>Nội dung buổi học</Text>
+          <View style={{ backgroundColor: "#fff", borderRadius: 16, overflow: "hidden", borderWidth: 1, borderColor: "#dceceb", shadowColor: "#195b63", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.06, shadowRadius: 9, elevation: 2 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 14, borderBottomWidth: 1, borderBottomColor: "#eef6f4" }}>
+              <View style={{ width: 32, height: 32, borderRadius: 11, backgroundColor: "#e4f5f2", alignItems: "center", justifyContent: "center" }}>
+                <Feather name="book-open" size={16} color={aqua} />
+              </View>
+              <Text style={{ fontSize: 12, fontFamily: "Inter_700Bold", color: "#294e59", textTransform: "uppercase", letterSpacing: 1.1, flex: 1 }}>Nội dung buổi học</Text>
+              <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: "#8aa3a6" }}>{allContents.length} mục</Text>
             </View>
-            <View style={{ padding: 14, gap: 8 }}>
+            <View style={{ padding: 13, gap: 9 }}>
               {allContents.map((item, idx) => (
                 <TouchableOpacity
                   key={item.id}
                   activeOpacity={0.75}
                   onPress={() => { setSelectedContent(item); Haptics.selectionAsync(); }}
-                  style={{ flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: colors.muted, borderRadius: 12, padding: 12 }}
+                  style={{ minHeight: 68, flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#fbfefd", borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, borderColor: "#dceceb" }}
                 >
-                  <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.primary + "20", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <Text style={{ fontSize: 12, fontFamily: "Inter_700Bold", color: colors.primary }}>{idx + 1}</Text>
+                  <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: "#d9f1ee", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Text style={{ fontSize: 13, fontFamily: "Inter_700Bold", color: aqua }}>{String(idx + 1).padStart(2, "0")}</Text>
                   </View>
-                  <View style={{ flex: 1 }}>
+                  <View style={{ flex: 1, minWidth: 0 }}>
                     {item.type ? (
-                      <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 2 }}>{item.type}</Text>
+                      <Text style={{ fontSize: 10, fontFamily: "Inter_700Bold", color: "#7a9a9f", textTransform: "uppercase", letterSpacing: 1.1, marginBottom: 3 }}>{item.type}</Text>
                     ) : null}
-                    <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.foreground, lineHeight: 19 }}>{item.title}</Text>
+                    <Text style={{ fontSize: 13, fontFamily: "Inter_700Bold", color: "#183b47", lineHeight: 18 }} numberOfLines={2}>{item.title}</Text>
                   </View>
                   {item.attachments && item.attachments.length > 0 && (
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: colors.primary + "15", borderRadius: 6, paddingHorizontal: 5, paddingVertical: 2 }}>
-                      <Feather name="paperclip" size={10} color={colors.primary} />
-                      <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: colors.primary }}>{item.attachments.length}</Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#e6f4ff", borderRadius: 10, paddingHorizontal: 8, paddingVertical: 5 }}>
+                      <Feather name="paperclip" size={11} color="#2a6d9c" />
+                      <Text style={{ fontSize: 10, fontFamily: "Inter_700Bold", color: "#2a6d9c" }}>{item.attachments.length}</Text>
                     </View>
                   )}
-                  {(item.description || (item.attachments && item.attachments.length > 0)) && (
-                    <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
-                  )}
+                  <Feather name="chevron-right" size={17} color="#7a9a9f" />
                 </TouchableOpacity>
               ))}
             </View>
@@ -682,29 +732,34 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
             activeOpacity={hasReview ? 0.75 : 1}
             onPress={() => { if (hasReview) { setReviewVisible(true); Haptics.selectionAsync(); } }}
             style={{
-              backgroundColor: hasReview ? "#fffbeb" : colors.card,
+              backgroundColor: hasReview ? warmCard : "#fff",
               borderRadius: 16,
               borderWidth: 1,
-              borderColor: hasReview ? "#fde68a" : colors.border,
+              borderColor: hasReview ? warmBorder : "#dceceb",
+              shadowColor: hasReview ? "#9a701f" : "#195b63",
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: 0.06,
+              shadowRadius: 9,
+              elevation: 2,
               overflow: "hidden",
             }}
           >
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, padding: 14, borderBottomWidth: 1, borderBottomColor: hasReview ? "#fde68a" : colors.border }}>
-              <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: hasReview ? "#f59e0b20" : colors.muted, alignItems: "center", justifyContent: "center" }}>
-                <Feather name="message-circle" size={15} color={hasReview ? "#f59e0b" : colors.mutedForeground} />
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 14, borderBottomWidth: 1, borderBottomColor: hasReview ? warmBorder : "#eef6f4" }}>
+              <View style={{ width: 32, height: 32, borderRadius: 11, backgroundColor: hasReview ? "#ffedc0" : "#e4f5f2", alignItems: "center", justifyContent: "center" }}>
+                <Feather name="message-circle" size={16} color={hasReview ? "#ad7a17" : aqua} />
               </View>
-              <Text style={{ fontSize: 13, fontFamily: "Inter_700Bold", color: colors.foreground, textTransform: "uppercase", letterSpacing: 0.7, flex: 1 }}>
+              <Text style={{ fontSize: 12, fontFamily: "Inter_700Bold", color: hasReview ? "#665127" : "#294e59", textTransform: "uppercase", letterSpacing: 1, flex: 1 }}>
                 Nhận xét từ giáo viên
               </Text>
-              {hasReview && <Feather name="chevron-right" size={16} color="#f59e0b" />}
+              <Feather name="chevron-right" size={17} color={hasReview ? "#ad7a17" : "#719499"} />
             </View>
             <View style={{ padding: 14 }}>
               {hasReview ? (
-                <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: "#92400e", lineHeight: 20 }}>
+                <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: "#8b7139", lineHeight: 18 }}>
                   Giáo viên đã có nhận xét cho buổi học này. Nhấn để xem chi tiết.
                 </Text>
               ) : (
-                <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, lineHeight: 20 }}>
+                <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground, lineHeight: 18 }}>
                   Chưa có nhận xét từ giáo viên cho buổi học này.
                 </Text>
               )}
