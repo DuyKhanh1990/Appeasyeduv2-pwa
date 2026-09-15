@@ -328,15 +328,22 @@ export default function GradesScreen() {
       setLoadingMore(true);
     }
     try {
+      const [yearPart, monthPart] = monthKey.split("-").map(Number);
+      const lastDay = new Date(yearPart, monthPart, 0).getDate();
+      const dateFrom = `${monthKey}-01`;
+      const dateTo = `${monthKey}-${String(lastDay).padStart(2, "0")}`;
       const data = await apiGet<ScoreSheetResponse | ScoreSheet[]>(
-        `/api/mobile/student/score-sheet?month=${monthKey}&page=${page}&pageSize=50`
+        `/api/mobile/student/score-sheet?month=${monthKey}&dateFrom=${dateFrom}&dateTo=${dateTo}&page=${page}&pageSize=50`
       );
       let newItems: ScoreSheet[];
       if (Array.isArray(data)) {
-        newItems = data;
+        newItems = data.filter((item) => getDateKey(item.sessionDate || item.createdAt).startsWith(`${monthKey}-`));
         setHasMore(false);
       } else {
-        newItems = (data as ScoreSheetResponse).items ?? [];
+        const responseItems = (data as ScoreSheetResponse).items ?? [];
+        // Keep this client-side guard because some backend versions return
+        // the full history even when month/dateFrom/dateTo are supplied.
+        newItems = responseItems.filter((item) => getDateKey(item.sessionDate || item.createdAt).startsWith(`${monthKey}-`));
         const tp = (data as ScoreSheetResponse).totalPages ?? 1;
         setHasMore(page < tp);
       }
