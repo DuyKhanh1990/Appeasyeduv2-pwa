@@ -60,7 +60,7 @@ function totalReactions(r: Record<string, number>) {
   return Object.values(r).reduce((s, v) => s + v, 0);
 }
 
-function PostCard({ post, colors }: { post: Post; colors: ReturnType<typeof useColors> }) {
+function PostCard({ post, colors, cardWidth }: { post: Post; colors: ReturnType<typeof useColors>; cardWidth: number }) {
   const cat = CATEGORY_COLORS[post.category] ?? { bg: "#f3f4f6", text: "#6b7280" };
   const catLabel = CATEGORY_LABELS[post.category] ?? post.category;
   const total = totalReactions(post.reactions);
@@ -70,7 +70,7 @@ function PostCard({ post, colors }: { post: Post; colors: ReturnType<typeof useC
     <TouchableOpacity
       activeOpacity={0.8}
       onPress={() => { cachePost(post); router.push({ pathname: "/news-post/[id]", params: { id: post.id } }); }}
-      style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, width: CARD_WIDTH }]}
+      style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, width: cardWidth }]}
     >
       {image ? (
         <Image source={{ uri: image }} style={styles.cardImage} resizeMode="cover" />
@@ -127,7 +127,6 @@ export default function NewsFeedSection() {
   const colors = useColors();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -140,11 +139,8 @@ export default function NewsFeedSection() {
           const list: Post[] = (Array.isArray(data?.data) ? data.data : [])
             .filter((p: Post) => p.category !== "khuyen-mai");
           setPosts(list.slice(0, 6));
-          setErrorMsg(null);
         } catch (err: unknown) {
           if (cancelled) return;
-          const msg = err instanceof Error ? err.message : String(err);
-          setErrorMsg(msg);
           setPosts([]);
         } finally {
           if (!cancelled) setLoading(false);
@@ -167,35 +163,12 @@ export default function NewsFeedSection() {
     );
   }
 
-  if (posts.length === 0) {
-    return (
-      <View style={{ marginTop: 24 }}>
-        <View style={styles.headerRow}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Bảng tin</Text>
-          <TouchableOpacity onPress={() => router.push("/(tabs)/newsfeed" as any)} activeOpacity={0.7}>
-            <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.primary }}>
-              Xem tất cả
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <View style={{ paddingHorizontal: 20 }}>
-          <View style={{ padding: 16, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, gap: 6 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Feather name="rss" size={16} color={colors.mutedForeground} />
-              <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
-                {errorMsg ? "Không tải được bảng tin" : "Chưa có bài viết nào"}
-              </Text>
-            </View>
-            {errorMsg && (
-              <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: "#ef4444" }}>
-                {errorMsg}
-              </Text>
-            )}
-          </View>
-        </View>
-      </View>
-    );
-  }
+  // Hide the section completely when there are no posts, matching PromotionsSection.
+  if (posts.length === 0) return null;
+
+  // A single post gets the full content width; from two posts onward keep the
+  // existing two-card carousel layout.
+  const cardWidth = posts.length === 1 ? SCREEN_WIDTH - 40 : CARD_WIDTH;
 
   return (
     <View style={{ marginTop: 24 }}>
@@ -216,7 +189,7 @@ export default function NewsFeedSection() {
         contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
         snapToInterval={CARD_WIDTH + 12}
         decelerationRate="fast"
-        renderItem={({ item }) => <PostCard post={item} colors={colors} />}
+         renderItem={({ item }) => <PostCard post={item} colors={colors} cardWidth={cardWidth} />}
       />
     </View>
   );
