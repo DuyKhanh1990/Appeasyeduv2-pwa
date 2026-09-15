@@ -143,7 +143,7 @@ const STAFF_QUICK_ACCESS: QuickAccessItem[] = [
   { id: "ending-classes",    title: "Lớp sắp\nkết thúc",  icon: "flag",        iconBg: "#fdf4ff", iconColor: "#9333ea", accentColor: "#9333ea", route: "/staff-ending-classes" },
   { id: "class-salary",      title: "Lương\nđứng lớp",    icon: "briefcase",   iconBg: "#eff6ff", iconColor: "#0284c7", accentColor: "#0284c7", route: "/staff-class-salary" },
   { id: "invoices",          title: "Hoá đơn",            icon: "file-text",   iconBg: "#fef9c3", iconColor: "#d97706", accentColor: "#d97706", route: "/invoices" },
-  { id: "leave-request",     title: "Xin nghỉ",           icon: "calendar",    iconBg: "#fff7ed", iconColor: "#ea580c", accentColor: "#ea580c", disabled: true },
+  { id: "leave-request",     title: "Xin nghỉ",           icon: "calendar",    iconBg: "#fff7ed", iconColor: "#ea580c", accentColor: "#ea580c", route: "/staff-leave-requests" },
   { id: "salary-summary",    title: "Tổng lương",         icon: "dollar-sign", iconBg: "#f0fdf4", iconColor: "#059669", accentColor: "#059669", route: "/staff-salary-summary" },
   { id: "dashboard",         title: "Dashboard",          icon: "bar-chart-2", iconBg: "#f5f3ff", iconColor: "#6c63ff", accentColor: "#6c63ff", route: "/dashboard", adminOnly: true },
 ];

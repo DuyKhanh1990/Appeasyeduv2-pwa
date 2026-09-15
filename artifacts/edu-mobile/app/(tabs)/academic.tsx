@@ -91,7 +91,6 @@ const HANH_CHINH_CARDS: FeatureCard[] = [
     iconBg: "#fff7ed",
     iconColor: "#ea580c",
     accentColor: "#ea580c",
-    disabled: true,
   },
   {
     id: "invoices",
@@ -204,6 +203,7 @@ export default function AcademicScreen() {
     else if (id === "ending-classes") router.push("/staff-ending-classes" as any);
     else if (id === "salary-summary") router.push("/staff-salary-summary" as any);
     else if (id === "class-salary") router.push("/staff-class-salary" as any);
+    else if (id === "leave-request") router.push("/staff-leave-requests" as any);
     else if (id === "invoices") router.push("/invoices" as any);
   };
 
