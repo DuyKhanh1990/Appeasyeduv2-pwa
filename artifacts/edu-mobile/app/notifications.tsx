@@ -133,12 +133,10 @@ function NotifCard({
   const dotColor = CATEGORY_COLORS[item.category] || colors.primary;
   const hasDeeplink = !!item.deeplink?.screen && !!DEEPLINK_ROUTES[item.deeplink.screen];
 
-  // Khi text > 3 dòng bị cắt: disable outer card, inner "Xem thêm" TouchableOpacity hoạt động
-  // độc lập (TouchableOpacity cha dùng capture phase nên phải disable mới chặn được).
   const needExpand = !expanded && isTruncated;
 
   // "Xem thêm" chỉ hiện khi text thực sự bị cắt bởi numberOfLines. Bấm = expand tại chỗ.
-  // Không có navigate từ nút này. Navigate = bấm vào card (khi card không bị disable).
+  // Vùng này nằm ngoài nút chính của card nên không kích hoạt deeplink.
   const footerAction = needExpand ? (
     <TouchableOpacity
       onPress={() => { if (!item.isRead) onRead(item.id); setExpanded(true); }}
@@ -149,13 +147,7 @@ function NotifCard({
   ) : null;
 
   return (
-    <TouchableOpacity
-      activeOpacity={needExpand ? 1 : 0.78}
-      disabled={needExpand}
-      onPress={() => {
-        if (!item.isRead) onRead(item.id);
-        if (hasDeeplink) navigateDeeplink(item.deeplink);
-      }}
+    <View
       style={[
         styles.card,
         {
@@ -165,74 +157,83 @@ function NotifCard({
         },
       ]}
     >
-      <View style={[styles.cardDot, { backgroundColor: dotColor }]} />
-      <View style={{ flex: 1, gap: 3 }}>
-        {item.student?.fullName && (
-          <View style={styles.studentRow}>
-            <View style={[styles.studentBadge, { backgroundColor: dotColor + "18" }]}>
-              <Feather name="user" size={10} color={dotColor} />
-              <Text style={[styles.studentBadgeText, { color: dotColor }]}>{item.student.fullName}</Text>
+      <TouchableOpacity
+        activeOpacity={0.78}
+        onPress={() => {
+          if (!item.isRead) onRead(item.id);
+          if (hasDeeplink) navigateDeeplink(item.deeplink);
+        }}
+        style={styles.cardMainAction}
+      >
+        <View style={[styles.cardDot, { backgroundColor: dotColor }]} />
+        <View style={{ flex: 1, gap: 3 }}>
+          {item.student?.fullName && (
+            <View style={styles.studentRow}>
+              <View style={[styles.studentBadge, { backgroundColor: dotColor + "18" }]}>
+                <Feather name="user" size={10} color={dotColor} />
+                <Text style={[styles.studentBadgeText, { color: dotColor }]}>{item.student.fullName}</Text>
+              </View>
+            </View>
+          )}
+          {/* Hàng trên: category pill — thời gian — unread dot */}
+          <View style={styles.cardTopRow}>
+            <View style={[styles.categoryPill, { backgroundColor: dotColor + "15" }]}>
+              <Text style={[styles.categoryPillText, { color: dotColor }]}>
+                {CATEGORY_LABELS[item.category] || item.category}
+              </Text>
+            </View>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Text style={[styles.cardTime, { color: colors.mutedForeground }]}>{timeAgo(item.createdAt)}</Text>
+              {!item.isRead && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
             </View>
           </View>
-        )}
-        {/* Hàng trên: category pill — thời gian — unread dot */}
-        <View style={styles.cardTopRow}>
-          <View style={[styles.categoryPill, { backgroundColor: dotColor + "15" }]}>
-            <Text style={[styles.categoryPillText, { color: dotColor }]}>
-              {CATEGORY_LABELS[item.category] || item.category}
-            </Text>
-          </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <Text style={[styles.cardTime, { color: colors.mutedForeground }]}>{timeAgo(item.createdAt)}</Text>
-            {!item.isRead && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
-          </View>
+          <Text
+            style={[styles.cardTitle, { color: colors.foreground }]}
+            numberOfLines={expanded ? undefined : 2}
+          >
+            {item.title}
+          </Text>
+          {item.content ? (
+            <View>
+              {expanded ? (
+                <Text style={[styles.cardContent, { color: colors.mutedForeground }]}>
+                  {plainContent}
+                </Text>
+              ) : (
+                <>
+                  {/* Text hiển thị — bị clamp (preview only) */}
+                  <Text
+                    style={[styles.cardContent, { color: colors.mutedForeground }]}
+                    numberOfLines={3}
+                    onLayout={(e) => setClampedH(e.nativeEvent.layout.height)}
+                  >
+                    {plainContent}
+                  </Text>
+                  {/* Text ẩn — đo chiều cao tự nhiên để phát hiện truncation */}
+                  <Text
+                    style={[styles.cardContent, {
+                      color: "transparent",
+                      position: "absolute",
+                      top: 0, left: 0, right: 0,
+                    }]}
+                    pointerEvents="none"
+                    onLayout={(e) => setNaturalH(e.nativeEvent.layout.height)}
+                  >
+                    {plainContent}
+                  </Text>
+                </>
+              )}
+            </View>
+          ) : null}
         </View>
-        <Text
-          style={[styles.cardTitle, { color: colors.foreground }]}
-          numberOfLines={expanded ? undefined : 2}
-        >
-          {item.title}
-        </Text>
-        {item.content ? (
-          <View>
-            {expanded ? (
-              <Text style={[styles.cardContent, { color: colors.mutedForeground }]}>
-                {plainContent}
-              </Text>
-            ) : (
-              <>
-                {/* Text hiển thị — bị clamp (preview only) */}
-                <Text
-                  style={[styles.cardContent, { color: colors.mutedForeground }]}
-                  numberOfLines={3}
-                  onLayout={(e) => setClampedH(e.nativeEvent.layout.height)}
-                >
-                  {plainContent}
-                </Text>
-                {/* Text ẩn — đo chiều cao tự nhiên để phát hiện truncation */}
-                <Text
-                  style={[styles.cardContent, {
-                    color: "transparent",
-                    position: "absolute",
-                    top: 0, left: 0, right: 0,
-                  }]}
-                  pointerEvents="none"
-                  onLayout={(e) => setNaturalH(e.nativeEvent.layout.height)}
-                >
-                  {plainContent}
-                </Text>
-              </>
-            )}
-          </View>
-        ) : null}
-        {/* "Xem thêm" chỉ hiện khi cần, căn phải */}
-        {footerAction && (
-          <View style={[styles.cardFooter, { justifyContent: "flex-end" }]}>
-            {footerAction}
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+      {/* "Xem thêm" là vùng bấm riêng, không nằm trong nút điều hướng của card. */}
+      {footerAction && (
+        <View style={[styles.cardFooter, { justifyContent: "flex-end" }]}>
+          {footerAction}
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -535,12 +536,14 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   card: {
+    borderWidth: 1,
+    marginBottom: 2,
+  },
+  cardMainAction: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 10,
     padding: 14,
-    borderWidth: 1,
-    marginBottom: 2,
   },
   cardDot: {
     width: 8,
@@ -599,7 +602,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 4,
+    paddingHorizontal: 14,
+    paddingBottom: 10,
+    marginTop: -6,
   },
   cardTime: {
     fontSize: 11,

@@ -10,7 +10,7 @@ variables:
   REGISTRY_PROJECT: emso-common
   REGISTRY_IMAGE: appeduv2pwa
   DOCKER_IMAGE: $DOCKER_REGISTRY/$REGISTRY_PROJECT/$REGISTRY_IMAGE
-  REGISTRY_TAG: "0.0.12"
+  REGISTRY_TAG: "0.0.13"
 
 appeduv2pwa-build-image:
   stage: build_images
