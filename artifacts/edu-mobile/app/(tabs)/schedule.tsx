@@ -685,7 +685,7 @@ function StaffSessionCard({
 export default function ScheduleScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const isStaff = user?.role === "staff" || user?.role === "teacher" || user?.role === "admin";
 
   const today = new Date();
@@ -932,20 +932,30 @@ export default function ScheduleScreen() {
   }, []);
 
   useEffect(() => {
+    if (authLoading || !user) return;
     if (isStaff) {
       fetchStaffMonth(viewYear, viewMonth);
     } else {
       fetchStudentMonthDots(viewYear, viewMonth);
     }
-  }, [viewYear, viewMonth, isStaff]);
+  }, [viewYear, viewMonth, isStaff, authLoading, user?.id, user?.centerUrl]);
 
   useEffect(() => {
+    if (authLoading || !user) return;
     if (!isStaff) fetchStudentDay(selectedDate);
-  }, [selectedDate, isStaff]);
+  }, [selectedDate, isStaff, authLoading, user?.id, user?.centerUrl]);
 
   useEffect(() => {
+    if (authLoading || !user) return;
     if (isStaff) fetchStaffDay(selectedDate);
-  }, [selectedDate, isStaff]);
+  }, [selectedDate, isStaff, authLoading, user?.id, user?.centerUrl]);
+
+  // Session data is user- and center-scoped. Never reuse month dots after
+  // switching accounts or centers.
+  useEffect(() => {
+    monthDotsCache.current.clear();
+    setDaysWithSessions(new Set());
+  }, [user?.id, user?.centerUrl]);
 
   useEffect(() => {
     if (deepLinkDate) {
