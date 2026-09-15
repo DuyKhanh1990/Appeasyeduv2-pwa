@@ -18,6 +18,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
+import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 import { apiGet, apiPost } from "@/lib/api";
 import { FileList } from "@/components/FileViewer";
@@ -794,10 +795,14 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
 
 export default function SessionDetailScreen() {
   const { id, sessionDate, isStudent, isTestSession: isTestParam } = useLocalSearchParams<{ id: string; sessionDate?: string; isStudent?: string; isTestSession?: string }>();
+  const { user, isLoading: authLoading } = useAuth();
   const colors = useColors();
   const insets = useSafeAreaInsets();
 
-  const isStudentView = isStudent === "1";
+  // Keep the query-param route contract, but infer the view for direct URLs
+  // where the PWA may omit query params during navigation or refresh.
+  const isStudentView = isStudent === "1"
+    || (isStudent == null && (user?.role === "student" || user?.role === "parent"));
   const isTestSessionParam = isTestParam === "1";
 
   // Student state
@@ -814,7 +819,7 @@ export default function SessionDetailScreen() {
   const [assignContentOpen, setAssignContentOpen] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || authLoading) return;
     if (isStudentView) {
       setStudentLoading(true);
       setStudentError(false);
@@ -847,7 +852,7 @@ export default function SessionDetailScreen() {
         .catch(() => setError(true))
         .finally(() => setLoading(false));
     }
-  }, [id, isStudentView, isTestSessionParam]);
+  }, [id, isStudentView, isTestSessionParam, authLoading]);
 
   // ── Student view ──────────────────────────────────────────────────────────
 
