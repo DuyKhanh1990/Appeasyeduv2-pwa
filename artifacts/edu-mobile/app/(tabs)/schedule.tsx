@@ -157,7 +157,8 @@ const SCHEDULE_AQUA = "#167c80";
 const SCHEDULE_AQUA_DARK = "#153d49";
 const SCHEDULE_AQUA_SOFT = "#d9f1ee";
 const SCHEDULE_PAGE_TINT = "#f3faf8";
-const SCHEDULE_WARM_YELLOW = "#f7d98d";
+// Session dots need stronger contrast than the warm decorative accent.
+const SCHEDULE_SESSION_DOT = "#f97316";
 
 function toYMD(date: Date): string {
   const y = date.getFullYear();
@@ -1328,10 +1329,10 @@ const styles = StyleSheet.create({
     color: "#527b80",
   },
   sessionDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: SCHEDULE_WARM_YELLOW,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: SCHEDULE_SESSION_DOT,
   },
   dragHandle: {
     alignItems: "center",
