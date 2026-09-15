@@ -154,7 +154,7 @@ const STUDENT_SHORTCUTS = [
   { id: "homework",  title: "BTVN",        icon: "book-open",   iconBg: "#fef3c7", iconColor: "#d97706", route: "/(tabs)/homework" },
   { id: "grades",    title: "Bảng điểm",  icon: "bar-chart-2", iconBg: "#f0fdf4", iconColor: "#16a34a", route: "/(tabs)/grades" },
   { id: "invoices",  title: "Hoá đơn",    icon: "file-text",   iconBg: "#fef9c3", iconColor: "#ca8a04", route: "/invoices" },
-  { id: "absence",   title: "Xin nghỉ",   icon: "x-circle",    iconBg: "#fef2f2", iconColor: "#ef4444", route: null as string | null },
+  { id: "absence",   title: "Xin nghỉ",   icon: "x-circle",    iconBg: "#fef2f2", iconColor: "#ef4444", route: "/student-leave-requests" },
 ];
 
 const CATEGORY_COLORS: Record<string, string> = {
