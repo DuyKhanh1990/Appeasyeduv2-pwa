@@ -15,7 +15,6 @@ import {
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useAuth } from "@/context/AuthContext";
-import { HtmlText } from "@/components/HtmlText";
 import { useColors } from "@/hooks/useColors";
 import { apiGet, apiPatch } from "@/lib/api";
 import { navigateDeeplink, DEEPLINK_ROUTES, type DeepLink } from "@/lib/deeplinkNavigator";
@@ -94,6 +93,24 @@ function timeAgo(dateStr: string): string {
   return d.toLocaleDateString("vi-VN", { day: "numeric", month: "numeric", year: "numeric" });
 }
 
+function notificationPlainText(content: string): string {
+  return content
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "• ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/[ \t]*\n[ \t]*/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 
 function NotifCard({
   item,
@@ -111,6 +128,7 @@ function NotifCard({
   const [clampedH, setClampedH] = useState(0);
   const [naturalH, setNaturalH] = useState(0);
   const isTruncated = naturalH > 0 && clampedH > 0 && naturalH > clampedH + 2;
+  const plainContent = notificationPlainText(item.content || "");
 
   const dotColor = CATEGORY_COLORS[item.category] || colors.primary;
   const hasDeeplink = !!item.deeplink?.screen && !!DEEPLINK_ROUTES[item.deeplink.screen];
@@ -178,8 +196,9 @@ function NotifCard({
         {item.content ? (
           <View>
             {expanded ? (
-              /* Full rich render when expanded */
-              <HtmlText html={item.content} style={[styles.cardContent, { color: colors.mutedForeground }] as any} />
+              <Text style={[styles.cardContent, { color: colors.mutedForeground }]}>
+                {plainContent}
+              </Text>
             ) : (
               <>
                 {/* Text hiển thị — bị clamp (preview only) */}
@@ -188,7 +207,7 @@ function NotifCard({
                   numberOfLines={3}
                   onLayout={(e) => setClampedH(e.nativeEvent.layout.height)}
                 >
-                  {item.content.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").trim()}
+                  {plainContent}
                 </Text>
                 {/* Text ẩn — đo chiều cao tự nhiên để phát hiện truncation */}
                 <Text
@@ -200,7 +219,7 @@ function NotifCard({
                   pointerEvents="none"
                   onLayout={(e) => setNaturalH(e.nativeEvent.layout.height)}
                 >
-                  {item.content.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").trim()}
+                  {plainContent}
                 </Text>
               </>
             )}
