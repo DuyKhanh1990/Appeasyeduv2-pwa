@@ -500,11 +500,11 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
         <View style={{ position: "relative" }}>
           <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
             <TouchableOpacity
-              onPress={() => { router.back(); Haptics.selectionAsync(); }}
+              onPress={() => { goBackFromSessionDetail(); Haptics.selectionAsync(); }}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: "#ffffffbf", alignItems: "center", justifyContent: "center", shadowColor: aqua, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 5, elevation: 1 }}
             >
-              <Feather name="arrow-left" size={20} color={aqua} />
+              <Feather name="chevron-left" size={24} color={aqua} />
             </TouchableOpacity>
           </View>
 
@@ -883,7 +883,7 @@ export default function SessionDetailScreen() {
           <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground, textAlign: "center" }}>Không tải được thông tin</Text>
           <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>Vui lòng thử lại sau</Text>
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={goBackFromSessionDetail}
             style={{ marginTop: 8, backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20 }}
           >
             <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Quay lại</Text>
@@ -913,11 +913,11 @@ export default function SessionDetailScreen() {
       >
         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 14 }}>
           <TouchableOpacity
-            onPress={() => { router.back(); Haptics.selectionAsync(); }}
+            onPress={() => { goBackFromSessionDetail(); Haptics.selectionAsync(); }}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: colors.primary + "18", alignItems: "center", justifyContent: "center" }}
           >
-            <Feather name="arrow-left" size={20} color={colors.primary} />
+            <Feather name="chevron-left" size={24} color={colors.primary} />
           </TouchableOpacity>
         </View>
 
@@ -975,7 +975,7 @@ export default function SessionDetailScreen() {
           <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground, textAlign: "center" }}>Không tải được thông tin</Text>
           <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>Vui lòng thử lại sau</Text>
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={goBackFromSessionDetail}
             style={{ marginTop: 8, backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20 }}
           >
             <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Quay lại</Text>
