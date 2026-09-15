@@ -1041,8 +1041,13 @@ export default function HomeworkScreen() {
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   }, [selectedExamItem]);
 
+  // Deeplink cũ hoặc payload backend không đồng nhất có thể gửi classId không
+  // khớp với các dòng assignment. Khi đó giữ đúng tháng/ngày nhưng bỏ riêng
+  // bộ lọc lớp, thay vì báo rỗng dù API đã trả bài tập.
+  const hasHighlightedClass = !!activeHighlightClassId
+    && rows.some(r => r.classId === activeHighlightClassId);
   const filtered = rows.filter(r => {
-    if (activeHighlightClassId && r.classId !== activeHighlightClassId) return false;
+    if (hasHighlightedClass && r.classId !== activeHighlightClassId) return false;
     if (filter === "BTVN") return r.itemType === "BTVN";
     if (filter === "exam") return r.itemType === "Bài kiểm tra";
     if (filter === "pending") return r.submissionStatus === "pending";

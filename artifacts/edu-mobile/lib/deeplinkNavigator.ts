@@ -40,6 +40,19 @@ export function navigateDeeplink(deeplink: DeepLink | null | undefined) {
   const params = deeplink.params ?? {};
 
   if (deeplink.screen === "Calendar" || deeplink.screen === "StaffCalendar") {
+    // classSessionId is sufficient to load the existing detail screen directly.
+    // Keep the calendar fallback below for older payloads without sessionId.
+    if (params.sessionId) {
+      router.navigate({
+        pathname: "/session-detail/[id]" as any,
+        params: {
+          id: params.sessionId,
+          sessionDate: params.date ?? "",
+          ...(deeplink.screen === "Calendar" ? { isStudent: "1" } : {}),
+        },
+      });
+      return;
+    }
     setCalendarDeeplink({
       date: params.date,
       sessionId: params.sessionId,
