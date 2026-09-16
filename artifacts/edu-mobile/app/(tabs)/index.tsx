@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect, router } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -295,6 +295,30 @@ function NotificationCarouselCard({
   );
 }
 
+function sessionTimeToMinutes(value: string): number {
+  const [hours, minutes] = value.split(":").map(Number);
+  return (Number.isFinite(hours) ? hours : 0) * 60 + (Number.isFinite(minutes) ? minutes : 0);
+}
+
+function getAutoScheduleIndex(sessions: Array<{ startTime: string; endTime: string }>): number {
+  if (sessions.length === 0) return 0;
+
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const activeIndex = sessions.findIndex((session) => {
+    const start = sessionTimeToMinutes(session.startTime);
+    const end = sessionTimeToMinutes(session.endTime);
+    return nowMinutes >= start && nowMinutes < end;
+  });
+
+  if (activeIndex >= 0) return activeIndex;
+
+  const upcomingIndex = sessions.findIndex(
+    (session) => nowMinutes < sessionTimeToMinutes(session.startTime),
+  );
+  return upcomingIndex >= 0 ? upcomingIndex : sessions.length - 1;
+}
+
 function TodayScheduleSection({
   schedule,
   loadingSchedule,
@@ -306,17 +330,46 @@ function TodayScheduleSection({
   isStaff: boolean;
   colors: ReturnType<typeof useColors>;
 }) {
+  const sessions = schedule?.sessions ?? [];
+  const tabsRef = useRef<ScrollView>(null);
+  const [activeIndex, setActiveIndex] = useState(() => getAutoScheduleIndex(sessions));
+
+  useEffect(() => {
+    setActiveIndex(getAutoScheduleIndex(sessions));
+  }, [schedule?.date, sessions.length]);
+
+  useEffect(() => {
+    if (sessions.length === 0) return;
+
+    const updateActiveTab = () => {
+      setActiveIndex(getAutoScheduleIndex(sessions));
+    };
+    updateActiveTab();
+    const timer = setInterval(updateActiveTab, 30_000);
+    return () => clearInterval(timer);
+  }, [schedule?.date, sessions]);
+
+  useEffect(() => {
+    if (sessions.length === 0) return;
+    tabsRef.current?.scrollTo({
+      x: Math.max(0, activeIndex * 72 - 90),
+      animated: true,
+    });
+  }, [activeIndex, sessions.length]);
+
+  const selectedSession = sessions[activeIndex] ?? sessions[0];
+
   return (
     <View style={[styles.section, styles.scheduleSection]}>
       <View style={styles.sectionRow}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <View style={styles.sectionAccentBar} />
           <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>
-            Lịch học hôm nay{schedule && schedule.sessions.length > 0 ? ` (${schedule.sessions.length})` : ""}
+            Lịch học hôm nay{sessions.length > 0 ? ` (${sessions.length})` : ""}
           </Text>
         </View>
         <TouchableOpacity onPress={() => router.push("/(tabs)/schedule" as any)} activeOpacity={0.7}>
-          <Text style={[styles.scheduleSeeAll, { color: colors.primary }]}>Xem lịch</Text>
+          <Text style={[styles.scheduleSeeAll, { color: colors.primary }]}>Xem tất cả</Text>
         </TouchableOpacity>
       </View>
 
@@ -324,77 +377,147 @@ function TodayScheduleSection({
         <View style={styles.loadingBox}>
           <ActivityIndicator size="small" color={colors.primary} />
         </View>
-      ) : !schedule || schedule.sessions.length === 0 ? (
+      ) : sessions.length === 0 || !selectedSession ? (
         <View style={[styles.emptyBox, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
           <Feather name="calendar" size={20} color={colors.mutedForeground} />
           <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Không có lịch học hôm nay</Text>
         </View>
-      ) : isStaff ? (
-        <View style={styles.classesContainer}>
-          {(schedule.sessions as StaffSession[]).map((session) => (
-            <TouchableOpacity
-              key={session.classSessionId}
-              activeOpacity={0.78}
-              onPress={() => router.push("/(tabs)/schedule" as any)}
-              style={[styles.classItem, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}
-            >
-              <View style={[styles.classTime, { backgroundColor: colors.secondary, borderRadius: colors.radius - 4 }]}>
-                <Text style={[styles.classTimeText, { color: colors.primary }]}>{session.startTime}</Text>
-                <Text style={[styles.classTimeEnd, { color: colors.mutedForeground }]}>{session.endTime}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.classSubject, { color: colors.foreground }]} numberOfLines={1}>{session.className}</Text>
-                <Text style={[styles.classTeacher, { color: colors.mutedForeground }]} numberOfLines={1}>{session.locationName}</Text>
-                <View style={{ flexDirection: "row", gap: 10, marginTop: 4, flexWrap: "wrap" }}>
-                  <Text style={[styles.classBadge, { color: colors.success }]}>
-                    {session.enrolledCount} học viên
+      ) : (
+        <>
+          <ScrollView
+            ref={tabsRef}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.scheduleTabsContent}
+          >
+            {sessions.map((session, index) => {
+              const isActive = index === activeIndex;
+              return (
+                <TouchableOpacity
+                  key={`${session.classSessionId}-${index}`}
+                  activeOpacity={0.8}
+                  onPress={() => setActiveIndex(index)}
+                  style={[
+                    styles.scheduleTab,
+                    {
+                      backgroundColor: isActive ? colors.primary : colors.card,
+                      borderColor: isActive ? colors.primary : colors.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.scheduleTabText, { color: isActive ? colors.card : colors.mutedForeground }]}>
+                    {session.startTime}
                   </Text>
-                  {session.pendingCount > 0 && (
-                    <Text style={[styles.classBadge, { color: colors.warning }]}>
-                      {session.pendingCount} chờ điểm danh
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
+          <TouchableOpacity
+            activeOpacity={0.86}
+            onPress={() => router.push("/(tabs)/schedule" as any)}
+            style={[styles.scheduleFocusCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+          >
+            <View style={[styles.scheduleFocusAccent, { backgroundColor: colors.primary }]} />
+            <View style={styles.scheduleFocusBody}>
+              {isStaff ? (
+                <Text style={[styles.schedulePerson, { color: colors.mutedForeground }]}>Lớp học</Text>
+              ) : (selectedSession as StudentSession).student?.name ? (
+                <Text style={[styles.schedulePerson, { color: colors.mutedForeground }]}>
+                  {(selectedSession as StudentSession).student?.name}
+                </Text>
+              ) : null}
+
+              <View style={styles.scheduleFocusTitleRow}>
+                <View style={styles.scheduleFocusTitleWrap}>
+                  <Text style={[styles.scheduleFocusTitle, { color: colors.foreground }]} numberOfLines={1}>
+                    {isStaff
+                      ? (selectedSession as StaffSession).className
+                      : (selectedSession as StudentSession).classCode || (selectedSession as StudentSession).className}
+                  </Text>
+                  {!isStaff && (selectedSession as StudentSession).classCode && (
+                    <Text style={[styles.scheduleFocusSubtitle, { color: colors.mutedForeground }]} numberOfLines={1}>
+                      {(selectedSession as StudentSession).className}
                     </Text>
                   )}
                 </View>
+                <View style={[styles.scheduleTimePill, { backgroundColor: colors.secondary }]}>
+                  <Text style={[styles.scheduleTimeStart, { color: colors.primary }]}>{selectedSession.startTime}</Text>
+                  <Text style={[styles.scheduleTimeEnd, { color: colors.mutedForeground }]}>{selectedSession.endTime}</Text>
+                </View>
               </View>
-              <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
-            </TouchableOpacity>
-          ))}
-        </View>
-      ) : (
-        <View style={styles.classesContainer}>
-          {(schedule.sessions as StudentSession[]).map((session, index) => (
-            <TouchableOpacity
-              key={`${session.classSessionId}-${session.student?.code ?? index}`}
-              activeOpacity={0.78}
-              onPress={() => router.push("/(tabs)/schedule" as any)}
-              style={[styles.classItem, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}
-            >
-              <View style={[styles.classTime, { backgroundColor: colors.secondary, borderRadius: colors.radius - 4 }]}>
-                <Text style={[styles.classTimeText, { color: colors.primary }]}>{session.startTime}</Text>
-                <Text style={[styles.classTimeEnd, { color: colors.mutedForeground }]}>{session.endTime}</Text>
+
+              <View style={styles.scheduleInfoRow}>
+                <Feather name="map-pin" size={15} color={colors.foreground} />
+                <Text style={[styles.scheduleInfoText, { color: colors.foreground }]} numberOfLines={1}>
+                  {selectedSession.locationName || "Chưa cập nhật địa điểm"}
+                </Text>
               </View>
-              <View style={{ flex: 1 }}>
-                {session.student?.name && (
-                  <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: colors.primary, marginBottom: 1 }} numberOfLines={1}>
-                    {session.student.name}
+
+              {isStaff ? (
+                <View style={styles.scheduleInfoRow}>
+                  <Feather name="users" size={15} color={colors.foreground} />
+                  <Text style={[styles.scheduleInfoText, { color: colors.foreground }]} numberOfLines={1}>
+                    {(selectedSession as StaffSession).enrolledCount} học viên
+                    {(selectedSession as StaffSession).pendingCount > 0
+                      ? ` · ${(selectedSession as StaffSession).pendingCount} chờ điểm danh`
+                      : ""}
                   </Text>
+                </View>
+              ) : (
+                <View style={styles.scheduleInfoRow}>
+                  <Feather name="user" size={15} color={colors.foreground} />
+                  <Text style={[styles.scheduleInfoText, { color: colors.foreground }]} numberOfLines={1}>
+                    {(selectedSession as StudentSession).teacherNames?.join(", ") || "Chưa cập nhật giáo viên"}
+                  </Text>
+                </View>
+              )}
+
+              <View style={styles.scheduleStatusRow}>
+                {!isStaff && <AttendanceBadge status={(selectedSession as StudentSession).attendanceStatus} />}
+                {isStaff && (selectedSession as StaffSession).pendingCount > 0 && (
+                  <View style={[styles.scheduleStatusPill, { backgroundColor: colors.warning + "20" }]}>
+                    <Text style={[styles.scheduleStatusText, { color: colors.warning }]}>Cần điểm danh</Text>
+                  </View>
                 )}
-                <Text style={[styles.classSubject, { color: colors.foreground }]} numberOfLines={1}>{session.className}</Text>
-                <Text style={[styles.classTeacher, { color: colors.mutedForeground }]} numberOfLines={1}>{session.locationName}</Text>
-                {session.teacherNames && session.teacherNames.length > 0 && (
-                  <Text style={[styles.classTeacher, { color: colors.mutedForeground }]} numberOfLines={1}>{session.teacherNames.join(", ")}</Text>
-                )}
-                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6, marginTop: 6 }}>
-                  <AttendanceBadge status={session.attendanceStatus} />
-                  <Text style={[styles.classBadge, { color: colors.mutedForeground }]}>
-                    {formatLearningFormat(session.learningFormat ?? "")}
+                <View style={[styles.scheduleModePill, { backgroundColor: colors.muted }]}>
+                  <Text style={[styles.scheduleModeText, { color: colors.mutedForeground }]}>
+                    {isStaff ? "Offline" : formatLearningFormat((selectedSession as StudentSession).learningFormat ?? "")}
                   </Text>
                 </View>
               </View>
-              <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
-            </TouchableOpacity>
-          ))}
-        </View>
+            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.scheduleRail}
+              contentContainerStyle={styles.scheduleRailContent}
+            >
+              {sessions.map((session, index) => (
+                <TouchableOpacity
+                  key={`rail-${session.classSessionId}-${index}`}
+                  onPress={() => setActiveIndex(index)}
+                  activeOpacity={0.75}
+                  style={[
+                    styles.scheduleRailChip,
+                    {
+                      backgroundColor: index === activeIndex ? colors.secondary : colors.background,
+                      borderColor: index === activeIndex ? colors.primary + "35" : colors.border,
+                    },
+                  ]}
+                >
+                  <View style={[styles.scheduleRailDot, { backgroundColor: index === activeIndex ? colors.primary : colors.mutedForeground }]} />
+                  <Text style={[styles.scheduleRailText, { color: index === activeIndex ? colors.primary : colors.mutedForeground }]} numberOfLines={1}>
+                    {isStaff
+                      ? (session as StaffSession).className
+                      : (session as StudentSession).classCode || (session as StudentSession).className}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </TouchableOpacity>
+        </>
       )}
     </View>
   );
@@ -1065,6 +1188,162 @@ const styles = StyleSheet.create({
   scheduleSeeAll: {
     fontSize: 11,
     fontFamily: "Inter_700Bold",
+  },
+  scheduleTabsContent: {
+    gap: 8,
+    paddingHorizontal: 1,
+    paddingBottom: 2,
+  },
+  scheduleTab: {
+    minWidth: 62,
+    height: 36,
+    paddingHorizontal: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderRadius: 18,
+    shadowColor: "#2c3159",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 7,
+    elevation: 2,
+  },
+  scheduleTabText: {
+    fontSize: 12,
+    fontFamily: "Inter_700Bold",
+  },
+  scheduleFocusCard: {
+    position: "relative",
+    marginTop: 10,
+    borderWidth: 1,
+    borderRadius: 24,
+    overflow: "hidden",
+    shadowColor: "#2c3159",
+    shadowOffset: { width: 0, height: 7 },
+    shadowOpacity: 0.1,
+    shadowRadius: 15,
+    elevation: 4,
+  },
+  scheduleFocusAccent: {
+    height: 5,
+    width: "100%",
+  },
+  scheduleFocusBody: {
+    padding: 16,
+    paddingBottom: 14,
+  },
+  schedulePerson: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+    marginBottom: 6,
+  },
+  scheduleFocusTitleRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  scheduleFocusTitleWrap: {
+    minWidth: 0,
+    flex: 1,
+    paddingTop: 2,
+  },
+  scheduleFocusTitle: {
+    fontSize: 22,
+    lineHeight: 27,
+    fontFamily: "Inter_700Bold",
+  },
+  scheduleFocusSubtitle: {
+    marginTop: 3,
+    fontSize: 12,
+    lineHeight: 16,
+    fontFamily: "Inter_500Medium",
+  },
+  scheduleTimePill: {
+    width: 76,
+    minHeight: 62,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 15,
+  },
+  scheduleTimeStart: {
+    fontSize: 17,
+    lineHeight: 20,
+    fontFamily: "Inter_700Bold",
+  },
+  scheduleTimeEnd: {
+    marginTop: 2,
+    fontSize: 11,
+    fontFamily: "Inter_500Medium",
+  },
+  scheduleInfoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 15,
+  },
+  scheduleInfoText: {
+    minWidth: 0,
+    flex: 1,
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+  },
+  scheduleStatusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    marginTop: 15,
+  },
+  scheduleStatusPill: {
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 10,
+  },
+  scheduleStatusText: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+  },
+  scheduleModePill: {
+    marginLeft: "auto",
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 10,
+  },
+  scheduleModeText: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+  },
+  scheduleRail: {
+    borderTopWidth: 1,
+    borderTopColor: "rgba(120,128,160,0.16)",
+  },
+  scheduleRailContent: {
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  scheduleRailChip: {
+    maxWidth: 136,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderWidth: 1,
+    borderRadius: 10,
+  },
+  scheduleRailDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  scheduleRailText: {
+    maxWidth: 108,
+    fontSize: 10,
+    fontFamily: "Inter_600SemiBold",
   },
   nowCard: {
     padding: 16,
