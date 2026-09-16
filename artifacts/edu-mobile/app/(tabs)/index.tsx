@@ -994,17 +994,17 @@ export default function HomeScreen() {
           <TouchableOpacity
             activeOpacity={0.86}
             onPress={() => router.push(nextActionRoute as any)}
-            style={[styles.nextActionCard, { backgroundColor: colors.nextActionBackground }]}
+            style={[styles.nextActionCard, { backgroundColor: colors.primary }]}
           >
             <View style={styles.nextActionContent}>
               <View style={styles.nextActionKickerRow}>
-                <Feather name="star" size={13} color={colors.gradientStart} />
-                <Text style={[styles.nextActionKicker, { color: colors.gradientStart }]}>VIỆC TIẾP THEO</Text>
+                <Feather name="star" size={13} color={colors.primaryForeground} />
+                <Text style={[styles.nextActionKicker, { color: colors.primaryForeground }]}>VIỆC TIẾP THEO</Text>
               </View>
-              <Text style={[styles.nextActionTitle, { color: colors.card }]} numberOfLines={1}>
+              <Text style={[styles.nextActionTitle, { color: colors.primaryForeground }]} numberOfLines={1}>
                 {nextActionTitle}
               </Text>
-              <Text style={[styles.nextActionCopy, { color: "rgba(255,255,255,0.72)" }]} numberOfLines={2}>
+              <Text style={[styles.nextActionCopy, { color: colors.primaryForeground }]} numberOfLines={2}>
                 {nextActionCopy}
               </Text>
               {!hasCompletedAllAssignments && (

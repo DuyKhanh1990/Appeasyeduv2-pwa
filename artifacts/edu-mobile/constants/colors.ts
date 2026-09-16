@@ -32,7 +32,6 @@ const colors = {
 
     gradientStart: "#ddd6fe",
     gradientEnd: "#a78bfa",
-    nextActionBackground: "#6495b3",
   },
 
   dark: {
@@ -68,7 +67,6 @@ const colors = {
 
     gradientStart: "#ede9fe",
     gradientEnd: "#c4b5fd",
-    nextActionBackground: "#6495b3",
   },
 
   radius: 12,
