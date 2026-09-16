@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect, router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import Svg, { Circle } from "react-native-svg";
 import {
   ActivityIndicator,
   Platform,
