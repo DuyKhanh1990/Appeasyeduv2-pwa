@@ -408,7 +408,7 @@ function CompletionCelebration({ colors }: { colors: ReturnType<typeof useColors
   return (
     <View style={styles.celebrationWrap}>
       {particles.map((particle, index) => {
-        const distance = 0.25 + (index % 3) * 0.1;
+        const distance = 1 + (index % 3) * 0.08;
         return (
           <Animated.View
             key={`firework-${index}`}
