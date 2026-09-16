@@ -100,6 +100,21 @@ interface AssignmentStatResponse {
   rows: AssignmentRowStat[];
 }
 
+interface StudentMonthSession {
+  classSessionId?: string;
+  sessionDate?: string;
+  className?: string;
+  classCode?: string;
+  startTime?: string;
+  endTime?: string;
+  sessionStatus?: string;
+}
+
+interface StudentMonthScheduleResponse {
+  month?: string;
+  sessions?: StudentMonthSession[];
+}
+
 interface StarResponse {
   available: number;
 }
@@ -299,6 +314,39 @@ function NotificationCarouselCard({
 function sessionTimeToMinutes(value: string): number {
   const [hours, minutes] = value.split(":").map(Number);
   return (Number.isFinite(hours) ? hours : 0) * 60 + (Number.isFinite(minutes) ? minutes : 0);
+}
+
+function localDateKey(date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getRemainingStudentClassCount(sessions: StudentMonthSession[]): number {
+  const todayKey = localDateKey();
+  const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
+  const finishedStatuses = new Set(["cancel", "cancelled", "canceled", "completed", "done", "finished"]);
+  const remainingClassKeys = new Set<string>();
+
+  for (const session of sessions) {
+    const status = (session.sessionStatus ?? "").trim().toLowerCase();
+    if (finishedStatuses.has(status)) continue;
+
+    const sessionDate = (session.sessionDate ?? "").split("T")[0];
+    if (!sessionDate) continue;
+
+    const isLaterDate = sessionDate > todayKey;
+    const isTodayAndNotFinished =
+      sessionDate === todayKey &&
+      (!session.endTime || nowMinutes < sessionTimeToMinutes(session.endTime));
+    if (!isLaterDate && !isTodayAndNotFinished) continue;
+
+    const classKey = session.classCode || session.className || session.classSessionId;
+    if (classKey) remainingClassKeys.add(classKey);
+  }
+
+  return remainingClassKeys.size;
 }
 
 function getAutoScheduleIndex(sessions: Array<{ startTime: string; endTime: string }>): number {
@@ -640,16 +688,27 @@ export default function HomeScreen() {
 
   const fetchStudentStats = async () => {
     try {
-      const month = new Date().toISOString().slice(0, 7);
-      const data = await apiGet<AssignmentStatResponse>(
-        `/api/mobile/student/assignments?month=${month}&pageSize=200`
-      );
-      const rows = data.rows ?? [];
+      const now = new Date();
+      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const [assignmentResult, scheduleResult] = await Promise.allSettled([
+        apiGet<AssignmentStatResponse>(
+          `/api/mobile/student/assignments?month=${month}&pageSize=200`
+        ),
+        apiGet<StudentMonthScheduleResponse>(`/api/mobile/student/calendar?month=${month}`),
+      ]);
+
+      if (assignmentResult.status !== "fulfilled") throw assignmentResult.reason;
+
+      const rows = assignmentResult.value.rows ?? [];
       const classIds = new Set(rows.map((r) => r.classId).filter(Boolean));
       const done = rows.filter(
         (r) => r.submissionStatus === "submitted" || r.submissionStatus === "graded"
       ).length;
-      setStudentStats({ classes: classIds.size, done, total: rows.length });
+      const classes = scheduleResult.status === "fulfilled"
+        ? getRemainingStudentClassCount(scheduleResult.value.sessions ?? [])
+        : classIds.size;
+
+      setStudentStats({ classes, done, total: rows.length });
     } catch {
       setStudentStats(null);
     }
