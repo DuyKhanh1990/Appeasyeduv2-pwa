@@ -329,15 +329,20 @@ function ProgressRing({
   label: string;
   colors: ReturnType<typeof useColors>;
 }) {
-  const size = 72;
+  const size = 64;
   const strokeWidth = 4;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const safeProgress = Math.min(100, Math.max(0, progress));
 
   return (
-    <View style={styles.progressRing}>
-      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+    <View style={[styles.progressRing, { width: size, height: size }]}>
+      <Svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        style={StyleSheet.absoluteFillObject}
+      >
         <Circle
           cx={size / 2}
           cy={size / 2}
@@ -359,9 +364,7 @@ function ProgressRing({
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
       </Svg>
-      <View style={styles.progressRingLabel}>
-        <Text style={styles.progressRingValue}>{label}</Text>
-      </View>
+      <Text style={styles.progressRingValue}>{label}</Text>
     </View>
   );
 }
@@ -1359,6 +1362,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   nextActionCard: {
+    width: "100%",
     minHeight: 140,
     flexDirection: "row",
     alignItems: "center",
@@ -1374,6 +1378,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   nextActionContent: {
+    width: 0,
     minWidth: 0,
     flex: 1,
     alignItems: "flex-start",
@@ -1417,22 +1422,13 @@ const styles = StyleSheet.create({
   },
   progressRing: {
     position: "relative",
-    width: 72,
-    height: 72,
-    flex: 0,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  progressRingLabel: {
-    position: "absolute",
-    width: 72,
-    height: 72,
-    top: 0,
-    left: 0,
+    flexShrink: 0,
+    alignSelf: "center",
     alignItems: "center",
     justifyContent: "center",
   },
   progressRingValue: {
+    width: "100%",
     color: "#ffffff",
     fontSize: 14,
     lineHeight: 18,
