@@ -1,4 +1,4 @@
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFocusEffect, router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Svg, { Circle } from "react-native-svg";
@@ -883,7 +883,7 @@ export default function HomeScreen() {
         </View>
 
         <TouchableOpacity style={styles.bellBtn} onPress={() => router.push("/notifications")} activeOpacity={0.8}>
-          <Feather name="bell" size={22} color="#ffffff" />
+          <MaterialCommunityIcons name="bell-outline" size={24} color="#ffffff" />
           {unreadCount > 0 && (
             <View style={styles.bellBadge}>
               <Text style={styles.bellBadgeText}>{unreadCount > 99 ? "99+" : unreadCount}</Text>
