@@ -320,6 +320,52 @@ function getAutoScheduleIndex(sessions: Array<{ startTime: string; endTime: stri
   return upcomingIndex >= 0 ? upcomingIndex : sessions.length - 1;
 }
 
+function ProgressRing({
+  progress,
+  label,
+  colors,
+}: {
+  progress: number;
+  label: string;
+  colors: ReturnType<typeof useColors>;
+}) {
+  const size = 72;
+  const strokeWidth = 4;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const safeProgress = Math.min(100, Math.max(0, progress));
+
+  return (
+    <View style={styles.progressRing}>
+      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="transparent"
+          stroke="rgba(255,255,255,0.18)"
+          strokeWidth={strokeWidth}
+        />
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="transparent"
+          stroke={colors.accent}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={`${circumference} ${circumference}`}
+          strokeDashoffset={circumference - (safeProgress / 100) * circumference}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        />
+      </Svg>
+      <View style={styles.progressRingLabel}>
+        <Text style={styles.progressRingValue}>{label}</Text>
+      </View>
+    </View>
+  );
+}
+
 function TodayScheduleSection({
   schedule,
   loadingSchedule,
@@ -726,6 +772,33 @@ export default function HomeScreen() {
   const isStaff = isStaffRole || schedule?.userType === "staff";
   const nextSession = schedule?.sessions[0];
   const pendingAssignments = studentStats ? Math.max(studentStats.total - studentStats.done, 0) : 0;
+  const nextActionDone = isStaffRole ? (staffStats?.tasks.done ?? 0) : (studentStats?.done ?? 0);
+  const nextActionTotal = isStaffRole ? (staffStats?.tasks.total ?? 0) : (studentStats?.total ?? 0);
+  const nextActionPending = Math.max(nextActionTotal - nextActionDone, 0);
+  const nextActionPercent = nextActionTotal > 0
+    ? Math.round((nextActionDone / nextActionTotal) * 100)
+    : 0;
+  const nextActionRoute = isStaffRole
+    ? "/(tabs)/tasks"
+    : user?.role === "parent"
+      ? "/(tabs)/schedule"
+      : "/(tabs)/homework";
+  const nextActionTitle = isStaffRole
+    ? "Hoàn thành công việc"
+    : user?.role === "parent"
+      ? "Theo dõi lịch học"
+      : "Hoàn thành BTVN";
+  const nextActionCopy = isStaffRole
+    ? nextActionTotal > 0
+      ? `Còn ${nextActionPending} việc, bạn đã hoàn thành ${nextActionDone} việc rồi.`
+      : "Mở danh sách công việc để xem việc cần làm."
+    : user?.role === "parent"
+      ? nextSession
+        ? `${nextSession.className} · ${nextSession.startTime}`
+        : "Mở lịch để xem hoạt động hôm nay."
+      : studentStats
+        ? `Còn ${pendingAssignments} bài, bạn đã hoàn thành ${studentStats.done} bài rồi.`
+        : "Đang cập nhật tiến độ bài tập của bạn.";
   const todayProgress = isStaffRole
     ? staffStats ? `${staffStats.tasks.done}/${staffStats.tasks.total}` : "—"
     : studentStats ? `${studentStats.done}/${studentStats.total}` : "—";
@@ -881,43 +954,35 @@ export default function HomeScreen() {
           </View>
         )}
 
-        <View style={styles.section}>
-          <View style={styles.sectionRow}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <View style={styles.sectionAccentBar} />
-              <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>Đang diễn ra</Text>
-            </View>
-            <TouchableOpacity onPress={() => router.push("/(tabs)/schedule" as any)} activeOpacity={0.7}>
-              <Text style={[styles.scheduleSeeAll, { color: colors.primary }]}>Xem lịch hôm nay</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={[styles.section, styles.nextActionSection]}>
           <TouchableOpacity
-            activeOpacity={0.82}
-            onPress={() => router.push("/(tabs)/schedule" as any)}
-            style={[styles.nowCard, { backgroundColor: colors.gradientStart }]}
+            activeOpacity={0.86}
+            onPress={() => router.push(nextActionRoute as any)}
+            style={[styles.nextActionCard, { backgroundColor: colors.foreground }]}
           >
-            <Text style={[styles.nowEyebrow, { color: colors.primary }]}>
-              {nextSession ? (isStaffRole ? "Sắp bắt đầu" : "Buổi học tiếp theo") : "Việc tiếp theo"}
-            </Text>
-            <Text style={[styles.nowTitle, { color: colors.foreground }]}>
-              {nextSession?.className ?? (pendingAssignments > 0 ? "Hoàn thành bài tập còn lại" : "Xem lịch học hôm nay")}
-            </Text>
-            <Text style={[styles.nowCopy, { color: colors.mutedForeground }]}>
-              {nextSession
-                ? `${nextSession.locationName || "Lớp học"}${isStaffRole ? "" : " · Mở lịch để xem thông tin chi tiết"}`
-                : pendingAssignments > 0
-                  ? `Bạn còn ${pendingAssignments} bài tập đang chờ hoàn thành.`
-                  : "Mở lịch để xem các hoạt động trong ngày."}
-            </Text>
-            <View style={styles.nowFoot}>
-              <Text style={[styles.nowTime, { color: colors.foreground }]}>
-                {nextSession ? `${nextSession.startTime} — ${nextSession.endTime}` : "Hôm nay"}
+            <View style={styles.nextActionContent}>
+              <View style={styles.nextActionKickerRow}>
+                <Feather name="star" size={13} color={colors.accent} />
+                <Text style={[styles.nextActionKicker, { color: colors.accent }]}>VIỆC TIẾP THEO</Text>
+              </View>
+              <Text style={[styles.nextActionTitle, { color: colors.card }]} numberOfLines={1}>
+                {nextActionTitle}
               </Text>
-              <View style={styles.nowLink}>
-                <Text style={[styles.nowLinkText, { color: colors.primary }]}>Mở ngay</Text>
-                <Feather name="chevron-right" size={14} color={colors.primary} />
+              <Text style={[styles.nextActionCopy, { color: "rgba(255,255,255,0.72)" }]} numberOfLines={2}>
+                {nextActionCopy}
+              </Text>
+              <View style={[styles.nextActionButton, { backgroundColor: colors.gradientStart }]}>
+                <Text style={[styles.nextActionButtonText, { color: colors.foreground }]}>
+                  {user?.role === "parent" ? "Xem lịch" : "Làm ngay"}
+                </Text>
+                <Feather name="arrow-right" size={14} color={colors.foreground} />
               </View>
             </View>
+            <ProgressRing
+              progress={nextActionPercent}
+              label={user?.role === "parent" ? "→" : `${nextActionPercent}%`}
+              colors={colors}
+            />
           </TouchableOpacity>
         </View>
 
@@ -1352,6 +1417,88 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     fontSize: 10,
     fontFamily: "Inter_600SemiBold",
+  },
+  nextActionSection: {
+    marginTop: 20,
+  },
+  nextActionCard: {
+    minHeight: 140,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    padding: 16,
+    borderRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#17264f",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 14,
+    elevation: 5,
+  },
+  nextActionContent: {
+    minWidth: 0,
+    flex: 1,
+    alignItems: "flex-start",
+  },
+  nextActionKickerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  nextActionKicker: {
+    fontSize: 9,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 1.1,
+  },
+  nextActionTitle: {
+    maxWidth: "100%",
+    marginTop: 5,
+    fontSize: 17,
+    lineHeight: 21,
+    fontFamily: "Inter_700Bold",
+  },
+  nextActionCopy: {
+    maxWidth: "100%",
+    marginTop: 3,
+    fontSize: 11,
+    lineHeight: 15,
+    fontFamily: "Inter_400Regular",
+  },
+  nextActionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 10,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 10,
+  },
+  nextActionButtonText: {
+    fontSize: 10,
+    fontFamily: "Inter_700Bold",
+  },
+  progressRing: {
+    position: "relative",
+    width: 72,
+    height: 72,
+    flex: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  progressRingLabel: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  progressRingValue: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontFamily: "Inter_700Bold",
   },
   nowCard: {
     padding: 16,
