@@ -403,12 +403,13 @@ function CompletionCelebration({ colors }: { colors: ReturnType<typeof useColors
     { x: 24, y: 24, color: colors.gradientEnd },
     { x: -24, y: 24, color: colors.warning },
     { x: -29, y: 2, color: colors.accent },
+    { x: 0, y: 29, color: colors.card },
   ];
 
   return (
     <View style={styles.celebrationWrap}>
       {particles.map((particle, index) => {
-        const distance = 1 + (index % 3) * 0.08;
+        const distance = 1.2 + (index % 3) * 0.05;
         return (
           <Animated.View
             key={`firework-${index}`}
@@ -1530,8 +1531,8 @@ const styles = StyleSheet.create({
   },
   celebrationWrap: {
     position: "relative",
-    width: 64,
-    height: 64,
+    width: 88,
+    height: 88,
     flexShrink: 0,
     alignItems: "center",
     justifyContent: "center",
@@ -1545,8 +1546,8 @@ const styles = StyleSheet.create({
   },
   fireworkParticle: {
     position: "absolute",
-    left: 29,
-    top: 29,
+    left: 41,
+    top: 41,
     width: 6,
     height: 6,
     borderRadius: 3,
