@@ -4,8 +4,6 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import Svg, { Circle } from "react-native-svg";
 import {
   ActivityIndicator,
-  Animated,
-  Easing,
   Platform,
   RefreshControl,
   ScrollView,
@@ -371,75 +369,9 @@ function ProgressRing({
   );
 }
 
-function CompletionCelebration({ colors }: { colors: ReturnType<typeof useColors> }) {
-  const burst = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.delay(900),
-        Animated.timing(burst, {
-          toValue: 1,
-          duration: 650,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: false,
-        }),
-        Animated.timing(burst, {
-          toValue: 0,
-          duration: 120,
-          useNativeDriver: false,
-        }),
-      ]),
-    );
-    animation.start();
-    return () => animation.stop();
-  }, [burst]);
-
-  const particles = [
-    { x: -24, y: -22, color: colors.accent },
-    { x: 0, y: -29, color: colors.gradientEnd },
-    { x: 24, y: -22, color: colors.warning },
-    { x: 29, y: 2, color: colors.accent },
-    { x: 24, y: 24, color: colors.gradientEnd },
-    { x: -24, y: 24, color: colors.warning },
-    { x: -29, y: 2, color: colors.accent },
-    { x: 0, y: 29, color: colors.card },
-  ];
-
+function CompletionBadge({ colors }: { colors: ReturnType<typeof useColors> }) {
   return (
     <View style={styles.celebrationWrap}>
-      {particles.map((particle, index) => {
-        const distance = 1.2 + (index % 3) * 0.05;
-        return (
-          <Animated.View
-            key={`firework-${index}`}
-            style={[
-              styles.fireworkParticle,
-              {
-                backgroundColor: particle.color,
-                opacity: burst.interpolate({
-                  inputRange: [0, 0.12, 0.72, 1],
-                  outputRange: [0, 0.9, 1, 0],
-                }),
-                transform: [
-                  {
-                    translateX: burst.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, particle.x * distance],
-                    }),
-                  },
-                  {
-                    translateY: burst.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, particle.y * distance],
-                    }),
-                  },
-                ],
-              },
-            ]}
-          />
-        );
-      })}
       <View style={[styles.celebrationCore, { backgroundColor: colors.gradientStart }]}>
         <Feather name="award" size={30} color={colors.foreground} />
       </View>
@@ -1016,6 +948,48 @@ export default function HomeScreen() {
           </View>
         )}
 
+        {(user?.role === "student" || user?.role === "parent") && (
+          <View style={{ marginTop: 24 }}>
+            <View style={{ paddingHorizontal: 20, marginBottom: 10 }}>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Lối tắt</Text>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              decelerationRate="fast"
+              contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 4, gap: QUICK_CARD_GAP }}
+            >
+              {STUDENT_SHORTCUTS.map((it) => {
+                // Kiểm tra quyền cho từng shortcut dựa vào API permissions
+                // student/parent luôn được xem lịch; các mục còn lại check từ API permissions
+                const permDisabled = (() => {
+                  switch (it.id) {
+                    case "schedule": return false; // student/parent luôn có quyền calendar
+                    case "homework": return !perms.mySpaceAssignments;
+                    case "grades":   return !perms.mySpaceScoreSheet;
+                    case "invoices": return !perms.mySpaceInvoices;
+                    default: return false;
+                  }
+                })();
+                const isDisabled = !it.route || permDisabled;
+                return (
+                  <TouchableOpacity
+                    key={it.id}
+                    activeOpacity={isDisabled ? 1 : 0.75}
+                    onPress={() => { if (!isDisabled) router.push(it.route as any); }}
+                    style={[styles.quickCard, { backgroundColor: colors.card, borderColor: colors.border }, isDisabled && { opacity: 0.4 }]}
+                  >
+                    <View style={[styles.quickIconWrap, { backgroundColor: it.iconBg }]}>
+                      <Feather name={it.icon as any} size={22} color={it.iconColor} />
+                    </View>
+                    <Text style={[styles.quickLabel, { color: colors.foreground }]} numberOfLines={2}>{it.title}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
         <View style={[styles.section, styles.nextActionSection]}>
           <TouchableOpacity
             activeOpacity={0.86}
@@ -1043,7 +1017,7 @@ export default function HomeScreen() {
               )}
             </View>
             {hasCompletedAllAssignments ? (
-              <CompletionCelebration colors={colors} />
+              <CompletionBadge colors={colors} />
             ) : (
               <ProgressRing
                 progress={nextActionPercent}
@@ -1114,48 +1088,6 @@ export default function HomeScreen() {
                 <Feather name={quickExpanded ? "chevron-up" : "chevron-down"} size={18} color="#fff" />
               </TouchableOpacity>
             )}
-          </View>
-        )}
-
-        {(user?.role === "student" || user?.role === "parent") && (
-          <View style={{ marginTop: 24 }}>
-            <View style={{ paddingHorizontal: 20, marginBottom: 10 }}>
-              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Lối tắt</Text>
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              decelerationRate="fast"
-              contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 4, gap: QUICK_CARD_GAP }}
-            >
-              {STUDENT_SHORTCUTS.map((it) => {
-                // Kiểm tra quyền cho từng shortcut dựa vào API permissions
-                // student/parent luôn được xem lịch; các mục còn lại check từ API permissions
-                const permDisabled = (() => {
-                  switch (it.id) {
-                    case "schedule": return false; // student/parent luôn có quyền calendar
-                    case "homework": return !perms.mySpaceAssignments;
-                    case "grades":   return !perms.mySpaceScoreSheet;
-                    case "invoices": return !perms.mySpaceInvoices;
-                    default: return false;
-                  }
-                })();
-                const isDisabled = !it.route || permDisabled;
-                return (
-                  <TouchableOpacity
-                    key={it.id}
-                    activeOpacity={isDisabled ? 1 : 0.75}
-                    onPress={() => { if (!isDisabled) router.push(it.route as any); }}
-                    style={[styles.quickCard, { backgroundColor: colors.card, borderColor: colors.border }, isDisabled && { opacity: 0.4 }]}
-                  >
-                    <View style={[styles.quickIconWrap, { backgroundColor: it.iconBg }]}>
-                      <Feather name={it.icon as any} size={22} color={it.iconColor} />
-                    </View>
-                    <Text style={[styles.quickLabel, { color: colors.foreground }]} numberOfLines={2}>{it.title}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
           </View>
         )}
 
@@ -1531,8 +1463,8 @@ const styles = StyleSheet.create({
   },
   celebrationWrap: {
     position: "relative",
-    width: 88,
-    height: 88,
+    width: 64,
+    height: 64,
     flexShrink: 0,
     alignItems: "center",
     justifyContent: "center",
@@ -1543,14 +1475,6 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     alignItems: "center",
     justifyContent: "center",
-  },
-  fireworkParticle: {
-    position: "absolute",
-    left: 41,
-    top: 41,
-    width: 6,
-    height: 6,
-    borderRadius: 3,
   },
   nowCard: {
     padding: 16,
