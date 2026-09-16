@@ -1005,18 +1005,24 @@ export default function HomeScreen() {
               <Text style={[styles.nextActionCopy, { color: "rgba(255,255,255,0.72)" }]} numberOfLines={2}>
                 {nextActionCopy}
               </Text>
-              <View style={[styles.nextActionButton, { backgroundColor: colors.gradientStart }]}>
-                <Text style={[styles.nextActionButtonText, { color: colors.foreground }]}>
-                  {user?.role === "parent" ? "Xem lịch" : "Làm ngay"}
-                </Text>
-                <Feather name="arrow-right" size={14} color={colors.foreground} />
-              </View>
+              {!hasCompletedAllAssignments && (
+                <View style={[styles.nextActionButton, { backgroundColor: colors.gradientStart }]}>
+                  <Text style={[styles.nextActionButtonText, { color: colors.foreground }]}>
+                    {user?.role === "parent" ? "Xem lịch" : "Làm ngay"}
+                  </Text>
+                  <Feather name="arrow-right" size={14} color={colors.foreground} />
+                </View>
+              )}
             </View>
-            <ProgressRing
-              progress={nextActionPercent}
-              label={user?.role === "parent" ? "→" : `${nextActionPercent}%`}
-              colors={colors}
-            />
+            {hasCompletedAllAssignments ? (
+              <CompletionCelebration colors={colors} />
+            ) : (
+              <ProgressRing
+                progress={nextActionPercent}
+                label={user?.role === "parent" ? "→" : `${nextActionPercent}%`}
+                colors={colors}
+              />
+            )}
           </TouchableOpacity>
         </View>
 
@@ -1494,6 +1500,33 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_700Bold",
     textAlign: "center",
     includeFontPadding: false,
+  },
+  celebrationWrap: {
+    position: "relative",
+    width: 64,
+    height: 64,
+    flexShrink: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  celebrationCore: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  celebrationStar: {
+    position: "absolute",
+    zIndex: 2,
+  },
+  celebrationStarTop: {
+    top: 0,
+    right: 3,
+  },
+  celebrationStarSide: {
+    left: 0,
+    bottom: 8,
   },
   nowCard: {
     padding: 16,
