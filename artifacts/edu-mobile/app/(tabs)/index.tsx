@@ -535,34 +535,6 @@ function TodayScheduleSection({
               </View>
             </View>
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.scheduleRail}
-              contentContainerStyle={styles.scheduleRailContent}
-            >
-              {sessions.map((session, index) => (
-                <TouchableOpacity
-                  key={`rail-${session.classSessionId}-${index}`}
-                  onPress={() => setActiveIndex(index)}
-                  activeOpacity={0.75}
-                  style={[
-                    styles.scheduleRailChip,
-                    {
-                      backgroundColor: index === activeIndex ? colors.secondary : colors.background,
-                      borderColor: index === activeIndex ? colors.primary + "35" : colors.border,
-                    },
-                  ]}
-                >
-                  <View style={[styles.scheduleRailDot, { backgroundColor: index === activeIndex ? colors.primary : colors.mutedForeground }]} />
-                  <Text style={[styles.scheduleRailText, { color: index === activeIndex ? colors.primary : colors.mutedForeground }]} numberOfLines={1}>
-                    {isStaff
-                      ? (session as StaffSession).className
-                      : (session as StudentSession).classCode || (session as StudentSession).className}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
           </TouchableOpacity>
         </>
       )}
@@ -1280,9 +1252,10 @@ const styles = StyleSheet.create({
   },
   scheduleFocusCard: {
     position: "relative",
-    marginTop: 10,
+    minHeight: 140,
+    marginTop: 8,
     borderWidth: 1,
-    borderRadius: 24,
+    borderRadius: 20,
     overflow: "hidden",
     shadowColor: "#2c3159",
     shadowOffset: { width: 0, height: 7 },
@@ -1295,13 +1268,13 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   scheduleFocusBody: {
-    padding: 16,
-    paddingBottom: 14,
+    padding: 12,
+    paddingBottom: 11,
   },
   schedulePerson: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: "Inter_600SemiBold",
-    marginBottom: 6,
+    marginBottom: 3,
   },
   scheduleFocusTitleRow: {
     flexDirection: "row",
@@ -1315,45 +1288,45 @@ const styles = StyleSheet.create({
     paddingTop: 2,
   },
   scheduleFocusTitle: {
-    fontSize: 22,
-    lineHeight: 27,
+    fontSize: 18,
+    lineHeight: 22,
     fontFamily: "Inter_700Bold",
   },
   scheduleFocusSubtitle: {
-    marginTop: 3,
-    fontSize: 12,
-    lineHeight: 16,
+    marginTop: 1,
+    fontSize: 10,
+    lineHeight: 13,
     fontFamily: "Inter_500Medium",
   },
   scheduleTimePill: {
-    width: 76,
-    minHeight: 62,
-    paddingVertical: 8,
+    width: 66,
+    minHeight: 52,
+    paddingVertical: 6,
     paddingHorizontal: 6,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 15,
+    borderRadius: 13,
   },
   scheduleTimeStart: {
-    fontSize: 17,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 18,
     fontFamily: "Inter_700Bold",
   },
   scheduleTimeEnd: {
-    marginTop: 2,
-    fontSize: 11,
+    marginTop: 1,
+    fontSize: 10,
     fontFamily: "Inter_500Medium",
   },
   scheduleInfoRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginTop: 15,
+    marginTop: 8,
   },
   scheduleInfoText: {
     minWidth: 0,
     flex: 1,
-    fontSize: 13,
+    fontSize: 11,
     fontFamily: "Inter_500Medium",
   },
   scheduleStatusRow: {
@@ -1361,60 +1334,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: 8,
-    marginTop: 15,
+    marginTop: 8,
   },
   scheduleStatusPill: {
     paddingHorizontal: 9,
-    paddingVertical: 5,
+    paddingVertical: 4,
     borderRadius: 10,
   },
   scheduleStatusText: {
-    fontSize: 11,
+    fontSize: 10,
     fontFamily: "Inter_600SemiBold",
   },
   scheduleModePill: {
     marginLeft: "auto",
     paddingHorizontal: 9,
-    paddingVertical: 5,
+    paddingVertical: 4,
     borderRadius: 10,
   },
   scheduleModeText: {
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
-  },
-  scheduleRail: {
-    width: "100%",
-    maxWidth: "100%",
-    overflow: "hidden",
-    borderTopWidth: 1,
-    borderTopColor: "rgba(120,128,160,0.16)",
-  },
-  scheduleRailContent: {
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  scheduleRailChip: {
-    width: 132,
-    maxWidth: 132,
-    flexShrink: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderWidth: 1,
-    borderRadius: 10,
-  },
-  scheduleRailDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-  },
-  scheduleRailText: {
-    minWidth: 0,
-    flex: 1,
-    overflow: "hidden",
     fontSize: 10,
     fontFamily: "Inter_600SemiBold",
   },
@@ -1488,9 +1425,9 @@ const styles = StyleSheet.create({
   },
   progressRingLabel: {
     position: "absolute",
+    width: 72,
+    height: 72,
     top: 0,
-    right: 0,
-    bottom: 0,
     left: 0,
     alignItems: "center",
     justifyContent: "center",
@@ -1498,7 +1435,10 @@ const styles = StyleSheet.create({
   progressRingValue: {
     color: "#ffffff",
     fontSize: 14,
+    lineHeight: 18,
     fontFamily: "Inter_700Bold",
+    textAlign: "center",
+    includeFontPadding: false,
   },
   nowCard: {
     padding: 16,
