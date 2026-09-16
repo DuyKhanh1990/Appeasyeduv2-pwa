@@ -4,6 +4,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import Svg, { Circle } from "react-native-svg";
 import {
   ActivityIndicator,
+  Animated,
+  Easing,
   Platform,
   RefreshControl,
   ScrollView,
@@ -365,6 +367,54 @@ function ProgressRing({
         />
       </Svg>
       <Text style={styles.progressRingValue}>{label}</Text>
+    </View>
+  );
+}
+
+function CompletionCelebration({ colors }: { colors: ReturnType<typeof useColors> }) {
+  const pulse = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 900,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: false,
+        }),
+        Animated.timing(pulse, {
+          toValue: 0,
+          duration: 900,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: false,
+        }),
+      ]),
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [pulse]);
+
+  const scale = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.92, 1.08],
+  });
+  const rotate = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["-6deg", "6deg"],
+  });
+
+  return (
+    <View style={styles.celebrationWrap}>
+      <Animated.View style={[styles.celebrationStar, styles.celebrationStarTop, { opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] }) }]}>
+        <Feather name="star" size={13} color={colors.accent} />
+      </Animated.View>
+      <Animated.View style={[styles.celebrationStar, styles.celebrationStarSide, { opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 0.55] }) }]}>
+        <Feather name="star" size={10} color={colors.gradientEnd} />
+      </Animated.View>
+      <Animated.View style={[styles.celebrationCore, { backgroundColor: colors.gradientStart, transform: [{ scale }, { rotate }] }]}>
+        <Feather name="award" size={30} color={colors.foreground} />
+      </Animated.View>
     </View>
   );
 }
@@ -753,6 +803,11 @@ export default function HomeScreen() {
   const nextActionPercent = nextActionTotal > 0
     ? Math.round((nextActionDone / nextActionTotal) * 100)
     : 0;
+  const hasCompletedAllAssignments =
+    user?.role === "student" &&
+    !!studentStats &&
+    studentStats.total > 0 &&
+    studentStats.done >= studentStats.total;
   const nextActionRoute = isStaffRole
     ? "/(tabs)/tasks"
     : user?.role === "parent"
@@ -762,7 +817,9 @@ export default function HomeScreen() {
     ? "Hoàn thành công việc"
     : user?.role === "parent"
       ? "Theo dõi lịch học"
-      : "Hoàn thành BTVN";
+      : hasCompletedAllAssignments
+        ? "Tuyệt vời!"
+        : "Hoàn thành BTVN";
   const nextActionCopy = isStaffRole
     ? nextActionTotal > 0
       ? `Còn ${nextActionPending} việc, bạn đã hoàn thành ${nextActionDone} việc rồi.`
@@ -771,6 +828,8 @@ export default function HomeScreen() {
       ? nextSession
         ? `${nextSession.className} · ${nextSession.startTime}`
         : "Mở lịch để xem hoạt động hôm nay."
+        : hasCompletedAllAssignments
+          ? `Bạn đã hoàn thành tất cả ${studentStats?.total ?? 0} bài trong tháng này.`
       : studentStats
         ? `Còn ${pendingAssignments} bài, bạn đã hoàn thành ${studentStats.done} bài rồi.`
         : "Đang cập nhật tiến độ bài tập của bạn.";
