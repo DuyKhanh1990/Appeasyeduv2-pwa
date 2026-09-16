@@ -893,15 +893,15 @@ export default function HomeScreen() {
           <TouchableOpacity
             activeOpacity={0.82}
             onPress={() => router.push("/(tabs)/schedule" as any)}
-            style={[styles.nowCard, { backgroundColor: colors.foreground }]}
+            style={[styles.nowCard, { backgroundColor: colors.gradientStart }]}
           >
             <Text style={[styles.nowEyebrow, { color: colors.primary }]}>
               {nextSession ? (isStaffRole ? "Sắp bắt đầu" : "Buổi học tiếp theo") : "Việc tiếp theo"}
             </Text>
-            <Text style={[styles.nowTitle, { color: colors.card }]}>
+            <Text style={[styles.nowTitle, { color: colors.foreground }]}>
               {nextSession?.className ?? (pendingAssignments > 0 ? "Hoàn thành bài tập còn lại" : "Xem lịch học hôm nay")}
             </Text>
-            <Text style={[styles.nowCopy, { color: colors.muted }]}>
+            <Text style={[styles.nowCopy, { color: colors.mutedForeground }]}>
               {nextSession
                 ? `${nextSession.locationName || "Lớp học"}${isStaffRole ? "" : " · Mở lịch để xem thông tin chi tiết"}`
                 : pendingAssignments > 0
@@ -909,7 +909,7 @@ export default function HomeScreen() {
                   : "Mở lịch để xem các hoạt động trong ngày."}
             </Text>
             <View style={styles.nowFoot}>
-              <Text style={[styles.nowTime, { color: colors.card }]}>
+              <Text style={[styles.nowTime, { color: colors.foreground }]}>
                 {nextSession ? `${nextSession.startTime} — ${nextSession.endTime}` : "Hôm nay"}
               </Text>
               <View style={styles.nowLink}>
@@ -1317,6 +1317,9 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
   },
   scheduleRail: {
+    width: "100%",
+    maxWidth: "100%",
+    overflow: "hidden",
     borderTopWidth: 1,
     borderTopColor: "rgba(120,128,160,0.16)",
   },
@@ -1326,7 +1329,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   scheduleRailChip: {
-    maxWidth: 136,
+    width: 132,
+    maxWidth: 132,
+    flexShrink: 0,
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
@@ -1341,7 +1346,9 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   scheduleRailText: {
-    maxWidth: 108,
+    minWidth: 0,
+    flex: 1,
+    overflow: "hidden",
     fontSize: 10,
     fontFamily: "Inter_600SemiBold",
   },
