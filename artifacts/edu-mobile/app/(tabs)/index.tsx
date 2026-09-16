@@ -356,7 +356,7 @@ function ProgressRing({
           cy={size / 2}
           r={radius}
           fill="transparent"
-          stroke={colors.accent}
+          stroke={colors.gradientStart}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={`${circumference} ${circumference}`}
@@ -994,12 +994,12 @@ export default function HomeScreen() {
           <TouchableOpacity
             activeOpacity={0.86}
             onPress={() => router.push(nextActionRoute as any)}
-            style={[styles.nextActionCard, { backgroundColor: colors.foreground }]}
+            style={[styles.nextActionCard, { backgroundColor: colors.nextActionBackground }]}
           >
             <View style={styles.nextActionContent}>
               <View style={styles.nextActionKickerRow}>
-                <Feather name="star" size={13} color={colors.accent} />
-                <Text style={[styles.nextActionKicker, { color: colors.accent }]}>VIỆC TIẾP THEO</Text>
+                <Feather name="star" size={13} color={colors.gradientStart} />
+                <Text style={[styles.nextActionKicker, { color: colors.gradientStart }]}>VIỆC TIẾP THEO</Text>
               </View>
               <Text style={[styles.nextActionTitle, { color: colors.card }]} numberOfLines={1}>
                 {nextActionTitle}
