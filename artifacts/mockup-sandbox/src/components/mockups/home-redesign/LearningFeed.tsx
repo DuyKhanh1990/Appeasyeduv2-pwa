@@ -7,6 +7,7 @@ import {
   CalendarDays,
   Check,
   ChevronRight,
+  Clock3,
   FileText,
   Flag,
   GraduationCap,
@@ -67,6 +68,48 @@ function Stat({ icon: Icon, label, value, tint, color }: { icon: IconType; label
       <strong className="stat-value">{value}</strong>
       <span className="stat-label">{label}</span>
     </div>
+  );
+}
+
+function TodaySchedule({ staffMode }: { staffMode: boolean }) {
+  const sessions = staffMode
+    ? [
+        { start: "18:30", end: "20:00", name: "IELTS Foundation", place: "Phòng 204", detail: "12 học viên · 2 chờ điểm danh", mode: "Offline" },
+        { start: "20:15", end: "21:45", name: "TOEIC Target", place: "Phòng 301", detail: "8 học viên", mode: "Offline" },
+      ]
+    : [
+        { start: "17:30", end: "19:00", name: "IELTS Foundation", place: "Phòng 204", detail: "Cô Mai · Chưa điểm danh", mode: "Offline" },
+        { start: "19:15", end: "20:45", name: "Speaking Club", place: "Phòng học trực tuyến", detail: "Thầy Nam · Sắp học", mode: "Online" },
+      ];
+
+  return (
+    <section className="section-block schedule-block">
+      <div className="section-head">
+        <h2 className="section-title">Lịch học hôm nay <span className="schedule-count">{sessions.length}</span></h2>
+        <button className="section-note" type="button" onClick={() => undefined}>Xem lịch</button>
+      </div>
+      <div className="schedule-list">
+        {sessions.map((session) => (
+          <article className="schedule-item" key={`${session.start}-${session.name}`}>
+            <div className="schedule-time">
+              <strong>{session.start}</strong>
+              <span>{session.end}</span>
+            </div>
+            <div className="schedule-copy">
+              <div className="schedule-title-row">
+                <h3>{session.name}</h3>
+                <ChevronRight size={15} />
+              </div>
+              <p><Clock3 size={11} /> {session.place}</p>
+              <div className="schedule-meta">
+                <span>{session.detail}</span>
+                <span className={`mode-pill ${session.mode === "Online" ? "online" : ""}`}>{session.mode}</span>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -135,6 +178,8 @@ export function LearningFeed() {
               </div>
             </article>
           </section>
+
+          <TodaySchedule staffMode={staffMode} />
 
           <section className="section-block">
             <div className="section-head">

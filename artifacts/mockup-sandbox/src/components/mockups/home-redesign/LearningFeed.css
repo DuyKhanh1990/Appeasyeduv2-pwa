@@ -205,6 +205,22 @@
 .now-time { color: #d8def1; font-size: 10px; font-weight: 700; }
 .tiny-link { display: inline-flex; align-items: center; gap: 3px; padding: 0; color: #e2ff65; font-size: 10px; font-weight: 800; cursor: pointer; background: none; border: 0; }
 
+.schedule-block { margin-top: 22px; }
+.schedule-count { display: inline-grid; width: 19px; height: 19px; margin-left: 3px; place-items: center; color: #6757d9; font-size: 10px; vertical-align: 2px; background: #eeeafd; border-radius: 999px; }
+.schedule-list { display: grid; gap: 8px; margin-top: 10px; }
+.schedule-item { display: flex; gap: 10px; padding: 9px; background: #fff; border: 1px solid #edf0f6; border-radius: 14px; box-shadow: 0 5px 13px rgba(56, 65, 96, .05); }
+.schedule-time { display: flex; width: 55px; flex: 0 0 55px; flex-direction: column; justify-content: center; align-items: center; color: #6757d9; background: #eeeafd; border-radius: 10px; }
+.schedule-time strong { font-size: 13px; line-height: 1.1; }
+.schedule-time span { margin-top: 3px; color: #9298ae; font-size: 9px; }
+.schedule-copy { min-width: 0; flex: 1; }
+.schedule-title-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; color: #9aa1b3; }
+.schedule-title-row h3 { min-width: 0; margin: 0; overflow: hidden; color: #27304a; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.schedule-copy p { display: flex; align-items: center; gap: 4px; margin: 5px 0 6px; color: #7f879b; font-size: 10px; }
+.schedule-meta { display: flex; align-items: center; justify-content: space-between; gap: 6px; color: #8a92a5; font-size: 9px; }
+.schedule-meta > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mode-pill { flex: 0 0 auto; padding: 3px 6px; color: #388d6a; font-size: 8px; font-weight: 800; background: #e5f6ec; border-radius: 999px; }
+.mode-pill.online { color: #4e78d7; background: #e5edff; }
+
 .shortcut-scroller {
   display: flex;
   gap: 9px;
