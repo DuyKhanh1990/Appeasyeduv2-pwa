@@ -1,7 +1,7 @@
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { useFocusEffect, router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import Svg, { Circle } from "react-native-svg";
+import Svg, { Circle, Path } from "react-native-svg";
 import {
   ActivityIndicator,
   Platform,
@@ -414,6 +414,34 @@ function ProgressRing({
       </Svg>
       <Text style={styles.progressRingValue}>{label}</Text>
     </View>
+  );
+}
+
+function BellOutlineIcon({ color = "#ffffff", size = 24 }: { color?: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function BookOpenIcon({ color, size = 20 }: { color: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M2.5 4.5h5A4.5 4.5 0 0 1 12 9v10a4 4 0 0 0-4-4H2.5zM21.5 4.5h-5A4.5 4.5 0 0 0 12 9v10a4 4 0 0 1 4-4h5.5z"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
   );
 }
 
@@ -883,7 +911,7 @@ export default function HomeScreen() {
         </View>
 
         <TouchableOpacity style={styles.bellBtn} onPress={() => router.push("/notifications")} activeOpacity={0.8}>
-          <MaterialCommunityIcons name="bell-outline" size={24} color="#ffffff" />
+          <BellOutlineIcon />
           {unreadCount > 0 && (
             <View style={styles.bellBadge}>
               <Text style={styles.bellBadgeText}>{unreadCount > 99 ? "99+" : unreadCount}</Text>
@@ -920,7 +948,7 @@ export default function HomeScreen() {
               color={colors.primary}
             />
             <StatCard
-              icon={<Feather name="book-open" size={20} color={colors.success} />}
+              icon={<BookOpenIcon color={colors.success} />}
               label="Lớp học"
               value={parentProfile ? String(parentProfile.linkedStudents.reduce((sum, s) => sum + s.enrolledClasses.length, 0)) : "—"}
               color={colors.success}
@@ -935,7 +963,7 @@ export default function HomeScreen() {
         ) : user?.role === "staff" || user?.role === "teacher" || user?.role === "admin" ? (
           <>
             <StatCard
-              icon={<Feather name="book-open" size={20} color={colors.primary} />}
+              icon={<BookOpenIcon color={colors.primary} />}
               label="Lớp học"
               value={staffStats ? String(staffStats.classCount) : "—"}
               color={colors.primary}
@@ -956,7 +984,7 @@ export default function HomeScreen() {
         ) : (
           <>
             <StatCard
-              icon={<Feather name="book-open" size={20} color={colors.primary} />}
+              icon={<BookOpenIcon color={colors.primary} />}
               label="Lớp học"
               value={studentStats ? String(studentStats.classes) : "—"}
               color={colors.primary}
