@@ -1,4 +1,4 @@
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { useFocusEffect, router } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
@@ -295,6 +295,111 @@ function NotificationCarouselCard({
   );
 }
 
+function TodayScheduleSection({
+  schedule,
+  loadingSchedule,
+  isStaff,
+  colors,
+}: {
+  schedule: ScheduleResponse | null;
+  loadingSchedule: boolean;
+  isStaff: boolean;
+  colors: ReturnType<typeof useColors>;
+}) {
+  return (
+    <View style={[styles.section, styles.scheduleSection]}>
+      <View style={styles.sectionRow}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <View style={styles.sectionAccentBar} />
+          <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>
+            Lịch học hôm nay{schedule && schedule.sessions.length > 0 ? ` (${schedule.sessions.length})` : ""}
+          </Text>
+        </View>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/schedule" as any)} activeOpacity={0.7}>
+          <Text style={[styles.scheduleSeeAll, { color: colors.primary }]}>Xem lịch</Text>
+        </TouchableOpacity>
+      </View>
+
+      {loadingSchedule ? (
+        <View style={styles.loadingBox}>
+          <ActivityIndicator size="small" color={colors.primary} />
+        </View>
+      ) : !schedule || schedule.sessions.length === 0 ? (
+        <View style={[styles.emptyBox, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
+          <Feather name="calendar" size={20} color={colors.mutedForeground} />
+          <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Không có lịch học hôm nay</Text>
+        </View>
+      ) : isStaff ? (
+        <View style={styles.classesContainer}>
+          {(schedule.sessions as StaffSession[]).map((session) => (
+            <TouchableOpacity
+              key={session.classSessionId}
+              activeOpacity={0.78}
+              onPress={() => router.push("/(tabs)/schedule" as any)}
+              style={[styles.classItem, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}
+            >
+              <View style={[styles.classTime, { backgroundColor: colors.secondary, borderRadius: colors.radius - 4 }]}>
+                <Text style={[styles.classTimeText, { color: colors.primary }]}>{session.startTime}</Text>
+                <Text style={[styles.classTimeEnd, { color: colors.mutedForeground }]}>{session.endTime}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.classSubject, { color: colors.foreground }]} numberOfLines={1}>{session.className}</Text>
+                <Text style={[styles.classTeacher, { color: colors.mutedForeground }]} numberOfLines={1}>{session.locationName}</Text>
+                <View style={{ flexDirection: "row", gap: 10, marginTop: 4, flexWrap: "wrap" }}>
+                  <Text style={[styles.classBadge, { color: colors.success }]}>
+                    {session.enrolledCount} học viên
+                  </Text>
+                  {session.pendingCount > 0 && (
+                    <Text style={[styles.classBadge, { color: colors.warning }]}>
+                      {session.pendingCount} chờ điểm danh
+                    </Text>
+                  )}
+                </View>
+              </View>
+              <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          ))}
+        </View>
+      ) : (
+        <View style={styles.classesContainer}>
+          {(schedule.sessions as StudentSession[]).map((session, index) => (
+            <TouchableOpacity
+              key={`${session.classSessionId}-${session.student?.code ?? index}`}
+              activeOpacity={0.78}
+              onPress={() => router.push("/(tabs)/schedule" as any)}
+              style={[styles.classItem, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}
+            >
+              <View style={[styles.classTime, { backgroundColor: colors.secondary, borderRadius: colors.radius - 4 }]}>
+                <Text style={[styles.classTimeText, { color: colors.primary }]}>{session.startTime}</Text>
+                <Text style={[styles.classTimeEnd, { color: colors.mutedForeground }]}>{session.endTime}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                {session.student?.name && (
+                  <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: colors.primary, marginBottom: 1 }} numberOfLines={1}>
+                    {session.student.name}
+                  </Text>
+                )}
+                <Text style={[styles.classSubject, { color: colors.foreground }]} numberOfLines={1}>{session.className}</Text>
+                <Text style={[styles.classTeacher, { color: colors.mutedForeground }]} numberOfLines={1}>{session.locationName}</Text>
+                {session.teacherNames && session.teacherNames.length > 0 && (
+                  <Text style={[styles.classTeacher, { color: colors.mutedForeground }]} numberOfLines={1}>{session.teacherNames.join(", ")}</Text>
+                )}
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6, marginTop: 6 }}>
+                  <AttendanceBadge status={session.attendanceStatus} />
+                  <Text style={[styles.classBadge, { color: colors.mutedForeground }]}>
+                    {formatLearningFormat(session.learningFormat ?? "")}
+                  </Text>
+                </View>
+              </View>
+              <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
 export default function HomeScreen() {
   const colors = useColors();
   const { user, permissions } = useAuth();
@@ -493,7 +598,13 @@ export default function HomeScreen() {
     setRefreshing(false);
   };
 
-  const isStaff = schedule?.userType === "staff";
+  const isStaffRole = user?.role === "staff" || user?.role === "teacher" || user?.role === "admin";
+  const isStaff = isStaffRole || schedule?.userType === "staff";
+  const nextSession = schedule?.sessions[0];
+  const pendingAssignments = studentStats ? Math.max(studentStats.total - studentStats.done, 0) : 0;
+  const todayProgress = isStaffRole
+    ? staffStats ? `${staffStats.tasks.done}/${staffStats.tasks.total}` : "—"
+    : studentStats ? `${studentStats.done}/${studentStats.total}` : "—";
   const avatarLetter = (user?.username || "U")[0].toUpperCase();
 
   return (
@@ -529,6 +640,22 @@ export default function HomeScreen() {
             </View>
           )}
         </TouchableOpacity>
+      </View>
+      <View style={styles.todayStrip}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.todayStripTitle}>Hôm nay có gì mới?</Text>
+          <Text style={styles.todayStripSubtitle}>
+            {loadingSchedule
+              ? "Đang cập nhật lịch học..."
+              : nextSession
+                ? `${schedule?.sessions.length ?? 0} buổi học trong ngày`
+                : "Bạn không có lịch học hôm nay"}
+          </Text>
+        </View>
+        <View style={styles.todayProgress}>
+          <Text style={styles.todayProgressValue}>{todayProgress}</Text>
+          <Text style={styles.todayProgressLabel}>{isStaffRole ? "công việc" : "BT xong"}</Text>
+        </View>
       </View>
     </View>
 
@@ -629,6 +756,53 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
         )}
+
+        <View style={styles.section}>
+          <View style={styles.sectionRow}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <View style={styles.sectionAccentBar} />
+              <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>Đang diễn ra</Text>
+            </View>
+            <TouchableOpacity onPress={() => router.push("/(tabs)/schedule" as any)} activeOpacity={0.7}>
+              <Text style={[styles.scheduleSeeAll, { color: colors.primary }]}>Xem lịch hôm nay</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity
+            activeOpacity={0.82}
+            onPress={() => router.push("/(tabs)/schedule" as any)}
+            style={[styles.nowCard, { backgroundColor: colors.foreground }]}
+          >
+            <Text style={[styles.nowEyebrow, { color: colors.primary }]}>
+              {nextSession ? (isStaffRole ? "Sắp bắt đầu" : "Buổi học tiếp theo") : "Việc tiếp theo"}
+            </Text>
+            <Text style={[styles.nowTitle, { color: colors.card }]}>
+              {nextSession?.className ?? (pendingAssignments > 0 ? "Hoàn thành bài tập còn lại" : "Xem lịch học hôm nay")}
+            </Text>
+            <Text style={[styles.nowCopy, { color: colors.muted }]}>
+              {nextSession
+                ? `${nextSession.locationName || "Lớp học"}${isStaffRole ? "" : " · Mở lịch để xem thông tin chi tiết"}`
+                : pendingAssignments > 0
+                  ? `Bạn còn ${pendingAssignments} bài tập đang chờ hoàn thành.`
+                  : "Mở lịch để xem các hoạt động trong ngày."}
+            </Text>
+            <View style={styles.nowFoot}>
+              <Text style={[styles.nowTime, { color: colors.card }]}>
+                {nextSession ? `${nextSession.startTime} — ${nextSession.endTime}` : "Hôm nay"}
+              </Text>
+              <View style={styles.nowLink}>
+                <Text style={[styles.nowLinkText, { color: colors.primary }]}>Mở ngay</Text>
+                <Feather name="chevron-right" size={14} color={colors.primary} />
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        <TodayScheduleSection
+          schedule={schedule}
+          loadingSchedule={loadingSchedule}
+          isStaff={isStaff}
+          colors={colors}
+        />
 
         {(user?.role === "staff" || user?.role === "teacher" || user?.role === "admin") && (
           <View style={{ marginTop: 20, paddingHorizontal: 16 }}>
@@ -734,83 +908,6 @@ export default function HomeScreen() {
         {perms.canViewNewsFeed && <NewsFeedSection />}
 
 
-        <View style={styles.section}>
-          <View style={styles.sectionRow}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <View style={styles.sectionAccentBar} />
-              <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>
-                Lịch học hôm nay{schedule && schedule.sessions.length > 0 ? ` (${schedule.sessions.length})` : ""}
-              </Text>
-            </View>
-          </View>
-
-          {loadingSchedule ? (
-            <View style={styles.loadingBox}>
-              <ActivityIndicator size="small" color={colors.primary} />
-            </View>
-          ) : !schedule || schedule.sessions.length === 0 ? (
-            <View style={[styles.emptyBox, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
-              <Feather name="calendar" size={20} color={colors.mutedForeground} />
-              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Không có lịch học hôm nay</Text>
-            </View>
-          ) : isStaff ? (
-            <View style={styles.classesContainer}>
-              {(schedule.sessions as StaffSession[]).map((s) => (
-                <View key={s.classSessionId} style={[styles.classItem, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
-                  <View style={[styles.classTime, { backgroundColor: colors.secondary, borderRadius: colors.radius - 4 }]}>
-                    <Text style={[styles.classTimeText, { color: colors.primary }]}>{s.startTime}</Text>
-                    <Text style={[styles.classTimeEnd, { color: colors.mutedForeground }]}>{s.endTime}</Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.classSubject, { color: colors.foreground }]}>{s.className}</Text>
-                    <Text style={[styles.classTeacher, { color: "#111" }]}>{s.locationName}</Text>
-                    <View style={{ flexDirection: "row", gap: 10, marginTop: 4 }}>
-                      <Text style={[styles.classBadge, { color: colors.success }]}>
-                        {s.enrolledCount} học viên
-                      </Text>
-                      {s.pendingCount > 0 && (
-                        <Text style={[styles.classBadge, { color: colors.warning }]}>
-                          {s.pendingCount} chờ điểm danh
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-                  <MaterialCommunityIcons name="chevron-right" size={20} color={colors.mutedForeground} />
-                </View>
-              ))}
-            </View>
-          ) : (
-            <View style={styles.classesContainer}>
-              {(schedule.sessions as StudentSession[]).map((s, i) => (
-                <View key={`${s.classSessionId}-${s.student?.code ?? i}`} style={[styles.classItem, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
-                  <View style={[styles.classTime, { backgroundColor: colors.secondary, borderRadius: colors.radius - 4 }]}>
-                    <Text style={[styles.classTimeText, { color: colors.primary }]}>{s.startTime}</Text>
-                    <Text style={[styles.classTimeEnd, { color: colors.mutedForeground }]}>{s.endTime}</Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    {s.student?.name && (
-                      <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: colors.primary, marginBottom: 1 }}>
-                        {s.student.name}
-                      </Text>
-                    )}
-                    <Text style={[styles.classSubject, { color: colors.foreground }]}>{s.className}</Text>
-                    <Text style={[styles.classTeacher, { color: "#111" }]}>{s.locationName}</Text>
-                    {s.teacherNames && s.teacherNames.length > 0 && (
-                      <Text style={[styles.classTeacher, { color: "#111" }]}>{s.teacherNames.join(", ")}</Text>
-                    )}
-                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 6 }}>
-                      <AttendanceBadge status={s.attendanceStatus} />
-                      <Text style={[styles.classBadge, { color: "#111" }]}>
-                        {formatLearningFormat(s.learningFormat ?? "")}
-                      </Text>
-                    </View>
-                  </View>
-                  <MaterialCommunityIcons name="chevron-right" size={20} color={colors.mutedForeground} />
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
       </ScrollView>
     </View>
   );
@@ -908,6 +1005,43 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_700Bold",
     lineHeight: 12,
   },
+  todayStrip: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    marginTop: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: "rgba(35,27,117,0.26)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.14)",
+    borderRadius: 15,
+  },
+  todayStripTitle: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontFamily: "Inter_700Bold",
+  },
+  todayStripSubtitle: {
+    marginTop: 3,
+    color: "rgba(255,255,255,0.68)",
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+  },
+  todayProgress: {
+    alignItems: "flex-end",
+  },
+  todayProgressValue: {
+    color: "#ffffff",
+    fontSize: 20,
+    fontFamily: "Inter_700Bold",
+  },
+  todayProgressLabel: {
+    color: "rgba(255,255,255,0.68)",
+    fontSize: 9,
+    fontFamily: "Inter_400Regular",
+  },
   statsRow: {
     paddingHorizontal: 16,
   },
@@ -924,6 +1058,60 @@ const styles = StyleSheet.create({
   section: {
     paddingHorizontal: 20,
     marginTop: 24,
+  },
+  scheduleSection: {
+    marginTop: 20,
+  },
+  scheduleSeeAll: {
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
+  },
+  nowCard: {
+    padding: 16,
+    borderRadius: 18,
+    shadowColor: "#1f2b54",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    elevation: 4,
+  },
+  nowEyebrow: {
+    fontSize: 10,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  nowTitle: {
+    marginTop: 7,
+    fontSize: 16,
+    lineHeight: 21,
+    fontFamily: "Inter_700Bold",
+  },
+  nowCopy: {
+    marginTop: 5,
+    fontSize: 12,
+    lineHeight: 17,
+    fontFamily: "Inter_400Regular",
+  },
+  nowFoot: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    marginTop: 14,
+  },
+  nowTime: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+  },
+  nowLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+  },
+  nowLinkText: {
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
   },
   quickAccessHeader: {
     flexDirection: "row",
