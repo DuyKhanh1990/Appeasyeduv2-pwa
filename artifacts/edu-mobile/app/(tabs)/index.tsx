@@ -372,49 +372,76 @@ function ProgressRing({
 }
 
 function CompletionCelebration({ colors }: { colors: ReturnType<typeof useColors> }) {
-  const pulse = useRef(new Animated.Value(0)).current;
+  const burst = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const animation = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulse, {
+        Animated.delay(900),
+        Animated.timing(burst, {
           toValue: 1,
-          duration: 900,
+          duration: 650,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: false,
         }),
-        Animated.timing(pulse, {
+        Animated.timing(burst, {
           toValue: 0,
-          duration: 900,
-          easing: Easing.inOut(Easing.ease),
+          duration: 120,
           useNativeDriver: false,
         }),
       ]),
     );
     animation.start();
     return () => animation.stop();
-  }, [pulse]);
+  }, [burst]);
 
-  const scale = pulse.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.92, 1.08],
-  });
-  const rotate = pulse.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["-6deg", "6deg"],
-  });
+  const particles = [
+    { x: -24, y: -22, color: colors.accent },
+    { x: 0, y: -29, color: colors.gradientEnd },
+    { x: 24, y: -22, color: colors.warning },
+    { x: 29, y: 2, color: colors.accent },
+    { x: 24, y: 24, color: colors.gradientEnd },
+    { x: -24, y: 24, color: colors.warning },
+    { x: -29, y: 2, color: colors.accent },
+  ];
 
   return (
     <View style={styles.celebrationWrap}>
-      <Animated.View style={[styles.celebrationStar, styles.celebrationStarTop, { opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] }) }]}>
-        <Feather name="star" size={13} color={colors.accent} />
-      </Animated.View>
-      <Animated.View style={[styles.celebrationStar, styles.celebrationStarSide, { opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 0.55] }) }]}>
-        <Feather name="star" size={10} color={colors.gradientEnd} />
-      </Animated.View>
-      <Animated.View style={[styles.celebrationCore, { backgroundColor: colors.gradientStart, transform: [{ scale }, { rotate }] }]}>
+      {particles.map((particle, index) => {
+        const distance = 0.25 + (index % 3) * 0.1;
+        return (
+          <Animated.View
+            key={`firework-${index}`}
+            style={[
+              styles.fireworkParticle,
+              {
+                backgroundColor: particle.color,
+                opacity: burst.interpolate({
+                  inputRange: [0, 0.12, 0.72, 1],
+                  outputRange: [0, 0.9, 1, 0],
+                }),
+                transform: [
+                  {
+                    translateX: burst.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, particle.x * distance],
+                    }),
+                  },
+                  {
+                    translateY: burst.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, particle.y * distance],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          />
+        );
+      })}
+      <View style={[styles.celebrationCore, { backgroundColor: colors.gradientStart }]}>
         <Feather name="award" size={30} color={colors.foreground} />
-      </Animated.View>
+      </View>
     </View>
   );
 }
@@ -1516,17 +1543,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  celebrationStar: {
+  fireworkParticle: {
     position: "absolute",
-    zIndex: 2,
-  },
-  celebrationStarTop: {
-    top: 0,
-    right: 3,
-  },
-  celebrationStarSide: {
-    left: 0,
-    bottom: 8,
+    left: 29,
+    top: 29,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   nowCard: {
     padding: 16,
