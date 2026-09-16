@@ -7,3 +7,4 @@
 - [PWA production asset serving](pwa-production-asset-serving.md) — verify public manifest MIME and Service Worker version because static deployment can serve stale assets or text/plain webmanifests
 - [Session detail visual direction](session-detail-visual-direction.md) — use the approved Modern Cards direction for student session details while preserving existing behavior
 - [Calendar dots and auth readiness](calendar-dots-auth-readiness.md) — month-level calendar markers must wait for restored auth or the day view can work while all dots stay empty
+- [Parallel mockup CSS](parallel-mockup-css.md) — parallel design workers must use isolated stylesheets or a shared CSS write can erase a sibling preview's styles
