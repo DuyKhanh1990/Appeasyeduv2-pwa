@@ -104,7 +104,8 @@ function getDisplayName(data: MobileAuthResponse, preferredName?: string): strin
 
   return candidates.find((candidate) => {
     const value = candidate?.trim();
-    return Boolean(value) && !identityCodes.has(value.toLowerCase());
+    if (!value) return false;
+    return !identityCodes.has(value.toLowerCase());
   });
 }
 

@@ -9,3 +9,4 @@
 - [Calendar dots and auth readiness](calendar-dots-auth-readiness.md) — month-level calendar markers must wait for restored auth or the day view can work while all dots stay empty
 - [Parallel mockup CSS](parallel-mockup-css.md) — parallel design workers must use isolated stylesheets or a shared CSS write can erase a sibling preview's styles
 - [Web icon rendering](web-icon-rendering.md) — use direct SVG for important PWA icons because proxied Expo web font glyphs can fail selectively
+- [Auth display-name restore](auth-display-name-restore.md) — on web reload, prefer the stored display name and reject every API identity/code alias before showing a username
