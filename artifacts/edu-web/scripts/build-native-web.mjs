@@ -96,7 +96,7 @@ index = index
   .replace("</body>", [
     "  <script>",
     "    if ('serviceWorker' in navigator) {",
-    "      window.addEventListener('load', () => navigator.serviceWorker.register('./sw-v3.js').catch(() => {}));",
+    "      window.addEventListener('load', () => navigator.serviceWorker.register('./sw-v4.js', { updateViaCache: 'none' }).catch(() => {}));",
     "    }",
     "  </script>",
     "</body>",
@@ -110,7 +110,7 @@ if (existsSync(serviceWorkerPath)) {
     bundleVersion,
   );
   writeFileSync(serviceWorkerPath, serviceWorker);
-  writeFileSync(path.join(outputDir, "sw-v3.js"), serviceWorker);
+  writeFileSync(path.join(outputDir, "sw-v4.js"), serviceWorker);
 }
 
 console.log(`Expo Web PWA exported to ${outputDir}`);

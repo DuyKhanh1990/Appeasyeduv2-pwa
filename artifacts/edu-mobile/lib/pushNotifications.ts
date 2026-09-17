@@ -50,7 +50,10 @@ export async function registerWebServiceWorker(): Promise<ServiceWorkerRegistrat
     return null;
   }
 
-  return navigator.serviceWorker.register("./sw-v3.js", { scope: "./" });
+  return navigator.serviceWorker.register("./sw-v4.js", {
+    scope: "./",
+    updateViaCache: "none",
+  });
 }
 
 export async function registerForPushNotificationsAsync(): Promise<PushRegistrationResult> {

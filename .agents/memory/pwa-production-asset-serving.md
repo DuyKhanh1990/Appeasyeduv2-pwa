@@ -7,4 +7,4 @@ The public PWA deployment must be checked independently from the workspace build
 
 **Why:** The public domain can be backed by a static artifact handler or an older image even when `dist/public` is correct locally. This breaks Chrome installability diagnostics and can leave notification click behavior on an old Service Worker.
 
-**How to apply:** After each PWA publish, request the public manifest, Service Worker, and every manifest icon directly. Compare their MIME types, status codes, and Service Worker version with `dist/public` before testing Chrome Android installability.
+**How to apply:** After each PWA publish, request the public manifest, Service Worker, and every manifest icon directly. Compare their MIME types, status codes, and Service Worker version with `dist/public`; version the worker URL when the app shell changes and bypass HTTP cache for navigation and hashed bundles before testing Chrome Android installability.

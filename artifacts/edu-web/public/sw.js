@@ -32,8 +32,15 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.pathname.includes("/api/")) return;
 
+  const isAppShell =
+    request.mode === "navigate" ||
+    url.pathname.includes("/_expo/static/js/web/");
+  const networkRequest = isAppShell
+    ? new Request(request, { cache: "no-store" })
+    : request;
+
   event.respondWith(
-    fetch(request)
+    fetch(networkRequest)
       .then((response) => {
         const copy = response.clone();
         caches.open(VERSION).then((cache) => cache.put(request, copy));
