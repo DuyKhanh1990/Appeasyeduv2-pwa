@@ -7,6 +7,8 @@ const LAST_CENTER_KEY = "edu_last_center_url";
 const LAST_USERNAME_KEY = "edu_last_username";
 const ROLE_KEY = "edu_user_role";
 const TOKEN_KEY = "edu_auth_token";
+const PROFILE_NAME_KEY = "edu_profile_name";
+const PROFILE_CODE_KEY = "edu_profile_code";
 
 let centerUrl: string | null = null;
 let authToken: string | null = null;
@@ -51,12 +53,29 @@ export async function getStoredRole(): Promise<string | null> {
   return AsyncStorage.getItem(ROLE_KEY);
 }
 
+export async function saveProfileDisplayData(name?: string, code?: string): Promise<void> {
+  await Promise.all([
+    name ? AsyncStorage.setItem(PROFILE_NAME_KEY, name) : AsyncStorage.removeItem(PROFILE_NAME_KEY),
+    code ? AsyncStorage.setItem(PROFILE_CODE_KEY, code) : AsyncStorage.removeItem(PROFILE_CODE_KEY),
+  ]);
+}
+
+export async function getStoredProfileDisplayData(): Promise<{ name: string; code: string }> {
+  const [name, code] = await Promise.all([
+    AsyncStorage.getItem(PROFILE_NAME_KEY),
+    AsyncStorage.getItem(PROFILE_CODE_KEY),
+  ]);
+  return { name: name || "", code: code || "" };
+}
+
 export function clearSession() {
   centerUrl = null;
   authToken = null;
   AsyncStorage.removeItem(CENTER_URL_KEY);
   AsyncStorage.removeItem(ROLE_KEY);
   AsyncStorage.removeItem(TOKEN_KEY);
+  AsyncStorage.removeItem(PROFILE_NAME_KEY);
+  AsyncStorage.removeItem(PROFILE_CODE_KEY);
 }
 
 export function setCenterUrl(url: string) {

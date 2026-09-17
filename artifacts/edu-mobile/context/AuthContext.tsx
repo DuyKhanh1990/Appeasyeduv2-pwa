@@ -5,9 +5,11 @@ import {
   apiPost,
   clearSession,
   getCenterUrl,
+  getStoredProfileDisplayData,
   getStoredRole,
   initApi,
   saveLastCredentials,
+  saveProfileDisplayData,
   saveRole,
   setCenterUrl,
   setAuthToken,
@@ -54,12 +56,21 @@ export interface MobilePermissions {
 
 interface MobileAuthResponse {
   token?: string;
-  user: { id: string | number; username: string; isActive?: boolean; name?: string; role?: string };
+  user: {
+    id: string | number;
+    username: string;
+    isActive?: boolean;
+    name?: string;
+    fullName?: string;
+    displayName?: string;
+    role?: string;
+  };
   userType?: "student" | "staff" | "parent" | null;
   profile?: {
     id?: string | number;
     fullName?: string;
     name?: string;
+    displayName?: string;
     code?: string;
     type?: string;
   };
@@ -71,12 +82,25 @@ interface MobileAuthResponse {
 }
 
 function getDisplayName(data: MobileAuthResponse): string | undefined {
-  return (
-    data.profile?.fullName ??
-    data.profile?.name ??
-    data.staffName ??
-    data.user.name
-  );
+  const code = (
+    data.profile?.code ??
+    data.staffCode ??
+    data.user.username
+  ).trim().toLowerCase();
+  const candidates = [
+    data.profile?.fullName,
+    data.profile?.displayName,
+    data.profile?.name,
+    data.staffName,
+    data.user.fullName,
+    data.user.displayName,
+    data.user.name,
+  ];
+
+  return candidates.find((candidate) => {
+    const value = candidate?.trim();
+    return Boolean(value) && value?.toLowerCase() !== code;
+  });
 }
 
 interface AuthContextType {
@@ -146,6 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function restoreSession() {
     try {
       await initApi();
+      const storedProfile = await getStoredProfileDisplayData();
       const storedCenter = getCenterUrl();
       if (!storedCenter) {
         setIsLoading(false);
@@ -163,22 +188,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userData = {
           id: String(me.user.id),
           username: me.user.username,
-          name: getDisplayName(me),
+          name: getDisplayName(me) ?? storedProfile.name || undefined,
         };
-        profileCode = me.profile?.code ?? me.staffCode;
+        profileCode = me.profile?.code ?? me.staffCode ?? storedProfile.code || me.user.username;
         profileId = me.profile?.id ? String(me.profile.id) : (me.studentId ?? me.staffId);
       } catch {
         const storedRole = await getStoredRole();
         if (storedRole) {
           role = storedRole as UserRole;
           const legacyMe = await apiGet<{ id: string; username: string; name?: string; role?: string }>("/api/auth/me");
-          userData = legacyMe;
+          userData = {
+            ...legacyMe,
+            name: legacyMe.name?.trim().toLowerCase() === legacyMe.username.trim().toLowerCase()
+              ? (storedProfile.name || undefined)
+              : legacyMe.name,
+          };
+          profileCode = storedProfile.code || legacyMe.username;
         } else {
           throw new Error("No session");
         }
       }
 
       await saveRole(role);
+      await saveProfileDisplayData(userData.name, profileCode ?? userData.username);
       setUser({ ...userData, role, centerUrl: storedCenter, profileCode, profileId });
       fetchPermissions();
 
@@ -237,6 +269,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     await saveLastCredentials(normalizedCenter, username);
     await saveRole(role);
+    await saveProfileDisplayData(userData.name, profileCode ?? userData.username);
     setUser({ ...userData, role, centerUrl: normalizedCenter, profileCode, profileId });
     fetchPermissions();
 
