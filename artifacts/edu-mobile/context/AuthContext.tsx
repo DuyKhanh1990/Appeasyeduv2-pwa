@@ -59,6 +59,7 @@ interface MobileAuthResponse {
   profile?: {
     id?: string | number;
     fullName?: string;
+    name?: string;
     code?: string;
     type?: string;
   };
@@ -67,6 +68,15 @@ interface MobileAuthResponse {
   staffId?: string;
   staffName?: string;
   staffCode?: string;
+}
+
+function getDisplayName(data: MobileAuthResponse): string | undefined {
+  return (
+    data.profile?.fullName ??
+    data.profile?.name ??
+    data.staffName ??
+    data.user.name
+  );
 }
 
 interface AuthContextType {
@@ -153,7 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userData = {
           id: String(me.user.id),
           username: me.user.username,
-          name: me.profile?.fullName ?? me.user.name,
+          name: getDisplayName(me),
         };
         profileCode = me.profile?.code ?? me.staffCode;
         profileId = me.profile?.id ? String(me.profile.id) : (me.studentId ?? me.staffId);
@@ -205,7 +215,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       userData = {
         id: String(data.user.id),
         username: data.user.username,
-        name: data.profile?.fullName ?? data.user.name,
+        name: getDisplayName(data),
       };
       profileCode = data.profile?.code ?? data.staffCode;
       profileId = data.profile?.id ? String(data.profile.id) : (data.studentId ?? data.staffId);

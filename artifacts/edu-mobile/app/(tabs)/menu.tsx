@@ -126,12 +126,12 @@ export default function MenuScreen() {
         style={[styles.profileHeader, { paddingTop: insets.top + 16, backgroundColor: colors.gradientStart }]}
       >
         <View style={styles.avatarLarge}>
-          <Text style={styles.avatarLargeText}>{(user?.username || "H")[0].toUpperCase()}</Text>
+          <Text style={styles.avatarLargeText}>{(user?.name || user?.profileCode || user?.username || "H")[0].toUpperCase()}</Text>
         </View>
         <View style={styles.profileInfo}>
           <Text style={styles.profileName}>{user?.name || user?.username || "Học sinh"}</Text>
-          {user?.username && (
-            <Text style={styles.profileRole}>{user.username}</Text>
+          {(user?.profileCode || user?.username) && (
+            <Text style={styles.profileRole}>{user.profileCode || user.username}</Text>
           )}
         </View>
       </View>

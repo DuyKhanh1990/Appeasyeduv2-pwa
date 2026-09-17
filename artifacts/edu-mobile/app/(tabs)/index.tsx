@@ -883,7 +883,7 @@ export default function HomeScreen() {
   const todayProgress = isStaffRole
     ? staffStats ? `${staffStats.tasks.done}/${staffStats.tasks.total}` : "—"
     : studentStats ? `${studentStats.done}/${studentStats.total}` : "—";
-  const avatarLetter = (user?.username || "U")[0].toUpperCase();
+  const avatarLetter = (user?.name || user?.profileCode || user?.username || "U")[0].toUpperCase();
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
