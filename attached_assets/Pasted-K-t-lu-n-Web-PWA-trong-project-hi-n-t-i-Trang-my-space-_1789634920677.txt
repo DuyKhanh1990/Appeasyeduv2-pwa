@@ -1,0 +1,413 @@
+Kết luận
+Web PWA trong project hiện tại
+Trang /my-space/calendar của Học viên/Phụ huynh đã hiển thị được cấu trúc nhận xét mới:
+
+Bộ tiêu chí.
+Sao tổng.
+Tiêu đề nhóm.
+Từng tiêu chí con một lần.
+Checkbox theo Đạt / Chưa đạt.
+Tiêu chí text hiển thị nội dung nhận xét.
+Hỗ trợ nhiều giáo viên.
+Hỗ trợ tài khoản Phụ huynh chọn đúng học viên.
+API Mobile/PWA
+Trước đó bộ /api/mobile/... còn thiếu groupName, inputType, checked. Mình đã đồng bộ lại parser, nên API Mobile hiện cũng trả đủ dữ liệu mới.
+
+Đã build và restart server thành công.
+
+1. API cho Web PWA dùng Session Cookie
+Lấy lịch tháng
+GET /api/my-space/calendar/student?month=YYYY-MM
+
+Ví dụ:
+
+GET /api/my-space/calendar/student?month=2026-09
+
+Auth:
+
+Cookie: session cookie
+
+API này chỉ trả dữ liệu lịch nhẹ, không trả chi tiết nhận xét.
+
+Response:
+
+{
+  "month": "2026-09",
+  "datesWithSessions": [
+    "2026-09-02",
+    "2026-09-09"
+  ],
+  "sessions": [
+    {
+      "classSessionId": "class-session-uuid",
+      "studentSessionId": "student-session-uuid",
+      "classId": "class-uuid",
+      "sessionDate": "2026-09-02",
+      "weekday": 3,
+      "className": "Toán 9A",
+      "classCode": "T9A-001",
+      "classColor": "#4F46E5",
+      "startTime": "08:00",
+      "endTime": "10:00",
+      "learningFormat": "offline",
+      "onlineLink": null,
+      "locationId": "location-uuid",
+      "locationName": "Cơ sở 1",
+      "teacherNames": [
+        "Nguyễn Thị B"
+      ],
+      "enrolledCount": 20,
+      "sessionStatus": "scheduled",
+      "attendanceStatus": "present",
+      "studentId": "student-uuid",
+      "studentName": null,
+      "studentCode": null
+    }
+  ]
+}
+
+Đối với tài khoản Phụ huynh:
+
+{
+  "studentId": "child-uuid",
+  "studentName": "Nguyễn Văn A",
+  "studentCode": "HV001"
+}
+
+sẽ được trả về để phân biệt các con.
+
+Lấy danh sách lớp của học viên
+GET /api/my-space/calendar/student/classes
+
+Response:
+
+[
+  {
+    "classId": "class-uuid",
+    "className": "Toán 9A",
+    "classCode": "T9A-001",
+    "totalSessions": 24
+  }
+]
+
+Lấy danh sách buổi học theo lớp
+GET /api/my-space/calendar/student/class/:classId/sessions?page=1&pageSize=20
+
+Giới hạn:
+
+page: mặc định 1.
+pageSize: mặc định 20, tối đa 50.
+Response:
+
+{
+  "sessions": [
+    {
+      "classSessionId": "class-session-uuid",
+      "sessionIndex": 1,
+      "sessionDate": "2026-09-02",
+      "startTime": "08:00",
+      "endTime": "10:00",
+      "attendanceStatus": "present",
+      "attendanceNote": null,
+      "reviewPublished": true
+    }
+  ],
+  "total": 24,
+  "page": 1,
+  "pageSize": 20,
+  "totalPages": 2
+}
+
+reviewPublished dùng để biết có thể hiển thị nút Xem nhận xét hay không.
+
+Lấy chi tiết một buổi học và nhận xét
+GET /api/my-space/calendar/student/session/:classSessionId
+
+Đối với Phụ huynh có thể truyền thêm học viên cụ thể:
+
+GET /api/my-space/calendar/student/session/:classSessionId?studentId=:studentId
+
+Ví dụ:
+
+GET /api/my-space/calendar/student/session/abc-123?studentId=child-456
+
+Response đầy đủ:
+
+{
+  "classSessionId": "class-session-uuid",
+  "studentSessionId": "student-session-uuid",
+  "sessionDate": "2026-09-02",
+  "weekday": 3,
+  "className": "Toán 9A",
+  "classCode": "T9A-001",
+  "startTime": "08:00",
+  "endTime": "10:00",
+  "learningFormat": "offline",
+  "onlineLink": null,
+  "locationId": "location-uuid",
+  "locationName": "Cơ sở 1",
+  "sessionStatus": "scheduled",
+  "teacherNames": [
+    "Nguyễn Thị B"
+  ],
+  "attendanceStatus": "present",
+  "attendanceNote": null,
+  "reviewPublished": true,
+  "reviewData": [
+    {
+      "teacherName": "Nguyễn Thị B",
+      "criteria": [
+        {
+          "criteriaName": "Thái độ học tập",
+          "rating": 4,
+          "items": [
+            {
+              "groupName": "Tập trung trong giờ học",
+              "subCriteriaName": "Chú ý nghe giảng",
+              "comment": "",
+              "inputType": "checkbox",
+              "checked": true
+            },
+            {
+              "groupName": "Tập trung trong giờ học",
+              "subCriteriaName": "Chủ động phát biểu",
+              "comment": "Có tiến bộ",
+              "inputType": "text"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "generalContents": [],
+  "personalContents": [],
+  "userType": "student",
+  "studentName": null,
+  "studentCode": null,
+  "enrolledCount": 20,
+  "onlineClickedAt": null,
+  "onlineEndedAt": null
+}
+
+2. API cho PWA/Mobile dùng JWT Bearer
+Nếu bên PWA đang dùng JWT thì nên dùng bộ endpoint dưới đây.
+
+Header:
+
+Authorization: Bearer <JWT>
+
+Lấy lịch tháng đầy đủ
+GET /api/mobile/student/calendar?month=2026-09
+
+API này trả danh sách các buổi trong tháng, nhưng không trả reviewData chi tiết trong từng buổi để tránh response quá lớn.
+
+Dùng classSessionId từ response để gọi API chi tiết.
+
+Lấy danh sách ngày có buổi học
+GET /api/mobile/student/calendar/month?month=2026-09
+
+Response:
+
+{
+  "month": "2026-09",
+  "datesWithSessions": [
+    "2026-09-02T00:00:00.000Z",
+    "2026-09-09T00:00:00.000Z"
+  ]
+}
+
+API này chỉ dùng để vẽ dấu chấm trên lịch, không có nhận xét.
+
+Lấy các buổi học trong ngày
+GET /api/mobile/student/calendar/day?date=2026-09-02
+
+Response rút gọn:
+
+{
+  "date": "2026-09-02T00:00:00.000Z",
+  "sessions": [
+    {
+      "classSessionId": "class-session-uuid",
+      "studentSessionId": "student-session-uuid",
+      "sessionDate": "2026-09-02T00:00:00.000Z",
+      "sessionIndex": 5,
+      "weekday": 3,
+      "className": "Toán 9A",
+      "classCode": "T9A-001",
+      "startTime": "08:00",
+      "endTime": "10:00",
+      "learningFormat": "offline",
+      "sessionStatus": "scheduled",
+      "teacherNames": [
+        "Nguyễn Thị B"
+      ],
+      "attendanceStatus": "present",
+      "attendanceNote": null,
+      "reviewPublished": true,
+      "reviewData": [
+        {
+          "teacherName": "Nguyễn Thị B",
+          "criteria": [
+            {
+              "criteriaName": "Thái độ học tập",
+              "rating": 4,
+              "items": [
+                {
+                  "groupName": "Tập trung trong giờ học",
+                  "subCriteriaName": "Chú ý nghe giảng",
+                  "comment": "",
+                  "inputType": "checkbox",
+                  "checked": true
+                },
+                {
+                  "groupName": "Tập trung trong giờ học",
+                  "subCriteriaName": "Chủ động phát biểu",
+                  "comment": "Có tiến bộ",
+                  "inputType": "text"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "student": {
+        "id": "student-uuid",
+        "name": "Nguyễn Văn A",
+        "code": "HV001"
+      },
+      "isParent": false,
+      "enrolledCount": 20
+    }
+  ]
+}
+
+Lấy chi tiết một buổi học
+GET /api/mobile/student/session/:classSessionId
+
+Đối với Phụ huynh:
+
+GET /api/mobile/student/session/:classSessionId?studentId=:studentId
+
+Ví dụ:
+
+GET /api/mobile/student/session/abc-123?studentId=child-456
+
+Response có các field chính:
+
+{
+  "classSessionId": "class-session-uuid",
+  "studentSessionId": "student-session-uuid",
+  "sessionDate": "2026-09-02T00:00:00.000Z",
+  "sessionIndex": 5,
+  "className": "Toán 9A",
+  "classCode": "T9A-001",
+  "startTime": "08:00",
+  "endTime": "10:00",
+  "learningFormat": "offline",
+  "sessionStatus": "scheduled",
+  "teacherNames": [
+    "Nguyễn Thị B"
+  ],
+  "attendanceStatus": "present",
+  "attendanceNote": null,
+  "reviewPublished": true,
+  "reviewData": [],
+  "generalContents": [],
+  "personalContents": [],
+  "student": {
+    "id": "student-uuid",
+    "name": "Nguyễn Văn A",
+    "code": "HV001"
+  },
+  "isParent": false,
+  "enrolledCount": 20,
+  "onlineClickedAt": null,
+  "onlineEndedAt": null,
+  "onlineRule": null
+}
+
+reviewData sẽ chứa dữ liệu nhận xét theo cấu trúc bên dưới khi đã được công khai.
+
+3. Cấu trúc reviewData
+type ReviewItem = {
+  groupName?: string;
+  subCriteriaName: string;
+  comment: string;
+  inputType?: "text" | "checkbox";
+  checked?: boolean;
+};
+type ReviewCriteria = {
+  criteriaName: string;
+  rating?: number;
+  items: ReviewItem[];
+};
+type TeacherReview = {
+  teacherName: string;
+  criteria: ReviewCriteria[];
+};
+
+Ý nghĩa các field
+Field	Kiểu	Ý nghĩa
+teacherName	string	Tên giáo viên nhận xét
+criteriaName	string	Tên bộ tiêu chí
+rating	number	Sao tổng của bộ tiêu chí, thường từ 1 đến 5
+groupName	string	Tên nhóm tiêu chí
+subCriteriaName	string	Tên tiêu chí con
+comment	string	Nội dung nhận xét, có thể chứa HTML
+inputType	"text" | "checkbox"	Loại tiêu chí
+checked	boolean	Trạng thái checkbox
+Quy tắc render cho bên PWA
+Hiển thị criteriaName một lần.
+Hiển thị rating một lần ở phần đầu bộ tiêu chí.
+Gom các item cùng groupName.
+Hiển thị groupName một lần cho mỗi nhóm.
+Nếu:
+"inputType": "checkbox"
+
+thì:
+
+"checked": true
+
+hiển thị:
+
+Đạt
+
+và:
+
+"checked": false
+
+hiển thị:
+
+Chưa đạt
+
+Nếu inputType là "text" hoặc không có field này:
+Hiển thị subCriteriaName.
+Hiển thị comment.
+Không hiển thị subCriteriaName thêm một lần bên trên checkbox.
+Không suy luận checkbox chỉ vì comment rỗng.
+Nếu:
+"reviewPublished": false
+
+thì API trả:
+
+"reviewData": []
+
+và PWA không hiển thị nhận xét.
+
+4. Khuyến nghị cho bên PWA
+Nếu PWA dùng JWT:
+
+Lịch tháng: /api/mobile/student/calendar?month=YYYY-MM
+Lịch theo ngày: /api/mobile/student/calendar/day?date=YYYY-MM-DD
+Chi tiết buổi học: /api/mobile/student/session/:classSessionId
+Nếu PWA dùng session cookie:
+
+Lịch tháng: /api/my-space/calendar/student?month=YYYY-MM
+Danh sách lớp: /api/my-space/calendar/student/classes
+Buổi học theo lớp: /api/my-space/calendar/student/class/:classId/sessions
+Chi tiết nhận xét: /api/my-space/calendar/student/session/:classSessionId?studentId=:studentId
+Không nên dùng trực tiếp:
+
+GET /api/student-sessions/:id/review
+
+cho giao diện học viên/phụ huynh, vì endpoint này trả dữ liệu raw và không phải response đã chuẩn hóa cho calendar.
