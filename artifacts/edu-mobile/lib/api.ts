@@ -9,9 +9,33 @@ const ROLE_KEY = "edu_user_role";
 const TOKEN_KEY = "edu_auth_token";
 const PROFILE_NAME_KEY = "edu_profile_name";
 const PROFILE_CODE_KEY = "edu_profile_code";
+const WEB_PROFILE_NAME_KEY = "easyedu_profile_name";
+const WEB_PROFILE_CODE_KEY = "easyedu_profile_code";
 
 let centerUrl: string | null = null;
 let authToken: string | null = null;
+
+function getWebStorageValue(key: string): string | null {
+  if (Platform.OS !== "web" || typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function setWebStorageValue(key: string, value?: string): void {
+  if (Platform.OS !== "web" || typeof window === "undefined") return;
+  try {
+    if (value) {
+      window.localStorage.setItem(key, value);
+    } else {
+      window.localStorage.removeItem(key);
+    }
+  } catch {
+    // AsyncStorage remains the native and primary persistence mechanism.
+  }
+}
 
 // Callback được set bởi AuthContext để tự động logout khi nhận 401
 let onUnauthorized: (() => void) | null = null;
@@ -54,6 +78,8 @@ export async function getStoredRole(): Promise<string | null> {
 }
 
 export async function saveProfileDisplayData(name?: string, code?: string): Promise<void> {
+  setWebStorageValue(WEB_PROFILE_NAME_KEY, name);
+  setWebStorageValue(WEB_PROFILE_CODE_KEY, code);
   await Promise.all([
     name ? AsyncStorage.setItem(PROFILE_NAME_KEY, name) : AsyncStorage.removeItem(PROFILE_NAME_KEY),
     code ? AsyncStorage.setItem(PROFILE_CODE_KEY, code) : AsyncStorage.removeItem(PROFILE_CODE_KEY),
@@ -65,7 +91,10 @@ export async function getStoredProfileDisplayData(): Promise<{ name: string; cod
     AsyncStorage.getItem(PROFILE_NAME_KEY),
     AsyncStorage.getItem(PROFILE_CODE_KEY),
   ]);
-  return { name: name || "", code: code || "" };
+  return {
+    name: name || getWebStorageValue(WEB_PROFILE_NAME_KEY) || "",
+    code: code || getWebStorageValue(WEB_PROFILE_CODE_KEY) || "",
+  };
 }
 
 export function clearSession() {
@@ -76,6 +105,8 @@ export function clearSession() {
   AsyncStorage.removeItem(TOKEN_KEY);
   AsyncStorage.removeItem(PROFILE_NAME_KEY);
   AsyncStorage.removeItem(PROFILE_CODE_KEY);
+  setWebStorageValue(WEB_PROFILE_NAME_KEY);
+  setWebStorageValue(WEB_PROFILE_CODE_KEY);
 }
 
 export function setCenterUrl(url: string) {
