@@ -146,6 +146,18 @@ interface QuickAccessItem {
   adminOnly?: boolean;
 }
 
+function countStaffClasses(calendarData: any): number {
+  const sessions: any[] = Array.isArray(calendarData?.sessions) ? calendarData.sessions : [];
+  const classKeys = new Set<string>();
+
+  for (const session of sessions) {
+    const classKey = session.classId ?? session.classCode ?? session.className;
+    if (classKey) classKeys.add(String(classKey));
+  }
+
+  return classKeys.size;
+}
+
 const QUICK_CARD_WIDTH = 88;
 const QUICK_CARD_GAP   = 10;
 
@@ -755,7 +767,20 @@ export default function HomeScreen() {
     // Thử endpoint tổng hợp riêng trước (nếu trung tâm có)
     try {
       const data = await apiGet<StaffDashboardStats>("/api/mobile/staff/dashboard-stats");
-      setStaffStats(data);
+      if (data.classCount > 0) {
+        setStaffStats(data);
+        return;
+      }
+
+      // Một số backend trả classCount = 0 khi bảng lương chưa có dữ liệu,
+      // dù lịch Staff vẫn có các buổi dạy. Đếm lại từ lịch để không hiển thị sai.
+      const month = new Date().toISOString().slice(0, 7);
+      try {
+        const calendarData = await apiGet<any>(`/api/mobile/staff/calendar?month=${month}`);
+        setStaffStats({ ...data, classCount: countStaffClasses(calendarData) });
+      } catch {
+        setStaffStats(data);
+      }
       return;
     } catch {}
 
@@ -785,13 +810,16 @@ export default function HomeScreen() {
           .flatMap((col: any) => col.tasks ?? []).length;
       }
 
-      // Lớp học: từ bảng lương gần nhất (giống trang Lương đứng lớp)
+      // Lớp học: đếm các lớp duy nhất trong lịch Staff.
+      // Không phụ thuộc bảng lương vì lương có thể chưa publish/chưa có kỳ.
       let classCount = 0;
-      if (salaryResult.status === "fulfilled") {
+      if (calendarResult.status === "fulfilled") {
+        classCount = countStaffClasses(calendarResult.value);
+      }
+      if (classCount === 0 && salaryResult.status === "fulfilled") {
+        // Fallback cho trung tâm cũ không trả classId/classCode trong calendar.
         const tables: any[] = salaryResult.value ?? [];
-        if (tables.length > 0) {
-          classCount = tables[0].classes?.length ?? 0;
-        }
+        classCount = tables[0]?.classes?.length ?? 0;
       }
 
       // Đã dạy: đếm buổi đã qua trong tháng từ calendar (giống trang Lịch, không cần publish lương)
