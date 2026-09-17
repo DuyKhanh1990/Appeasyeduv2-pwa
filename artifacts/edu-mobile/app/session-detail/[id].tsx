@@ -25,6 +25,11 @@ import { FileList } from "@/components/FileViewer";
 import { HtmlText } from "@/components/HtmlText";
 import { PostHtmlContent } from "@/components/PostHtmlContent";
 import { AssignContentSheet } from "@/components/AssignContentSheet";
+import {
+  TeacherReviewContent,
+  hasPublishedTeacherReview,
+  type TeacherReviewBlock,
+} from "@/components/TeacherReviewContent";
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 
@@ -42,22 +47,6 @@ interface ContentItem {
   attachments?: Attachment[];
   availableAt?: string | null;
   maxAttempts?: number | null;
-}
-
-interface ReviewCriteriaItem {
-  subCriteriaName: string;
-  comment: string;
-}
-
-interface ReviewCriteria {
-  criteriaName: string;
-  rating?: number;
-  items: ReviewCriteriaItem[];
-}
-
-interface ReviewTeacherBlock {
-  teacherName: string;
-  criteria: ReviewCriteria[];
 }
 
 interface StudentInfo {
@@ -92,7 +81,7 @@ interface StudentSession {
   attendanceNote?: string | null;
   enrolledCount?: number;
   reviewPublished: boolean;
-  reviewData: ReviewTeacherBlock[];
+  reviewData: TeacherReviewBlock[];
   generalContents: ContentItem[];
   personalContents: ContentItem[];
   student?: StudentInfo | null;
@@ -219,16 +208,11 @@ function ContentModal({ item, onClose, colors }: {
 
 function ReviewModal({ visible, reviewData, onClose, colors }: {
   visible: boolean;
-  reviewData: ReviewTeacherBlock[];
+  reviewData: TeacherReviewBlock[];
   onClose: () => void;
   colors: ReturnType<typeof useColors>;
 }) {
   const insets = useSafeAreaInsets();
-  const hasContent = Array.isArray(reviewData) && reviewData.some((block) =>
-    Array.isArray(block.criteria) && block.criteria.some((c) =>
-      Array.isArray(c.items) && c.items.some((i) => i.comment && i.comment.trim() !== "")
-    )
-  );
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -263,56 +247,7 @@ function ReviewModal({ visible, reviewData, onClose, colors }: {
           contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 32 }}
           showsVerticalScrollIndicator={false}
         >
-          {!hasContent ? (
-            <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center", paddingVertical: 40 }}>
-              Chưa có nội dung nhận xét
-            </Text>
-          ) : (reviewData || []).map((block, blockIdx) => {
-            const hasBlockContent = Array.isArray(block.criteria) && block.criteria.some(
-              (c) => Array.isArray(c.items) && c.items.some((i) => i.comment && i.comment.trim() !== "")
-            );
-            if (!hasBlockContent) return null;
-            return (
-              <View key={blockIdx} style={{ backgroundColor: "#fffbeb", borderRadius: 12, padding: 12, marginBottom: 12, borderLeftWidth: 3, borderLeftColor: "#f59e0b" }}>
-                {block.teacherName ? (
-                  <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#f59e0b", marginBottom: 8 }}>{block.teacherName}</Text>
-                ) : null}
-                {(block.criteria || []).map((criteria, ci) => {
-                  const filteredItems = (criteria.items || []).filter((i) => i.comment && i.comment.trim() !== "");
-                  const hasRating = criteria.rating != null && criteria.rating > 0;
-                  if (filteredItems.length === 0 && !hasRating) return null;
-                  return (
-                    <View key={ci} style={{ marginBottom: ci < (block.criteria.length - 1) ? 10 : 0 }}>
-                      {criteria.criteriaName ? (
-                        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                          <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#92400e", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                            {criteria.criteriaName}
-                          </Text>
-                          {hasRating ? (
-                            <View style={{ flexDirection: "row", gap: 2 }}>
-                              {[1,2,3,4,5].map((s) => (
-                                <Text key={s} style={{ fontSize: 13, color: s <= (criteria.rating ?? 0) ? "#f59e0b" : "#d1d5db" }}>★</Text>
-                              ))}
-                            </View>
-                          ) : null}
-                        </View>
-                      ) : null}
-                      {filteredItems.map((item, ii) => (
-                        <View key={ii} style={{ backgroundColor: "#fff", borderRadius: 8, padding: 10, marginBottom: ii < filteredItems.length - 1 ? 6 : 0 }}>
-                          {item.subCriteriaName ? (
-                            <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#b45309", marginBottom: 4 }}>
-                              {item.subCriteriaName}
-                            </Text>
-                          ) : null}
-                          <HtmlText html={item.comment} style={{ fontSize: 13, color: "#374151", lineHeight: 19 }} compactImages />
-                        </View>
-                      ))}
-                    </View>
-                  );
-                })}
-              </View>
-            );
-          })}
+          <TeacherReviewContent reviewData={reviewData} colors={colors} />
         </ScrollView>
       </View>
     </Modal>
@@ -385,7 +320,7 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
 
   const attendanceInfo = ATTENDANCE_MAP[session.attendanceStatus || ""] || ATTENDANCE_MAP.pending;
   const allContents = [...(session.generalContents || []), ...(session.personalContents || [])];
-  const hasReview = session.reviewPublished && Array.isArray(session.reviewData) && session.reviewData.length > 0;
+  const hasReview = Boolean(session.reviewPublished && hasPublishedTeacherReview(session.reviewData));
   const isCancelledSession = session.sessionStatus === "cancelled";
 
   const dateStr = sessionDate
@@ -803,7 +738,13 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function SessionDetailScreen() {
-  const { id, sessionDate, isStudent, isTestSession: isTestParam } = useLocalSearchParams<{ id: string; sessionDate?: string; isStudent?: string; isTestSession?: string }>();
+  const { id, sessionDate, isStudent, isTestSession: isTestParam, studentId } = useLocalSearchParams<{
+    id: string;
+    sessionDate?: string;
+    isStudent?: string;
+    isTestSession?: string;
+    studentId?: string;
+  }>();
   const { user, isLoading: authLoading } = useAuth();
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -836,12 +777,15 @@ export default function SessionDetailScreen() {
       const endpoint = isTestSessionParam
         ? `/api/mobile/student/test-session/${id}`
         : `/api/mobile/student/session/${id}`;
-      apiGet<StudentSession>(endpoint)
+      const studentQuery = user?.role === "parent" && studentId
+        ? `?studentId=${encodeURIComponent(studentId)}`
+        : "";
+      apiGet<StudentSession>(`${endpoint}${studentQuery}`)
         .then(setStudentSession)
         .catch(() => {
           // If test-session endpoint fails (not yet implemented), fall back to session endpoint
           if (isTestSessionParam) {
-            apiGet<StudentSession>(`/api/mobile/student/session/${id}`)
+            apiGet<StudentSession>(`/api/mobile/student/session/${id}${studentQuery}`)
               .then(setStudentSession)
               .catch(() => setStudentError(true))
               .finally(() => setStudentLoading(false));
