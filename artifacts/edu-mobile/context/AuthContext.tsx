@@ -188,9 +188,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userData = {
           id: String(me.user.id),
           username: me.user.username,
-          name: getDisplayName(me) ?? storedProfile.name || undefined,
+          name: getDisplayName(me) ?? (storedProfile.name || undefined),
         };
-        profileCode = me.profile?.code ?? me.staffCode ?? storedProfile.code || me.user.username;
+        profileCode = me.profile?.code ?? me.staffCode ?? (storedProfile.code || me.user.username);
         profileId = me.profile?.id ? String(me.profile.id) : (me.studentId ?? me.staffId);
       } catch {
         const storedRole = await getStoredRole();
