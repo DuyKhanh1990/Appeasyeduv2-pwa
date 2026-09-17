@@ -269,9 +269,47 @@ function BulkAttendanceModal({ count, onClose, onSave, colors }: {
   );
 }
 
-interface EvaluationSubCriteria { id: string; name: string }
-interface EvaluationCriteria { id: string; name: string; subCriteria: EvaluationSubCriteria[] }
+interface EvaluationSubCriteria {
+  id: string;
+  name: string;
+  parentId?: string | null;
+  itemType?: string | null;
+  inputType?: string | null;
+  groupName?: string | null;
+}
+interface EvaluationCriteria {
+  id: string;
+  name: string;
+  inputType?: string | null;
+  subCriteria: EvaluationSubCriteria[];
+}
 interface SessionTeacher { id: string; fullName: string }
+interface ReviewFormStudent {
+  studentSessionId: string;
+  reviewData?: Record<string, unknown> | null;
+  reviewPublished?: boolean;
+}
+interface ReviewFormResponse {
+  criteria: EvaluationCriteria[];
+  teachers: SessionTeacher[];
+  students: ReviewFormStudent[];
+}
+
+function isCheckboxInput(inputType?: string | null) {
+  return (inputType ?? "").trim().toLowerCase() === "checkbox";
+}
+
+function getCriteriaItems(criteria: EvaluationCriteria) {
+  return (criteria.subCriteria ?? []).filter((item) => item.itemType !== "heading");
+}
+
+function getItemGroupName(criteria: EvaluationCriteria, item: EvaluationSubCriteria) {
+  if (item.groupName?.trim()) return item.groupName.trim();
+  if (!item.parentId) return "";
+  return criteria.subCriteria.find((candidate) =>
+    candidate.id === item.parentId && candidate.itemType === "heading"
+  )?.name ?? "";
+}
 
 function StarRating({ value, onChange, color }: { value: number; onChange: (v: number) => void; color: string }) {
   return (
@@ -302,6 +340,7 @@ function ReviewModal({ student, sessionId, onClose, onSave, colors, cachedReview
   const [activeTeacherIdx, setActiveTeacherIdx] = useState(0);
   const [publish, setPublish] = useState(true);
   const [scores, setScores] = useState<Record<string, Record<string, number>>>({});
+  const [checks, setChecks] = useState<Record<string, Record<string, boolean>>>({});
   // Stores raw HTML per teacherId -> fieldKey
   const [subHtml, setSubHtml] = useState<Record<string, Record<string, string>>>({});
   // Which criterion is expanded inline for editing
@@ -309,27 +348,25 @@ function ReviewModal({ student, sessionId, onClose, onSave, colors, cachedReview
   const criterionEditorRef = useRef<HomeworkRichEditorHandle>(null);
 
   useEffect(() => {
-    Promise.all([
-      apiGet<{ teachers: SessionTeacher[]; evaluationCriteriaIds: string[] }>(`/api/mobile/staff/calendar/session/${sessionId}`),
-      apiGet<EvaluationCriteria[]>("/api/evaluation-criteria"),
-    ])
-      .then(async ([detail, allCriteria]) => {
-        const detailTeachers = detail.teachers ?? [];
-        const criteriaIds: string[] = detail.evaluationCriteriaIds ?? [];
-        const filtered = allCriteria.filter((c) => criteriaIds.includes(c.id));
+    apiGet<ReviewFormResponse>(`/api/mobile/staff/calendar/session/${sessionId}/review-form`)
+      .then(async (form) => {
+        const detailTeachers = form.teachers ?? [];
+        const filtered = form.criteria ?? [];
         setTeachers(detailTeachers);
         setCriteria(filtered);
 
         const fallbackId = user?.id ?? "__noauth__";
         const tIds: string[] = detailTeachers.length > 0 ? detailTeachers.map((t) => t.id) : [fallbackId];
         const initScores: Record<string, Record<string, number>> = {};
+        const initChecks: Record<string, Record<string, boolean>> = {};
         const initHtml: Record<string, Record<string, string>> = {};
-        for (const tid of tIds) { initScores[tid] = {}; initHtml[tid] = {}; }
+        for (const tid of tIds) { initScores[tid] = {}; initChecks[tid] = {}; initHtml[tid] = {}; }
 
         const applyReviewData = (rawData: Record<string, any>, publishedVal: boolean) => {
           for (const tid of tIds) {
             const saved: any = rawData[tid] ?? {};
             const newScores: Record<string, number> = {};
+            const newChecks: Record<string, boolean> = {};
             const newHtml: Record<string, string> = {};
             if (Array.isArray(saved.items)) {
               for (const item of saved.items) {
@@ -337,6 +374,9 @@ function ReviewModal({ student, sessionId, onClose, onSave, colors, cachedReview
                 if (!commentKey) continue;
                 // Store raw HTML — used as initialHtml by the inline HomeworkRichEditor
                 if (item.comment !== undefined) newHtml[commentKey] = String(item.comment);
+                if (item.inputType === "checkbox" && typeof item.checked === "boolean") {
+                  newChecks[commentKey] = item.checked;
+                }
               }
               if (saved.criteriaRatings && typeof saved.criteriaRatings === "object") {
                 for (const [cId, score] of Object.entries(saved.criteriaRatings)) {
@@ -356,6 +396,7 @@ function ReviewModal({ student, sessionId, onClose, onSave, colors, cachedReview
               if (saved.scores && typeof saved.scores === "object") Object.assign(newScores, saved.scores);
             }
             initScores[tid] = newScores;
+            initChecks[tid] = newChecks;
             initHtml[tid] = newHtml;
           }
           setPublish(publishedVal);
@@ -364,32 +405,38 @@ function ReviewModal({ student, sessionId, onClose, onSave, colors, cachedReview
         if (cachedReviewData) {
           applyReviewData(cachedReviewData.reviewData as Record<string, any>, cachedReviewData.published);
         } else {
-          try {
-            const existing = await apiGet<{ hasReview: boolean; reviewPublished: boolean; reviewData: Record<string, unknown> }>(
-              `/api/student-sessions/${student.studentSessionId}/review`
-            );
-            const rawData = (existing.reviewData && typeof existing.reviewData === "object" && !Array.isArray(existing.reviewData))
-              ? existing.reviewData as Record<string, any>
-              : {};
-            applyReviewData(rawData, existing.reviewPublished ?? true);
-          } catch {
-          }
+          const currentStudent = (form.students ?? []).find(
+            (item) => item.studentSessionId === student.studentSessionId,
+          );
+          const rawData = currentStudent?.reviewData;
+          applyReviewData(
+            rawData && typeof rawData === "object" && !Array.isArray(rawData)
+              ? rawData as Record<string, any>
+              : {},
+            currentStudent?.reviewPublished ?? false,
+          );
         }
 
         setScores(initScores);
+        setChecks(initChecks);
         setSubHtml(initHtml);
       })
       .catch(() => {})
       .finally(() => setLoadingMeta(false));
-  }, [sessionId, student.studentSessionId, student.hasReview]);
+  }, [sessionId, student.studentSessionId, cachedReviewData, user?.id]);
 
   const teacherList: SessionTeacher[] = teachers.length > 0 ? teachers : [{ id: user?.id ?? "__noauth__", fullName: user?.name ?? "Giáo viên" }];
   const activeTeacher = teacherList[activeTeacherIdx] ?? teacherList[0];
   const activeScores = scores[activeTeacher?.id] ?? {};
+  const activeChecks = checks[activeTeacher?.id] ?? {};
   const activeHtml = subHtml[activeTeacher?.id] ?? {};
 
   const setScore = (teacherId: string, subId: string, val: number) => {
     setScores((prev) => ({ ...prev, [teacherId]: { ...prev[teacherId], [subId]: val } }));
+  };
+
+  const setChecked = (teacherId: string, subId: string, value: boolean) => {
+    setChecks((prev) => ({ ...prev, [teacherId]: { ...prev[teacherId], [subId]: value } }));
   };
 
   const saveFieldHtml = useCallback((teacherId: string, fieldKey: string, html: string) => {
@@ -428,26 +475,37 @@ function ReviewModal({ student, sessionId, onClose, onSave, colors, cachedReview
       if (criteria.length === 0) {
         const generalHtml = subHtml[t.id]?.["__general__"] ?? "";
         if (generalHtml) {
-          items.push({ criteriaId: "__general__", criteriaName: "Nhận xét chung", comment: generalHtml, score: 0 });
+          items.push({
+            criteriaId: "__general__",
+            criteriaName: "Nhận xét chung",
+            inputType: "text",
+            comment: generalHtml,
+          });
         }
       } else {
         for (const c of criteria) {
-          if (c.subCriteria.length === 0) {
+          const criterionItems = getCriteriaItems(c);
+          if (criterionItems.length === 0) {
+            const inputType = c.inputType ?? "text";
             items.push({
               criteriaId: c.id,
               criteriaName: c.name,
+              inputType,
+              ...(isCheckboxInput(inputType) ? { checked: checks[t.id]?.[c.id] ?? false } : {}),
               comment: subHtml[t.id]?.[c.id] ?? "",
-              score: scores[t.id]?.[c.id] ?? 0,
             });
           } else {
-            for (const sc of c.subCriteria) {
+            for (const sc of criterionItems) {
+              const inputType = sc.inputType ?? "text";
               items.push({
                 criteriaId: c.id,
                 criteriaName: c.name,
                 subCriteriaId: sc.id,
                 subCriteriaName: sc.name,
+                groupName: getItemGroupName(c, sc),
+                inputType,
+                ...(isCheckboxInput(inputType) ? { checked: checks[t.id]?.[sc.id] ?? false } : {}),
                 comment: subHtml[t.id]?.[sc.id] ?? "",
-                score: scores[t.id]?.[c.id] ?? 0,
               });
             }
           }
@@ -556,6 +614,44 @@ function ReviewModal({ student, sessionId, onClose, onSave, colors, cachedReview
     );
   };
 
+  const renderCheckboxCard = (fieldKey: string, label: string) => {
+    const checked = activeChecks[fieldKey] ?? false;
+    return (
+      <View
+        key={fieldKey}
+        style={{
+          backgroundColor: colors.muted,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: checked ? "#10b98180" : colors.border,
+          paddingHorizontal: 12,
+          paddingVertical: 10,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 10,
+        }}
+      >
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>
+            {label}
+          </Text>
+          <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: checked ? "#15803d" : colors.mutedForeground }}>
+            {checked ? "Đạt" : "Chưa đạt"}
+          </Text>
+        </View>
+        <Switch
+          value={checked}
+          onValueChange={(value) => {
+            setChecked(activeTeacher.id, fieldKey, value);
+            Haptics.selectionAsync();
+          }}
+          trackColor={{ false: colors.border, true: "#10b98180" }}
+          thumbColor={checked ? "#10b981" : "#9ca3af"}
+        />
+      </View>
+    );
+  };
+
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -609,30 +705,55 @@ function ReviewModal({ student, sessionId, onClose, onSave, colors, cachedReview
 
             <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
               <View style={{ paddingHorizontal: 16, paddingTop: 14, gap: 16 }}>
-                {criteria.length > 0 ? criteria.map((c) => (
-                  <View key={c.id}>
-                    {/* Criteria group header: bold name + star rating */}
-                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                      <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: colors.foreground }}>{c.name}</Text>
-                      <StarRating value={activeScores[c.id] ?? 0} onChange={(v) => setScore(activeTeacher.id, c.id, v)} color="#8b5cf6" />
-                    </View>
-                    <View style={{ gap: 14 }}>
-                      {c.subCriteria.length === 0
-                        ? (
+                {criteria.length > 0 ? criteria.map((c) => {
+                  const criterionItems = getCriteriaItems(c);
+                  const groups: Array<{ name: string; items: EvaluationSubCriteria[] }> = [];
+                  for (const item of criterionItems) {
+                    const name = getItemGroupName(c, item);
+                    const group = groups.find((candidate) => candidate.name === name);
+                    if (group) group.items.push(item);
+                    else groups.push({ name, items: [item] });
+                  }
+
+                  return (
+                    <View key={c.id}>
+                      {/* Criteria header: name + one rating */}
+                      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                        <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: colors.foreground }}>{c.name}</Text>
+                        <StarRating value={activeScores[c.id] ?? 0} onChange={(v) => setScore(activeTeacher.id, c.id, v)} color="#8b5cf6" />
+                      </View>
+                      <View style={{ gap: 14 }}>
+                        {criterionItems.length === 0 ? (
                           <View style={{ gap: 6 }}>
-                            <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#f97316" }}>{c.name}</Text>
-                            {renderFieldCard(c.id, c.name, false)}
+                            {isCheckboxInput(c.inputType)
+                              ? renderCheckboxCard(c.id, c.name)
+                              : renderFieldCard(c.id, c.name, false)}
                           </View>
-                        )
-                        : c.subCriteria.map((sc) => (
-                          <View key={sc.id} style={{ gap: 6 }}>
-                            <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#f97316" }}>{sc.name}</Text>
-                            {renderFieldCard(sc.id, sc.name, false)}
+                        ) : groups.map((group, groupIndex) => (
+                          <View key={`${c.id}-${group.name || "ungrouped"}-${groupIndex}`} style={{ gap: 6 }}>
+                            {group.name ? (
+                              <Text style={{ fontSize: 12, fontFamily: "Inter_700Bold", color: "#f97316", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                                {group.name}
+                              </Text>
+                            ) : null}
+                            {group.items.map((sc) => (
+                              <View key={sc.id} style={{ gap: 6 }}>
+                                {isCheckboxInput(sc.inputType)
+                                  ? renderCheckboxCard(sc.id, sc.name)
+                                  : (
+                                    <>
+                                      <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#f97316" }}>{sc.name}</Text>
+                                      {renderFieldCard(sc.id, sc.name, true)}
+                                    </>
+                                  )}
+                              </View>
+                            ))}
                           </View>
                         ))}
+                      </View>
                     </View>
-                  </View>
-                )) : (
+                  );
+                }) : (
                   <View style={{ alignItems: "center", paddingVertical: 32, paddingHorizontal: 16, gap: 10 }}>
                     <Feather name="alert-circle" size={32} color="#f59e0b" />
                     <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, textAlign: "center" }}>
@@ -862,7 +983,7 @@ export default function SessionAttendanceScreen() {
     );
     setReviewCache((prev) => ({ ...prev, [studentSessionId]: { reviewData, published: publish } }));
     try {
-      await apiPost("/api/student-sessions/review", {
+      await apiPost(`/api/mobile/staff/calendar/session/${id}/review`, {
         studentSessionIds: [studentSessionId],
         reviewData,
         published: publish,
