@@ -1,0 +1,481 @@
+Đúng, với Staff tại /my-space/calendar, luồng nhận xét học viên dùng các API sau.
+
+1. Luồng Web Staff hiện tại
+Bước 1: Lấy danh sách lịch dạy của nhân viên
+GET /api/my-space/calendar/staff?month=YYYY-MM
+
+Ví dụ:
+
+GET /api/my-space/calendar/staff?month=2026-09
+
+Response có các buổi học:
+
+{
+  "sessions": [
+    {
+      "classSessionId": "class-session-uuid",
+      "classId": "class-uuid",
+      "sessionDate": "2026-09-02",
+      "className": "Toán 9A",
+      "classCode": "T9A-001",
+      "startTime": "08:00",
+      "endTime": "10:00",
+      "sessionStatus": "scheduled"
+    }
+  ],
+  "datesWithSessions": [
+    "2026-09-02"
+  ],
+  "month": "2026-09",
+  "staffId": "staff-uuid"
+}
+
+Bước 2: Lấy chi tiết buổi học
+Khi nhân viên bấm vào một buổi học:
+
+GET /api/my-space/calendar/staff/session/:classSessionId
+
+Ví dụ:
+
+GET /api/my-space/calendar/staff/session/class-session-uuid
+
+Response chính:
+
+{
+  "classSessionId": "class-session-uuid",
+  "classId": "class-uuid",
+  "sessionDate": "2026-09-02",
+  "weekday": 3,
+  "className": "Toán 9A",
+  "classCode": "T9A-001",
+  "startTime": "08:00",
+  "endTime": "10:00",
+  "learningFormat": "offline",
+  "sessionStatus": "scheduled",
+  "sessionIndex": 5,
+  "totalSessions": 24,
+  "teachers": [
+    {
+      "id": "teacher-uuid",
+      "fullName": "Nguyễn Thị B",
+      "code": "GV001"
+    }
+  ],
+  "teacherNames": [
+    "Nguyễn Thị B"
+  ],
+  "evaluationCriteriaIds": [
+    "criteria-uuid-1"
+  ],
+  "enrolledCount": 20,
+  "attendancePendingCount": 3,
+  "reviewedCount": 12,
+  "reviewPublished": false,
+  "reviewData": [],
+  "generalContents": [],
+  "personalContents": [],
+  "userType": "staff"
+}
+
+API này trả thông tin tổng quan của buổi học và thống kê nhận xét, chưa phải danh sách chi tiết từng học viên.
+
+Bước 3: Lấy danh sách học viên trong buổi học
+Khi mở bảng học viên của buổi học, Web Staff gọi:
+
+GET /api/class-sessions/:classSessionId/student-sessions
+
+Ví dụ:
+
+GET /api/class-sessions/class-session-uuid/student-sessions
+
+Response là mảng các bản ghi học viên:
+
+[
+  {
+    "id": "student-session-uuid",
+    "classSessionId": "class-session-uuid",
+    "studentId": "student-uuid",
+    "studentClassId": "student-class-uuid",
+    "classId": "class-uuid",
+    "status": "active",
+    "attendanceStatus": "present",
+    "attendanceNote": "",
+    "reviewPublished": true,
+    "reviewData": {
+      "teacher-uuid": {
+        "teacherName": "Nguyễn Thị B",
+        "items": [
+          {
+            "criteriaId": "criteria-uuid-1",
+            "criteriaName": "Thái độ học tập",
+            "subCriteriaId": "sub-criteria-uuid-1",
+            "subCriteriaName": "Chú ý nghe giảng",
+            "groupName": "Tập trung trong giờ học",
+            "inputType": "checkbox",
+            "checked": true,
+            "comment": ""
+          },
+          {
+            "criteriaId": "criteria-uuid-1",
+            "criteriaName": "Thái độ học tập",
+            "subCriteriaId": "sub-criteria-uuid-2",
+            "subCriteriaName": "Chủ động phát biểu",
+            "groupName": "Tập trung trong giờ học",
+            "inputType": "text",
+            "comment": "Có tiến bộ"
+          }
+        ],
+        "criteriaRatings": {
+          "criteria-uuid-1": 4
+        }
+      }
+    },
+    "student": {
+      "id": "student-uuid",
+      "fullName": "Nguyễn Văn A",
+      "code": "HV001"
+    }
+  }
+]
+
+Các field quan trọng để hiển thị nút nhận xét:
+
+Field	Ý nghĩa
+id	ID của studentSession, dùng khi lưu nhận xét
+student.fullName	Tên học viên
+student.code	Mã học viên
+reviewData	Dữ liệu nhận xét hiện tại
+reviewPublished	Đã công khai cho học viên hay chưa
+attendanceStatus	Trạng thái điểm danh
+Nếu:
+
+"reviewData": null
+
+hoặc object rỗng thì hiển thị nút:
+
++ Thêm
+
+Nếu đã có dữ liệu thì hiển thị:
+
+Đã nhận xét
+
+2. Lấy danh sách tiêu chí và giáo viên
+Để dựng form nhập nhận xét, Web Staff dùng:
+
+GET /api/evaluation-criteria
+
+API trả danh sách bộ tiêu chí và các tiêu chí con. Cấu trúc cần dùng:
+
+[
+  {
+    "id": "criteria-uuid-1",
+    "name": "Thái độ học tập",
+    "subCriteria": [
+      {
+        "id": "heading-uuid",
+        "name": "Tập trung trong giờ học",
+        "parentId": null,
+        "itemType": "heading",
+        "inputType": "text"
+      },
+      {
+        "id": "sub-criteria-uuid-1",
+        "name": "Chú ý nghe giảng",
+        "parentId": "heading-uuid",
+        "itemType": "criterion",
+        "inputType": "checkbox"
+      },
+      {
+        "id": "sub-criteria-uuid-2",
+        "name": "Chủ động phát biểu",
+        "parentId": "heading-uuid",
+        "itemType": "criterion",
+        "inputType": "text"
+      }
+    ]
+  }
+]
+
+Quy tắc:
+
+itemType: "heading" là tiêu đề nhóm.
+itemType: "criterion" là tiêu chí thực tế để nhập.
+inputType: "checkbox" là checkbox Đạt/Chưa đạt.
+inputType: "text" là ô nhập nhận xét.
+parentId trỏ đến tiêu đề nhóm.
+Danh sách giáo viên trong buổi học được trả trong API:
+
+GET /api/my-space/calendar/staff/session/:classSessionId
+
+Field:
+
+"teachers": [
+  {
+    "id": "teacher-uuid",
+    "fullName": "Nguyễn Thị B",
+    "code": "GV001"
+  }
+]
+
+3. Lưu nhận xét Web Staff
+Endpoint
+POST /api/student-sessions/review
+
+Body
+{
+  "studentSessionIds": [
+    "student-session-uuid"
+  ],
+  "published": true,
+  "reviewData": {
+    "teacher-uuid": {
+      "teacherName": "Nguyễn Thị B",
+      "items": [
+        {
+          "criteriaId": "criteria-uuid-1",
+          "criteriaName": "Thái độ học tập",
+          "subCriteriaId": "sub-criteria-uuid-1",
+          "subCriteriaName": "Chú ý nghe giảng",
+          "groupName": "Tập trung trong giờ học",
+          "inputType": "checkbox",
+          "checked": true,
+          "comment": ""
+        },
+        {
+          "criteriaId": "criteria-uuid-1",
+          "criteriaName": "Thái độ học tập",
+          "subCriteriaId": "sub-criteria-uuid-2",
+          "subCriteriaName": "Chủ động phát biểu",
+          "groupName": "Tập trung trong giờ học",
+          "inputType": "text",
+          "comment": "Có tiến bộ"
+        }
+      ],
+      "criteriaRatings": {
+        "criteria-uuid-1": 4
+      }
+    }
+  }
+}
+
+Response thành công
+{
+  "success": true
+}
+
+Ý nghĩa published
+"published": true
+
+Lưu nhận xét.
+Công khai cho học viên/phụ huynh.
+Gửi thông báo nhận xét mới.
+"published": false
+
+Lưu nhận xét nháp.
+Học viên/phụ huynh chưa nhìn thấy.
+Không gửi thông báo công khai.
+4. Nhận xét hàng loạt nhiều học viên
+Có thể truyền nhiều studentSessionIds:
+
+{
+  "studentSessionIds": [
+    "student-session-uuid-1",
+    "student-session-uuid-2",
+    "student-session-uuid-3"
+  ],
+  "published": true,
+  "reviewData": {
+    "teacher-uuid": {
+      "teacherName": "Nguyễn Thị B",
+      "items": [],
+      "criteriaRatings": {
+        "criteria-uuid-1": 4
+      }
+    }
+  }
+}
+
+Nhận xét sẽ được áp dụng cho tất cả các học viên trong danh sách.
+
+5. Quy tắc dữ liệu nhận xét mới
+Bộ tiêu chí
+{
+  "criteriaName": "Thái độ học tập",
+  "criteriaRatings": {
+    "criteria-uuid-1": 4
+  }
+}
+
+criteriaRatings phải dùng ID của bộ tiêu chí làm key:
+
+{
+  "criteria-uuid-1": 4
+}
+
+Không dùng tên làm key:
+
+{
+  "Thái độ học tập": 4
+}
+
+Tiêu chí checkbox
+{
+  "subCriteriaName": "Chú ý nghe giảng",
+  "inputType": "checkbox",
+  "checked": true,
+  "comment": ""
+}
+
+checked: true → Đạt.
+checked: false → Chưa đạt.
+Tiêu chí text
+{
+  "subCriteriaName": "Chủ động phát biểu",
+  "inputType": "text",
+  "comment": "Có tiến bộ"
+}
+
+Nhóm tiêu chí
+{
+  "groupName": "Tập trung trong giờ học"
+}
+
+Các item cùng groupName thuộc cùng một nhóm. Khi render không được lặp tiêu đề nhóm cho từng item.
+
+6. API Mobile Staff tương đương
+Nếu bên PWA Staff dùng JWT thay vì session cookie, dùng bộ API này.
+
+Lấy form nhận xét hoàn chỉnh
+GET /api/mobile/staff/calendar/session/:classSessionId/review-form
+
+Header:
+
+Authorization: Bearer <JWT>
+
+Response:
+
+{
+  "criteria": [
+    {
+      "id": "criteria-uuid-1",
+      "name": "Thái độ học tập",
+      "subCriteria": [
+        {
+          "id": "heading-uuid",
+          "name": "Tập trung trong giờ học",
+          "parentId": null,
+          "itemType": "heading",
+          "inputType": "text"
+        },
+        {
+          "id": "sub-criteria-uuid-1",
+          "name": "Chú ý nghe giảng",
+          "parentId": "heading-uuid",
+          "itemType": "criterion",
+          "inputType": "checkbox"
+        }
+      ]
+    }
+  ],
+  "teachers": [
+    {
+      "id": "teacher-uuid",
+      "fullName": "Nguyễn Thị B"
+    }
+  ],
+  "students": [
+    {
+      "studentSessionId": "student-session-uuid",
+      "studentName": "Nguyễn Văn A",
+      "studentCode": "HV001",
+      "reviewPublished": true,
+      "reviewData": {
+        "teacher-uuid": {
+          "teacherName": "Nguyễn Thị B",
+          "items": [],
+          "criteriaRatings": {
+            "criteria-uuid-1": 4
+          }
+        }
+      }
+    }
+  ]
+}
+
+Lưu nhận xét Mobile Staff
+POST /api/mobile/staff/calendar/session/:classSessionId/review
+
+Body giống Web:
+
+{
+  "studentSessionIds": [
+    "student-session-uuid"
+  ],
+  "published": true,
+  "reviewData": {
+    "teacher-uuid": {
+      "teacherName": "Nguyễn Thị B",
+      "items": [
+        {
+          "criteriaId": "criteria-uuid-1",
+          "criteriaName": "Thái độ học tập",
+          "subCriteriaId": "sub-criteria-uuid-1",
+          "subCriteriaName": "Chú ý nghe giảng",
+          "groupName": "Tập trung trong giờ học",
+          "inputType": "checkbox",
+          "checked": true,
+          "comment": ""
+        }
+      ],
+      "criteriaRatings": {
+        "criteria-uuid-1": 4
+      }
+    }
+  }
+}
+
+Response:
+
+{
+  "success": true
+}
+
+Lấy danh sách học viên Mobile Staff
+GET /api/mobile/staff/calendar/session/:classSessionId/students
+
+API này trả trạng thái nhanh:
+
+[
+  {
+    "studentSessionId": "student-session-uuid",
+    "studentId": "student-uuid",
+    "studentName": "Nguyễn Văn A",
+    "studentCode": "HV001",
+    "attendanceStatus": "present",
+    "attendanceNote": "",
+    "sessionOrder": 5,
+    "hasReview": true,
+    "reviewPublished": true
+  }
+]
+
+Để lấy nội dung nhận xét đầy đủ, dùng:
+
+GET /api/mobile/staff/calendar/session/:classSessionId/review-form
+
+Tóm tắt cho bên Web Staff
+Bên Web Staff cần dùng chuỗi API:
+
+GET  /api/my-space/calendar/staff?month=YYYY-MM
+GET  /api/my-space/calendar/staff/session/:classSessionId
+GET  /api/class-sessions/:classSessionId/student-sessions
+GET  /api/evaluation-criteria
+POST /api/student-sessions/review
+
+Trong đó API quan trọng nhất khi bấm nhận xét một học viên là:
+
+GET /api/class-sessions/:classSessionId/student-sessions
+
+để lấy studentSessionId, reviewData, reviewPublished, sau đó lưu bằng:
+
+POST /api/student-sessions/review
