@@ -81,13 +81,18 @@ interface MobileAuthResponse {
   staffCode?: string;
 }
 
-function getDisplayName(data: MobileAuthResponse): string | undefined {
-  const code = (
-    data.profile?.code ??
-    data.staffCode ??
-    data.user.username
-  ).trim().toLowerCase();
+function getDisplayName(data: MobileAuthResponse, preferredName?: string): string | undefined {
+  const identityCodes = new Set(
+    [
+      data.profile?.code,
+      data.staffCode,
+      data.user.username,
+    ]
+      .map((value) => value?.trim().toLowerCase())
+      .filter(Boolean),
+  );
   const candidates = [
+    preferredName,
     data.profile?.fullName,
     data.profile?.displayName,
     data.profile?.name,
@@ -99,7 +104,7 @@ function getDisplayName(data: MobileAuthResponse): string | undefined {
 
   return candidates.find((candidate) => {
     const value = candidate?.trim();
-    return Boolean(value) && value?.toLowerCase() !== code;
+    return Boolean(value) && !identityCodes.has(value.toLowerCase());
   });
 }
 
@@ -188,7 +193,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userData = {
           id: String(me.user.id),
           username: me.user.username,
-          name: getDisplayName(me) ?? (storedProfile.name || undefined),
+          name: getDisplayName(me, storedProfile.name),
         };
         profileCode = me.profile?.code ?? me.staffCode ?? (storedProfile.code || me.user.username);
         profileId = me.profile?.id ? String(me.profile.id) : (me.studentId ?? me.staffId);
