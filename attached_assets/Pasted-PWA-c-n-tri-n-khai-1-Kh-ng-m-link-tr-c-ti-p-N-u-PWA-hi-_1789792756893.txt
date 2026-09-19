@@ -1,0 +1,94 @@
+PWA cần triển khai
+1. Không mở link trực tiếp בלבד
+Nếu PWA hiện tại chỉ làm như sau:
+
+window.open(session.onlineLink);
+
+hoặc:
+
+<a href={session.onlineLink}>Vào học online</a>
+
+thì chưa kích hoạt được logic tự động điểm danh.
+
+PWA phải gọi API trước:
+
+POST /api/mobile/student/session/:classSessionId/online-click
+Authorization: Bearer <JWT>
+
+Sau khi API thành công mới mở link:
+
+await api.post(
+  `/api/mobile/student/session/${classSessionId}/online-click`
+);
+window.open(onlineLink, "_blank");
+
+Backend sẽ tự kiểm tra cấu hình của cơ sở:
+
+Bật: ghi nhận onlineClickedAt và cập nhật attendanceStatus = "present".
+Tắt: chỉ ghi nhận onlineClickedAt, giữ nguyên trạng thái điểm danh.
+PWA không cần tự cập nhật attendanceStatus.
+
+2. Sau khi API thành công, refresh dữ liệu buổi học
+API hiện trả:
+
+{
+  "onlineClickedAt": "2026-09-19T08:00:00.000Z"
+}
+
+PWA nên gọi lại API chi tiết buổi học hoặc refresh calendar để lấy trạng thái mới:
+
+attendanceStatus = "present"
+onlineClickedAt = ...
+
+Nếu không refresh, server đã điểm danh nhưng giao diện PWA có thể vẫn đang hiển thị trạng thái cũ.
+
+3. Dùng đúng classSessionId
+API cần:
+
+classSessionId
+
+Không dùng studentSessionId làm path.
+
+Nếu tài khoản phụ huynh có nhiều con, cần truyền thêm học viên được chọn:
+
+POST /api/mobile/student/session/:classSessionId/online-click?studentId=<STUDENT_ID>
+
+Với học viên thông thường thì không cần studentId.
+
+4. Giữ nguyên logic thời gian hiện tại
+PWA vẫn dùng cấu hình:
+
+GET /api/mobile/online-learning-rules
+
+Hoặc dữ liệu onlineRule trong API chi tiết buổi học.
+
+Các trường gồm:
+
+{
+  "earlyEntryMinutes": 15,
+  "lateEntryMinutes": 5,
+  "earlyEndMinutes": 5,
+  "autoAttendanceOnJoin": true
+}
+
+autoAttendanceOnJoin chủ yếu để PWA biết và hiển thị thông tin nếu cần. Quyết định điểm danh thực tế vẫn nằm ở backend.
+
+PWA không cần làm
+PWA không cần:
+
+Tự gọi API điểm danh staff.
+Tự gửi attendanceStatus: "present".
+Tự đọc hoặc cập nhật database.
+Tự kiểm tra cơ sở nào bật/tắt để quyết định ghi điểm danh.
+Thay đổi luồng khi switch bị tắt.
+Kết luận
+Nếu PWA đã gọi:
+
+POST /api/mobile/student/session/:classSessionId/online-click
+
+khi bấm nút vào học, thì chỉ cần:
+
+Refresh lại dữ liệu sau khi API thành công.
+Kiểm tra UI hiển thị trạng thái Có học.
+Đảm bảo phụ huynh truyền đúng studentId.
+Nếu PWA hiện chỉ mở link trực tiếp, thì cần triển khai thêm đoạn gọi API online-click. Backend hiện đã sẵn sàng cho cả trường hợp bật và tắt switch.
