@@ -48,11 +48,55 @@ interface QrScanResponse {
   };
 }
 
+function extractTokenFromUrl(value: string): string | null {
+  try {
+    const url = new URL(value);
+    for (const key of ["token", "qrToken", "attendanceToken"]) {
+      const token = url.searchParams.get(key)?.trim();
+      if (token) return token;
+    }
+  } catch {
+    // Some QR payloads contain a relative query string rather than a full URL.
+  }
+  const query = value.split(/[?#]/)[1];
+  if (query) {
+    for (const part of query.split("&")) {
+      const [key, ...rest] = part.split("=");
+      if (["token", "qrToken", "attendanceToken"].includes(key)) {
+        const token = decodeURIComponent(rest.join("=")).trim();
+        if (token) return token;
+      }
+    }
+  }
+  return null;
+}
+
+function findTokenInPayload(value: unknown): string | null {
+  if (typeof value === "string") {
+    const raw = value.trim();
+    return extractTokenFromUrl(raw) || (raw || null);
+  }
+  if (!value || typeof value !== "object") return null;
+
+  const record = value as Record<string, unknown>;
+  for (const key of ["token", "qrToken", "attendanceToken"]) {
+    const candidate = record[key];
+    if (typeof candidate === "string" && candidate.trim()) return candidate.trim();
+  }
+  for (const candidate of Object.values(record)) {
+    const token = findTokenInPayload(candidate);
+    if (token) return token;
+  }
+  return null;
+}
+
 function extractQrToken(value: string): string {
   const raw = value.trim();
+  if (!raw) return "";
+  const urlToken = extractTokenFromUrl(raw);
+  if (urlToken) return urlToken;
   try {
-    const url = new URL(raw);
-    return url.searchParams.get("token")?.trim() || raw;
+    return findTokenInPayload(JSON.parse(raw)) || raw;
   } catch {
     return raw;
   }
@@ -98,12 +142,13 @@ export function StaffQrScannerScreen() {
       setScanResult(result);
     } catch (error) {
       const status = (error as { status?: number })?.status;
+      const serverMessage = (error as { serverMessage?: string })?.serverMessage?.trim();
       setScanError(
         status === 404
-          ? "QR không hợp lệ hoặc hiện chưa có lịch điểm danh phù hợp."
+          ? "Camera đã đọc mã QR, nhưng hiện chưa có lịch điểm danh phù hợp cho học viên này. Hãy kiểm tra đúng trung tâm và thời gian buổi học."
           : status === 409
             ? "Có nhiều lịch trùng thời gian. Vui lòng chọn điểm danh trong Lịch."
-            : "Không thể đọc mã QR. Vui lòng thử lại.",
+            : serverMessage || "Không thể đọc mã QR. Vui lòng thử lại.",
       );
       setScannerActive(true);
     } finally {

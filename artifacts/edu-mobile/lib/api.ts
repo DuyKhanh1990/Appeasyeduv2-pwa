@@ -222,7 +222,11 @@ export async function apiGet<T>(path: string): Promise<T> {
   });
   if (!response.ok) {
     handleUnauthorized(response.status);
-    throw Object.assign(new Error(`HTTP ${response.status}`), { status: response.status });
+    const serverMessage = await readErrorMessage(response);
+    throw Object.assign(new Error(serverMessage ?? `HTTP ${response.status}`), {
+      status: response.status,
+      serverMessage,
+    });
   }
   return response.json() as Promise<T>;
 }
