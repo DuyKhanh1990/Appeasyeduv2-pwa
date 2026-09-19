@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   ActivityIndicator,
   Animated,
+  Alert,
   Modal,
   PanResponder,
   Platform,
@@ -24,7 +25,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
-import { apiGet } from "@/lib/api";
+import { apiGet, apiPost } from "@/lib/api";
 import { FileList } from "@/components/FileViewer";
 import { HtmlText } from "@/components/HtmlText";
 import { PostHtmlContent } from "@/components/PostHtmlContent";
@@ -66,6 +67,12 @@ interface StudentSession {
   endTime: string;
   learningFormat?: string;
   onlineLink?: string | null;
+  onlineClickedAt?: string | null;
+  onlineRule?: {
+    earlyEntryMinutes?: number;
+    lateEntryMinutes?: number;
+    earlyEndMinutes?: number;
+  } | null;
   locationId?: string | null;
   locationName?: string | null;
   teacherNames: string[];
@@ -284,15 +291,18 @@ function StudentSessionCard({
   session,
   colors,
   onPress,
+  onOnlineJoined,
   highlighted,
   onLayout,
 }: {
   session: StudentSession;
   colors: ReturnType<typeof useColors>;
   onPress?: () => void;
+  onOnlineJoined?: () => void;
   highlighted?: boolean;
   onLayout?: (y: number) => void;
 }) {
+  const [joiningOnline, setJoiningOnline] = useState(false);
   const isCancelledSession = session.sessionStatus === "cancelled";
   const effectiveAttendanceStatus = session.attendanceStatus || "pending";
   const attendanceColor = ATTENDANCE_MAP[effectiveAttendanceStatus]?.text || colors.primary;
@@ -393,11 +403,17 @@ function StudentSessionCard({
             const endDT = datePart && session.endTime
               ? new Date(`${datePart}T${session.endTime}:00`)
               : null;
-            const joinOpenDT = startDT ? new Date(startDT.getTime() - 15 * 60000) : null;
+            const joinOpenDT = startDT
+              ? new Date(startDT.getTime() - (session.onlineRule?.earlyEntryMinutes ?? 15) * 60000)
+              : null;
+            const joinCloseDT = startDT && session.onlineRule?.lateEntryMinutes != null
+              ? new Date(startDT.getTime() + session.onlineRule.lateEntryMinutes * 60000)
+              : endDT;
             const now = new Date();
             const notYetOpen = joinOpenDT ? now < joinOpenDT : (startDT ? now < startDT : false);
             const alreadyEnded = endDT ? now > endDT : false;
-            const canJoin = !notYetOpen && !alreadyEnded;
+            const tooLate = joinCloseDT ? now > joinCloseDT : false;
+            const canJoin = !notYetOpen && !alreadyEnded && !tooLate;
             const joinOpenLabel = joinOpenDT
               ? `${String(joinOpenDT.getHours()).padStart(2, "0")}:${String(joinOpenDT.getMinutes()).padStart(2, "0")}`
               : session.startTime;
@@ -405,10 +421,37 @@ function StudentSessionCard({
               <View style={{ marginTop: 8, flexDirection: "row", alignItems: "center", gap: 8 }}>
                 <TouchableOpacity
                   activeOpacity={canJoin ? 0.78 : 1}
-                  disabled={!canJoin}
-                  onPress={() => {
+                  disabled={!canJoin || joiningOnline}
+                  onPress={async () => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    if (canJoin && session.onlineLink) Linking.openURL(session.onlineLink);
+                    if (!canJoin || !session.onlineLink || joiningOnline) return;
+
+                    setJoiningOnline(true);
+                    try {
+                      const studentQuery =
+                        session.isParent && session.student?.id
+                          ? `?studentId=${encodeURIComponent(session.student.id)}`
+                          : "";
+                      await apiPost(
+                        `/api/mobile/student/session/${session.classSessionId}/online-click${studentQuery}`,
+                        {},
+                      );
+                      onOnlineJoined?.();
+                    } catch (error) {
+                      const serverMessage = (error as { serverMessage?: string })?.serverMessage;
+                      Alert.alert(
+                        "Không thể vào học online",
+                        serverMessage || "Chưa ghi nhận được lượt vào học. Vui lòng thử lại.",
+                      );
+                      return;
+                    } finally {
+                      setJoiningOnline(false);
+                    }
+                    try {
+                      await Linking.openURL(session.onlineLink);
+                    } catch {
+                      Alert.alert("Không thể mở lớp học", "Link học online không thể mở trên thiết bị này.");
+                    }
                   }}
                   style={{
                     flexDirection: "row",
@@ -420,7 +463,11 @@ function StudentSessionCard({
                     borderRadius: 20,
                   }}
                 >
-                  <MaterialCommunityIcons name="video-outline" size={13} color="#fff" />
+                  {joiningOnline ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <MaterialCommunityIcons name="video-outline" size={13} color="#fff" />
+                  )}
                   <Text style={{ color: "#fff", fontSize: 12, fontFamily: "Inter_600SemiBold" }}>Vào học online</Text>
                 </TouchableOpacity>
                 {!canJoin && (
@@ -1204,6 +1251,7 @@ export default function ScheduleScreen() {
                     colors={colors}
                     highlighted={isHighlighted}
                     onLayout={isHighlighted ? handleSessionHighlightLayout : undefined}
+                    onOnlineJoined={() => { void fetchStudentDay(selectedDate, true); }}
                     onPress={() => router.push({
                       pathname: `/session-detail/[id]` as any,
                       params: {

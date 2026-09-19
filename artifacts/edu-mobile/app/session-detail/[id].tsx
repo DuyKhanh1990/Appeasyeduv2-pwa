@@ -388,13 +388,33 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
     if (!session.onlineLink || !canJoinOnline) return;
     setJoiningOnline(true);
     try {
+      const studentQuery =
+        session.isParent && session.student?.id
+          ? `?studentId=${encodeURIComponent(session.student.id)}`
+          : "";
       const result = await apiPost<{ onlineClickedAt: string }>(
-        `/api/mobile/student/session/${session.classSessionId}/online-click`,
+        `/api/mobile/student/session/${session.classSessionId}/online-click${studentQuery}`,
         {}
       );
-      setSession((prev) => ({ ...prev, onlineClickedAt: result.data?.onlineClickedAt || prev.onlineClickedAt }));
-    } catch {
-      // Non-blocking — still open the link even if tracking fails
+      try {
+        const refreshed = await apiGet<StudentSession>(
+          `/api/mobile/student/session/${session.classSessionId}${studentQuery}`,
+        );
+        setSession(refreshed);
+      } catch {
+        // The click was recorded; keep the local UI in sync if the refresh is unavailable.
+        setSession((prev) => ({
+          ...prev,
+          onlineClickedAt: result.data?.onlineClickedAt || prev.onlineClickedAt,
+        }));
+      }
+    } catch (error) {
+      const serverMessage = (error as { serverMessage?: string })?.serverMessage;
+      Alert.alert(
+        "Không thể vào học online",
+        serverMessage || "Chưa ghi nhận được lượt vào học. Vui lòng thử lại.",
+      );
+      return;
     } finally {
       setJoiningOnline(false);
     }
