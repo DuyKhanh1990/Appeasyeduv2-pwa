@@ -45,6 +45,35 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [showInstallHelp, setShowInstallHelp] = useState(false);
+  const [installing, setInstalling] = useState(false);
+
+  React.useEffect(() => {
+    if (Platform.OS !== "web" || typeof window === "undefined") return;
+
+    const isStandaloneMode =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true;
+    setIsStandalone(isStandaloneMode);
+
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setDeferredInstallPrompt(event as BeforeInstallPromptEvent);
+    };
+    const handleAppInstalled = () => {
+      setIsStandalone(true);
+      setDeferredInstallPrompt(null);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", handleAppInstalled);
+    };
+  }, []);
 
   const handleLogin = async () => {
     if (!centerUrl.trim() || !username.trim() || !password.trim()) {
@@ -70,6 +99,25 @@ export default function LoginScreen() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleInstall = async () => {
+    if (!deferredInstallPrompt) {
+      setShowInstallHelp(true);
+      return;
+    }
+
+    setInstalling(true);
+    try {
+      await deferredInstallPrompt.prompt();
+      const choice = await deferredInstallPrompt.userChoice;
+      setDeferredInstallPrompt(null);
+      if (choice.outcome === "accepted") setIsStandalone(true);
+    } catch {
+      setShowInstallHelp(true);
+    } finally {
+      setInstalling(false);
     }
   };
 
@@ -185,9 +233,53 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
+          {Platform.OS === "web" && !isStandalone ? (
+            <TouchableOpacity
+              activeOpacity={0.84}
+              onPress={handleInstall}
+              disabled={installing}
+              style={styles.installButton}
+            >
+              <Feather name="download" size={17} color="#ea580c" />
+              <Text style={styles.installButtonText}>
+                {installing ? "Đang mở cài đặt..." : "Cài đặt EasyEdu"}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+
           <Text style={styles.footer}>© 2026 EduCenter. Tất cả quyền được bảo lưu.</Text>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Modal
+        visible={showInstallHelp}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowInstallHelp(false)}
+        statusBarTranslucent
+      >
+        <Pressable style={styles.installModalBackdrop} onPress={() => setShowInstallHelp(false)}>
+          <View
+            style={styles.installModalCard}
+            onStartShouldSetResponder={() => true}
+          >
+            <View style={styles.installModalIcon}>
+              <Feather name="download" size={22} color="#ea580c" />
+            </View>
+            <Text style={styles.installModalTitle}>Cài đặt EasyEdu</Text>
+            <Text style={styles.installModalText}>
+              Trình duyệt này chưa mở được hộp thoại cài đặt tự động. Hãy mở menu trình duyệt rồi chọn “Cài đặt ứng dụng” hoặc “Thêm vào màn hình chính”.
+            </Text>
+            <TouchableOpacity
+              activeOpacity={0.84}
+              onPress={() => setShowInstallHelp(false)}
+              style={styles.installModalButton}
+            >
+              <Text style={styles.installModalButtonText}>Đã hiểu</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -286,6 +378,80 @@ const styles = StyleSheet.create({
   forgotText: {
     fontSize: 14,
     fontFamily: "Inter_500Medium",
+  },
+  installButton: {
+    minHeight: 46,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#fed7aa",
+    backgroundColor: "#fff7ed",
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
+    paddingHorizontal: 16,
+  },
+  installButtonText: {
+    color: "#ea580c",
+    fontSize: 14,
+    fontFamily: "Inter_700Bold",
+  },
+  installModalBackdrop: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+    backgroundColor: "rgba(15,23,42,0.58)",
+  },
+  installModalCard: {
+    width: "100%",
+    maxWidth: 360,
+    borderRadius: 22,
+    padding: 22,
+    backgroundColor: "#ffffff",
+    alignItems: "center",
+    shadowColor: "#0f172a",
+    shadowOpacity: 0.22,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 10,
+  },
+  installModalIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fff7ed",
+    marginBottom: 12,
+  },
+  installModalTitle: {
+    color: "#111827",
+    fontSize: 18,
+    fontFamily: "Inter_700Bold",
+  },
+  installModalText: {
+    color: "#6b7280",
+    fontSize: 13,
+    lineHeight: 19,
+    fontFamily: "Inter_400Regular",
+    textAlign: "center",
+    marginTop: 9,
+  },
+  installModalButton: {
+    minHeight: 44,
+    minWidth: 130,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 18,
+    backgroundColor: "#fb923c",
+    marginTop: 18,
+  },
+  installModalButtonText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontFamily: "Inter_700Bold",
   },
   footer: {
     textAlign: "center",
