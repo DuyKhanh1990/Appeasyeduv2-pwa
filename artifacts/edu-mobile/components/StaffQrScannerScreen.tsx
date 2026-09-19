@@ -347,8 +347,11 @@ export function StaffQrScannerScreen() {
             onRequestClose={reset}
             statusBarTranslucent
           >
-            <View style={styles.resultModalBackdrop}>
-              <View style={[styles.resultModalSheet, { backgroundColor: colors.background }]}>
+            <Pressable style={styles.resultModalBackdrop} onPress={reset}>
+              <View
+                style={[styles.resultModalSheet, { backgroundColor: colors.background }]}
+                onStartShouldSetResponder={() => true}
+              >
                 <ScrollView
                   showsVerticalScrollIndicator={false}
                   contentContainerStyle={styles.resultModalContent}
@@ -445,7 +448,7 @@ export function StaffQrScannerScreen() {
           </View>
                 </ScrollView>
               </View>
-            </View>
+            </Pressable>
           </Modal>
         ) : null}
       </ScrollView>
