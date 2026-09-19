@@ -164,8 +164,11 @@ export function StaffQrScannerScreen() {
     }
   };
 
+  const isAlreadyAttended =
+    scanResult?.session.attendanceStatus?.toLowerCase() === "present";
+
   const markAttendance = async () => {
-    if (!scanResult?.attendance.canAttend || busy) return;
+    if (!scanResult?.attendance.canAttend || isAlreadyAttended || busy) return;
     setBusy(true);
     setScanError("");
     try {
@@ -389,22 +392,39 @@ export function StaffQrScannerScreen() {
               </View>
             </View>
 
-            <View style={[styles.attendanceState, { backgroundColor: scanResult.attendance.canAttend ? colors.success + "12" : colors.warning + "16" }]}>
+             <View
+               style={[
+                 styles.attendanceState,
+                 {
+                   backgroundColor:
+                     isAlreadyAttended || scanResult.attendance.canAttend
+                       ? colors.success + "12"
+                       : colors.warning + "16",
+                 },
+               ]}
+             >
               <Feather
-                name={scanResult.attendance.canAttend ? "check-circle" : "clock"}
+                 name={isAlreadyAttended || scanResult.attendance.canAttend ? "check-circle" : "clock"}
                 size={18}
-                color={scanResult.attendance.canAttend ? colors.success : colors.warning}
+                 color={isAlreadyAttended || scanResult.attendance.canAttend ? colors.success : colors.warning}
               />
-              <Text style={[styles.attendanceStateText, { color: scanResult.attendance.canAttend ? colors.success : colors.warning }]}>
-                {attended
+               <Text
+                 style={[
+                   styles.attendanceStateText,
+                   { color: isAlreadyAttended || scanResult.attendance.canAttend ? colors.success : colors.warning },
+                 ]}
+               >
+                 {attended
                   ? "Đã ghi nhận điểm danh thành công."
+                   : isAlreadyAttended
+                     ? "Học viên đã được điểm danh trước đó."
                   : scanResult.attendance.canAttend
                     ? "Đang trong thời gian được phép điểm danh."
                     : `Điểm danh mở lúc ${formatTime(scanResult.attendance.openAt)}.`}
               </Text>
             </View>
 
-            {!attended ? (
+             {!attended && !isAlreadyAttended ? (
               <TouchableOpacity
                 activeOpacity={0.84}
                 disabled={!scanResult.attendance.canAttend || busy}
