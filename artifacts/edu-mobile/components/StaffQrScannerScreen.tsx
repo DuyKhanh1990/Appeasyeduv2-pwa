@@ -193,6 +193,7 @@ export function StaffQrScannerScreen() {
               <CameraView
                 style={StyleSheet.absoluteFill}
                 facing="back"
+                autofocus="on"
                 barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
                 onBarcodeScanned={busy ? undefined : ({ data }) => scanToken(data)}
               />
