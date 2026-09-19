@@ -19,6 +19,7 @@ import { StatCard } from "@/components/StatCard";
 import NewsFeedSection from "@/components/NewsFeedSection";
 import PromotionsSection from "@/components/PromotionsSection";
 import { AttendanceQrModal } from "@/components/AttendanceQrModal";
+import { QrScanIcon } from "@/components/QrScanIcon";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -948,7 +949,7 @@ export default function HomeScreen() {
             activeOpacity={0.8}
             accessibilityLabel="Mở mã QR điểm danh"
           >
-            <Feather name="maximize" size={20} color="#fff" />
+            <QrScanIcon size={22} />
           </TouchableOpacity>
         )}
         <TouchableOpacity style={styles.bellBtn} onPress={() => router.push("/notifications")} activeOpacity={0.8}>

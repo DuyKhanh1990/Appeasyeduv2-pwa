@@ -15,6 +15,7 @@ import QRCode from "react-native-qrcode-svg";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 import { apiGet } from "@/lib/api";
+import { QrScanIcon } from "@/components/QrScanIcon";
 
 interface AttendanceQrStudent {
   student: {
@@ -90,7 +91,7 @@ export function AttendanceQrModal({
           <View style={styles.header}>
             <View style={styles.headerTitleWrap}>
               <View style={[styles.headerIcon, { backgroundColor: colors.primary + "16" }]}>
-                <Feather name="maximize" size={18} color={colors.primary} />
+                <QrScanIcon size={19} color={colors.primary} />
               </View>
               <View>
                 <Text style={[styles.title, { color: colors.foreground }]}>Mã QR điểm danh</Text>
