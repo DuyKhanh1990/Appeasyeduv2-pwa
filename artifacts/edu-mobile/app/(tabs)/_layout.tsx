@@ -1,5 +1,5 @@
 import { BlurView } from "expo-blur";
-import { Redirect, Tabs } from "expo-router";
+import { Redirect, Tabs, router, usePathname } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { Platform, StyleSheet, TouchableOpacity, View, useColorScheme } from "react-native";
@@ -35,6 +35,7 @@ function TabLayoutInner() {
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
   const insets = useSafeAreaInsets();
+  const pathname = usePathname();
   const bottomInset = Math.max(
     insets.bottom,
     isWeb ? WEB_BOTTOM_INSET_FALLBACK : 0,
@@ -47,49 +48,52 @@ function TabLayoutInner() {
   }
 
   const isStudent = !user || user.role === "student" || user.role === "parent";
+  const isStaff = !isStudent;
+  const showStaffQrButton = isStaff && !pathname.endsWith("/qr-scan");
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.mutedForeground,
-        headerShown: false,
-        tabBarStyle: getTabBarStyle({
-          backgroundColor: colors.background,
-          borderColor: colors.border,
-          bottomInset,
-          transparent: isIOS,
-        }),
-        tabBarBackground: () =>
-          isIOS ? (
-            <BlurView
-              intensity={100}
-              tint={isDark ? "dark" : "light"}
-              style={StyleSheet.absoluteFill}
-            />
-          ) : (
-            <View
-              style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]}
-            />
-          ),
-        tabBarLabelStyle: {
-          fontSize: 10,
-          lineHeight: 14,
-          fontFamily: "Inter_500Medium",
-          marginBottom: 2,
-        },
-        tabBarIconStyle: {
-          marginTop: 2,
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Trang chủ",
-          tabBarIcon: ({ color }) => <Feather name="home" size={22} color={color} />,
+    <>
+      <Tabs
+        screenOptions={{
+          tabBarActiveTintColor: colors.primary,
+          tabBarInactiveTintColor: colors.mutedForeground,
+          headerShown: false,
+          tabBarStyle: getTabBarStyle({
+            backgroundColor: colors.background,
+            borderColor: colors.border,
+            bottomInset,
+            transparent: isIOS,
+          }),
+          tabBarBackground: () =>
+            isIOS ? (
+              <BlurView
+                intensity={100}
+                tint={isDark ? "dark" : "light"}
+                style={StyleSheet.absoluteFill}
+              />
+            ) : (
+              <View
+                style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]}
+              />
+            ),
+          tabBarLabelStyle: {
+            fontSize: 10,
+            lineHeight: 14,
+            fontFamily: "Inter_500Medium",
+            marginBottom: 2,
+          },
+          tabBarIconStyle: {
+            marginTop: 2,
+          },
         }}
-      />
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: "Trang chủ",
+            tabBarIcon: ({ color }) => <Feather name="home" size={22} color={color} />,
+          }}
+        />
 
       {/* Lịch — dim nếu staff không có quyền calendar; student/parent luôn được xem */}
       <Tabs.Screen
@@ -160,24 +164,61 @@ function TabLayoutInner() {
           tabBarBadgeStyle: { fontSize: 10, minWidth: 18, height: 18, lineHeight: 18 },
         }}
       />
-      <Tabs.Screen
-        name="qr-scan"
-        options={{
-          title: "Quét QR",
-          href: isStudent ? null : undefined,
-          tabBarIcon: ({ color }) => <Feather name="maximize" size={22} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="menu"
-        options={{
-          title: "Menu",
-          tabBarIcon: ({ color }) => <Feather name="menu" size={22} color={color} />,
-        }}
-      />
-    </Tabs>
+        {/* Quét QR mở từ nút nổi, không chiếm một vị trí trên thanh tab. */}
+        <Tabs.Screen
+          name="qr-scan"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="menu"
+          options={{
+            title: "Menu",
+            tabBarIcon: ({ color }) => <Feather name="menu" size={22} color={color} />,
+          }}
+        />
+      </Tabs>
+
+      {showStaffQrButton && (
+        <TouchableOpacity
+          activeOpacity={0.86}
+          accessibilityLabel="Mở quét QR điểm danh"
+          onPress={() => router.push("/(tabs)/qr-scan" as any)}
+          style={[
+            styles.staffQrFab,
+            {
+              backgroundColor: colors.primary,
+              bottom: bottomInset + 74,
+              borderColor: colors.background,
+            },
+          ]}
+        >
+          <Feather name="camera" size={22} color="#fff" />
+        </TouchableOpacity>
+      )}
+    </>
   );
 }
+
+const styles = StyleSheet.create({
+  staffQrFab: {
+    position: "absolute",
+    right: 18,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 4,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#0f172a",
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 7,
+    zIndex: 20,
+  },
+});
 
 export default function TabLayout() {
   return (
