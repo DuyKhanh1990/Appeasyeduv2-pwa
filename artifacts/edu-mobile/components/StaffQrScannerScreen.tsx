@@ -1,10 +1,11 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -120,12 +121,19 @@ export function StaffQrScannerScreen() {
   const [busy, setBusy] = useState(false);
   const [scannerActive, setScannerActive] = useState(true);
   const [attended, setAttended] = useState(false);
+  const closeAfterSuccessRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isStaff = user?.role === "staff" || user?.role === "teacher" || user?.role === "admin";
   const permissionLabel = useMemo(() => {
     if (!permission?.granted) return "Cho phép camera để quét mã QR";
     return "Đưa mã QR vào khung quét";
   }, [permission?.granted]);
+
+  useEffect(() => {
+    return () => {
+      if (closeAfterSuccessRef.current) clearTimeout(closeAfterSuccessRef.current);
+    };
+  }, []);
 
   const scanToken = async (rawValue: string) => {
     const token = extractQrToken(rawValue);
@@ -170,6 +178,10 @@ export function StaffQrScannerScreen() {
         },
       );
       setAttended(true);
+      closeAfterSuccessRef.current = setTimeout(() => {
+        closeAfterSuccessRef.current = null;
+        reset();
+      }, 900);
     } catch (error) {
       const status = (error as { status?: number })?.status;
       setScanError(status === 403 ? "Chưa đến giờ mở điểm danh cho buổi học này." : "Điểm danh chưa thành công. Vui lòng thử lại.");
@@ -179,6 +191,10 @@ export function StaffQrScannerScreen() {
   };
 
   const reset = () => {
+    if (closeAfterSuccessRef.current) {
+      clearTimeout(closeAfterSuccessRef.current);
+      closeAfterSuccessRef.current = null;
+    }
     setManualToken("");
     setScanResult(null);
     setScanError("");
@@ -321,6 +337,19 @@ export function StaffQrScannerScreen() {
         ) : null}
 
         {scanResult ? (
+          <Modal
+            visible
+            transparent
+            animationType="fade"
+            onRequestClose={reset}
+            statusBarTranslucent
+          >
+            <View style={styles.resultModalBackdrop}>
+              <View style={[styles.resultModalSheet, { backgroundColor: colors.background }]}>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={styles.resultModalContent}
+                >
           <View style={[styles.resultCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.resultHeader}>
               <View>
@@ -394,6 +423,10 @@ export function StaffQrScannerScreen() {
               <Text style={[styles.scanAnotherText, { color: colors.primary }]}>Quét học viên khác</Text>
             </TouchableOpacity>
           </View>
+                </ScrollView>
+              </View>
+            </View>
+          </Modal>
         ) : null}
       </ScrollView>
     </KeyboardAvoidingView>
