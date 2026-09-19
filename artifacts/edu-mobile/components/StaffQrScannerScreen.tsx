@@ -1,5 +1,5 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
@@ -164,7 +164,7 @@ export function StaffQrScannerScreen() {
           <Text style={styles.topBarSubtitle}>Quét mã học viên để điểm danh nhanh</Text>
         </View>
         <View style={styles.topBarIcon}>
-          <Feather name="maximize" size={19} color="#fff" />
+          <MaterialCommunityIcons name="qrcode-scan" size={23} color="#fff" />
         </View>
       </View>
 

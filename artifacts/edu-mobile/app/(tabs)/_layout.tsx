@@ -1,6 +1,6 @@
 import { BlurView } from "expo-blur";
 import { Redirect, Tabs, router, usePathname } from "expo-router";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import React from "react";
 import { Platform, StyleSheet, TouchableOpacity, View, useColorScheme } from "react-native";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
@@ -194,7 +194,7 @@ function TabLayoutInner() {
             },
           ]}
         >
-          <Feather name="camera" size={22} color="#fff" />
+          <MaterialCommunityIcons name="qrcode-scan" size={24} color="#fff" />
         </TouchableOpacity>
       )}
     </>
