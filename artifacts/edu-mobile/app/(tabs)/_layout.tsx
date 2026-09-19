@@ -161,6 +161,14 @@ function TabLayoutInner() {
         }}
       />
       <Tabs.Screen
+        name="qr-scan"
+        options={{
+          title: "Quét QR",
+          href: isStudent ? null : undefined,
+          tabBarIcon: ({ color }) => <Feather name="maximize" size={22} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="menu"
         options={{
           title: "Menu",

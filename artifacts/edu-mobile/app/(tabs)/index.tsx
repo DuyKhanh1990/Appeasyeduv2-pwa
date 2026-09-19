@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import { StatCard } from "@/components/StatCard";
 import NewsFeedSection from "@/components/NewsFeedSection";
 import PromotionsSection from "@/components/PromotionsSection";
+import { AttendanceQrModal } from "@/components/AttendanceQrModal";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -665,6 +666,7 @@ export default function HomeScreen() {
   const [studentStats, setStudentStats] = useState<{ classes: number; done: number; total: number } | null>(null);
   const [studentStars, setStudentStars] = useState<number | null>(null);
   const [staffStats, setStaffStats] = useState<StaffDashboardStats | null>(null);
+  const [attendanceQrVisible, setAttendanceQrVisible] = useState(false);
 
   const topPad = insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
@@ -869,6 +871,7 @@ export default function HomeScreen() {
   };
 
   const isStaffRole = user?.role === "staff" || user?.role === "teacher" || user?.role === "admin";
+  const canShowAttendanceQr = user?.role === "student" || user?.role === "parent";
   const isStaff = isStaffRole || schedule?.userType === "staff";
   const nextSession = schedule?.sessions[0];
   const pendingAssignments = studentStats ? Math.max(studentStats.total - studentStats.done, 0) : 0;
@@ -938,6 +941,16 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {canShowAttendanceQr && (
+          <TouchableOpacity
+            style={styles.qrHeaderBtn}
+            onPress={() => setAttendanceQrVisible(true)}
+            activeOpacity={0.8}
+            accessibilityLabel="Mở mã QR điểm danh"
+          >
+            <Feather name="maximize" size={20} color="#fff" />
+          </TouchableOpacity>
+        )}
         <TouchableOpacity style={styles.bellBtn} onPress={() => router.push("/notifications")} activeOpacity={0.8}>
           <BellOutlineIcon />
           {unreadCount > 0 && (
@@ -1213,6 +1226,12 @@ export default function HomeScreen() {
 
 
       </ScrollView>
+      {canShowAttendanceQr && (
+        <AttendanceQrModal
+          visible={attendanceQrVisible}
+          onClose={() => setAttendanceQrVisible(false)}
+        />
+      )}
     </View>
   );
 }
@@ -1226,6 +1245,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+  },
+  qrHeaderBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.16)",
+    marginLeft: "auto",
+    marginRight: 8,
   },
   userInfo: {
     flexDirection: "row",
