@@ -1,5 +1,5 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
@@ -19,6 +19,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 import { apiGet, apiPost } from "@/lib/api";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
+import { QrScanIcon } from "@/components/QrScanIcon";
 
 interface QrScanResponse {
   student: {
@@ -164,7 +165,7 @@ export function StaffQrScannerScreen() {
           <Text style={styles.topBarSubtitle}>Quét mã học viên để điểm danh nhanh</Text>
         </View>
         <View style={styles.topBarIcon}>
-          <MaterialCommunityIcons name="qrcode-scan" size={23} color="#fff" />
+          <QrScanIcon size={24} />
         </View>
       </View>
 

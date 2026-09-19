@@ -1,6 +1,6 @@
 import { BlurView } from "expo-blur";
 import { Redirect, Tabs, router, usePathname } from "expo-router";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { Platform, StyleSheet, TouchableOpacity, View, useColorScheme } from "react-native";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ChatUnreadProvider, useChatUnread } from "@/context/ChatUnreadContext";
 import { useColors } from "@/hooks/useColors";
 import { usePermissions } from "@/hooks/usePermissions";
+import { QrScanIcon } from "@/components/QrScanIcon";
 import {
   getTabBarStyle,
   WEB_BOTTOM_INSET_FALLBACK,
@@ -194,7 +195,7 @@ function TabLayoutInner() {
             },
           ]}
         >
-          <MaterialCommunityIcons name="qrcode-scan" size={24} color="#fff" />
+          <QrScanIcon size={25} />
         </TouchableOpacity>
       )}
     </>
