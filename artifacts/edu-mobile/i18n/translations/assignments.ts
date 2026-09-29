@@ -32,6 +32,7 @@ const assignments: Record<string, string> = {
   "Học viên không để lại nội dung.": "The student left no content.",
   "Nộp lại": "Resubmit",
   "Điểm": "Score",
+  "Chưa chấm": "Not graded",
   "Nhận xét": "Feedback",
   "Xem bài nộp": "View submission",
   "Cá nhân hoá": "Personalized",

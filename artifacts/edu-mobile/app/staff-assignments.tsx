@@ -36,6 +36,15 @@ function formatDate(dateStr: string, locale: "vi-VN" | "en-US" = "vi-VN") {
   return d.toLocaleDateString(locale, { day: "numeric", month: "numeric", year: "numeric" });
 }
 
+function formatWeekday(dateStr: string, fallback: string, locale: "vi-VN" | "en-US") {
+  if (locale === "vi-VN") return fallback;
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr);
+  if (!match) return fallback;
+  const [, year, month, day] = match;
+  return new Date(Number(year), Number(month) - 1, Number(day), 12)
+    .toLocaleDateString(locale, { weekday: "short" });
+}
+
 const MONTH_NAMES = [
   "Tháng 1","Tháng 2","Tháng 3","Tháng 4","Tháng 5","Tháng 6",
   "Tháng 7","Tháng 8","Tháng 9","Tháng 10","Tháng 11","Tháng 12",
@@ -69,7 +78,7 @@ function AssignmentCard({
         <View style={{ flex: 1, gap: 4 }}>
           <View style={styles.cardTitleRow}>
             <View style={[styles.typeBadge, { backgroundColor: typeBg }]}>
-              <Text style={[styles.typeBadgeText, { color: typeColor }]}>{row.itemType}</Text>
+              <Text style={[styles.typeBadgeText, { color: typeColor }]}>{t(row.itemType)}</Text>
             </View>
             {hasScore && (
               <View style={[styles.scoreBadge, { backgroundColor: "#f0fdf4" }]}>
@@ -85,7 +94,7 @@ function AssignmentCard({
             {row.homeworkTitle}
           </Text>
           <Text style={[styles.classInfo, { color: colors.mutedForeground }]}>
-             {row.className} • {row.weekday} {formatDate(row.sessionDate, locale)} • {row.startTime}–{row.endTime}
+             {row.className} • {formatWeekday(row.sessionDate, row.weekday, locale)} {formatDate(row.sessionDate, locale)} • {row.startTime}–{row.endTime}
           </Text>
         </View>
         <Feather name="chevron-right" size={18} color={colors.mutedForeground} style={{ marginLeft: 8, alignSelf: "center" }} />
@@ -413,7 +422,9 @@ export default function StaffAssignmentsScreen() {
                 const d = new Date(date + "T00:00:00");
                 const weekdays = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
                 const wd = weekdays[d.getDay()];
-                const dateLabel = `${wd}, ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+                const dateLabel = locale === "vi-VN"
+                  ? `${wd}, ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`
+                  : `${d.toLocaleDateString(locale, { weekday: "short" })}, ${d.toLocaleDateString(locale, { month: "numeric", day: "numeric", year: "numeric" })}`;
                 const isLast = groupIdx === groupedByDate.length - 1;
                 return (
                   <View key={date} style={{ marginBottom: isLast ? 0 : 16 }}>
@@ -431,7 +442,7 @@ export default function StaffAssignmentsScreen() {
                       </Text>
                       <View style={{ marginLeft: 8, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10, backgroundColor: colors.primary + "18" }}>
                         <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: colors.primary }}>
-                          {dateRows.length} mục
+                          {dateRows.length} {t("mục")}
                         </Text>
                       </View>
                     </View>

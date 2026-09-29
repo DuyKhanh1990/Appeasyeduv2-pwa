@@ -18,6 +18,7 @@ const payroll: Record<string, string> = {
   "Bạn không có quyền truy cập.": "You do not have permission to access this.",
   "BHXH (8%)": "Social insurance (8%)", "BHYT (1.5%)": "Health insurance (1.5%)", "BHTN (1%)": "Unemployment insurance (1%)",
   "Không": "None", "Tổng nhận": "Total received", "buổi hợp lệ": "eligible sessions",
+  "buổi đủ điều kiện": "eligible sessions",
   "lớp": "classes", "có gói lương": "with salary package", "chưa gắn": "not attached",
   "Bảng lương đã công bố": "Published salary tables",
   "Đang tải dữ liệu lương...": "Loading salary data...", "Không thể tải dữ liệu": "Unable to load data",

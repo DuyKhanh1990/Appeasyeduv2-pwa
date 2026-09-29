@@ -248,7 +248,7 @@ function ClassRow({
           </Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
-              {cls.role}
+              {t(cls.role)}
             </Text>
             {!hasPackage ? (
               <View style={{ backgroundColor: "#fdf4ff", borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: "#e9d5ff" }}>
@@ -263,7 +263,7 @@ function ClassRow({
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
             <Feather name="check-circle" size={11} color="#15803d" />
             <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: "#15803d" }}>
-              {Number(cls.totalEligibleSessions)} buổi đủ điều kiện
+              {Number(cls.totalEligibleSessions)} {t("buổi đủ điều kiện")}
             </Text>
             {hasSessions && (
               <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginLeft: 2 }}>

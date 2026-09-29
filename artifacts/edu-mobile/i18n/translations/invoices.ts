@@ -3,6 +3,8 @@ const invoices: Record<string, string> = {
   "Nợ": "Debt", "Đã huỷ": "Cancelled", "Chuyển khoản": "Bank transfer", "Tiền mặt": "Cash", "Thẻ": "Card",
   "Tất cả": "All", "Đã trả": "Paid", "Còn lại:": "Remaining:", "Hạn:": "Due:",
   "Thu gọn ▲": "Collapse ▲", "Xem thêm ▼": "Show more ▼", "Hoá đơn": "Invoices",
+  "Chi lương": "Salary payment", "Phiếu chi lương": "Salary payment voucher",
+  "Lớp": "Class", "Bảng lương": "Salary table", "Chi": "Expense", "Thu": "Income",
   "Đang tải hoá đơn...": "Loading invoices...", "Thử lại": "Retry",
   "Không thể tải hoá đơn": "Unable to load invoices", "Phiếu thu": "Receipt", "Phiếu chi": "Payment voucher",
   "Hiển thị": "Showing", "hoá đơn": "invoices", "Tháng 1": "January", "Tháng 2": "February", "Tháng 3": "March",

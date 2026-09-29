@@ -140,10 +140,24 @@ function formatCurrency(amount: string | number): string {
   return num.toLocaleString("vi-VN") + " đ";
 }
 
-function formatDate(dateStr: string | null): string {
+function formatDate(dateStr: string | null, locale: "vi-VN" | "en-US" = "vi-VN"): string {
   if (!dateStr) return "—";
   const d = new Date(dateStr);
-  return d.toLocaleDateString("vi-VN", { day: "numeric", month: "numeric", year: "numeric" });
+  return d.toLocaleDateString(locale, { day: "numeric", month: "numeric", year: "numeric" });
+}
+
+function normalizeInvoiceText(text: string | null): string {
+  return (text ?? "").normalize("NFKC").replace(/\s+/g, " ").trim().toLocaleLowerCase();
+}
+
+function translateGeneratedInvoiceText(text: string, t: (sourceText: string) => string): string {
+  return text
+    .replace(/(^|\n)Chi lương Giáo viên /g, (_match, lineStart: string) =>
+      `${lineStart}${t("Chi lương")} ${t("Giáo viên")} `)
+    .replace(/(^|\n)Chi lương(?=\s)/g, (_match, lineStart: string) =>
+      `${lineStart}${t("Chi lương")}`)
+    .replace(/ - Lớp(?=\s)/g, ` - ${t("Lớp")}`)
+    .replace(/Bảng lương:/g, `${t("Bảng lương")}:`);
 }
 
 function isUnpaidLike(status: string) {
@@ -159,6 +173,7 @@ function getInvoiceMonth(inv: StudentInvoice): string {
 
 function CollapsibleDescription({ text, colors }: { text: string; colors: ReturnType<typeof useColors> }) {
   const { t } = useLanguage();
+  const displayText = translateGeneratedInvoiceText(text, t);
   const [expanded, setExpanded] = useState(false);
   const [measured, setMeasured] = useState(false);
   const [lineCount, setLineCount] = useState(0);
@@ -177,7 +192,7 @@ function CollapsibleDescription({ text, colors }: { text: string; colors: Return
             }
           }}
         >
-          {text}
+          {displayText}
         </Text>
       </View>
       {measured && isTruncated && (
@@ -208,7 +223,11 @@ function StatusBadge({ status }: { status: string }) {
 // ─── Staff Invoice Card ───────────────────────────────────────────────────────
 
 function StaffInvoiceCard({ inv, colors }: { inv: StaffInvoice; colors: ReturnType<typeof useColors> }) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
+  const hasDuplicateNote = Boolean(
+    normalizeInvoiceText(inv.note) &&
+    normalizeInvoiceText(inv.note) === normalizeInvoiceText(inv.description),
+  );
   return (
     <View
       style={[styles.card, {
@@ -224,7 +243,7 @@ function StaffInvoiceCard({ inv, colors }: { inv: StaffInvoice; colors: ReturnTy
             {inv.salaryTable.name}
             {inv.salaryTable.locationName ? ` · ${inv.salaryTable.locationName}` : ""}
             {inv.salaryTable.startDate && inv.salaryTable.endDate
-              ? `  ${formatDate(inv.salaryTable.startDate)} – ${formatDate(inv.salaryTable.endDate)}`
+              ? `  ${formatDate(inv.salaryTable.startDate, locale)} – ${formatDate(inv.salaryTable.endDate, locale)}`
               : ""}
           </Text>
         </View>
@@ -234,7 +253,7 @@ function StaffInvoiceCard({ inv, colors }: { inv: StaffInvoice; colors: ReturnTy
         <View style={{ flex: 1, gap: 4 }}>
           <View style={styles.cardTitleRow}>
             <Text style={[styles.cardTitle, { color: colors.foreground }]} numberOfLines={1}>
-              {inv.title}
+              {translateGeneratedInvoiceText(inv.title, t)}
             </Text>
             {inv.label && (
               <View style={[styles.labelPill, { backgroundColor: colors.primary + "15" }]}>
@@ -244,7 +263,7 @@ function StaffInvoiceCard({ inv, colors }: { inv: StaffInvoice; colors: ReturnTy
           </View>
 
           <Text style={[styles.cardCode, { color: colors.mutedForeground }]}>
-            {[inv.code, inv.settleCode, inv.type, inv.category].filter(Boolean).join(" · ")}
+            {[inv.code, inv.settleCode, inv.type && t(inv.type), inv.category && t(inv.category)].filter(Boolean).join(" · ")}
           </Text>
 
           <View style={styles.amountRow}>
@@ -269,7 +288,7 @@ function StaffInvoiceCard({ inv, colors }: { inv: StaffInvoice; colors: ReturnTy
               <View style={styles.dateItem}>
                 <Feather name="clock" size={11} color={colors.mutedForeground} />
                 <Text style={[styles.dateText, { color: colors.mutedForeground }]}>
-                  {t("Hạn:")} {formatDate(inv.dueDate)}
+                  {t("Hạn:")} {formatDate(inv.dueDate, locale)}
                 </Text>
               </View>
             )}
@@ -277,7 +296,7 @@ function StaffInvoiceCard({ inv, colors }: { inv: StaffInvoice; colors: ReturnTy
               <View style={styles.dateItem}>
                 <Feather name="check-circle" size={11} color={colors.success} />
                 <Text style={[styles.dateText, { color: colors.mutedForeground }]}>
-                  {formatDate(inv.paidAt)}
+                  {formatDate(inv.paidAt, locale)}
                 </Text>
               </View>
             )}
@@ -291,11 +310,11 @@ function StaffInvoiceCard({ inv, colors }: { inv: StaffInvoice; colors: ReturnTy
             )}
           </View>
 
-          {inv.note ? (
+          {inv.note && !hasDuplicateNote ? (
             <View style={styles.dateItem}>
               <Feather name="message-square" size={11} color={colors.mutedForeground} />
               <Text style={[styles.dateText, { color: colors.mutedForeground, flexShrink: 1 }]}>
-                {inv.note}
+                {translateGeneratedInvoiceText(inv.note, t)}
               </Text>
             </View>
           ) : null}
@@ -328,7 +347,7 @@ function StudentInvoiceCard({
   highlighted?: boolean;
   onLayout?: (y: number) => void;
 }) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   return (
     <View
       onLayout={highlighted && onLayout ? (e) => onLayout(e.nativeEvent.layout.y) : undefined}
@@ -356,7 +375,7 @@ function StudentInvoiceCard({
         <View style={{ flex: 1, gap: 4 }}>
           <View style={styles.cardTitleRow}>
             <Text style={[styles.cardTitle, { color: colors.foreground }]} numberOfLines={1}>
-              {inv.title}
+              {translateGeneratedInvoiceText(inv.title, t)}
             </Text>
             {inv.label && (
               <View style={[styles.labelPill, { backgroundColor: colors.primary + "15" }]}>
@@ -366,7 +385,7 @@ function StudentInvoiceCard({
           </View>
 
           <Text style={[styles.cardCode, { color: colors.mutedForeground }]}>
-            {inv.code} · {inv.category}
+            {inv.code} · {t(inv.category)}
           </Text>
 
           <View style={styles.amountRow}>
@@ -391,7 +410,7 @@ function StudentInvoiceCard({
               <View style={styles.dateItem}>
                 <Feather name="clock" size={11} color={colors.mutedForeground} />
                 <Text style={[styles.dateText, { color: colors.mutedForeground }]}>
-                  {t("Hạn:")} {formatDate(inv.dueDate)}
+                  {t("Hạn:")} {formatDate(inv.dueDate, locale)}
                 </Text>
               </View>
             )}
@@ -399,7 +418,7 @@ function StudentInvoiceCard({
               <View style={styles.dateItem}>
                 <Feather name="check-circle" size={11} color={colors.success} />
                 <Text style={[styles.dateText, { color: colors.mutedForeground }]}>
-                  {formatDate(inv.paidAt)}
+                  {formatDate(inv.paidAt, locale)}
                 </Text>
               </View>
             )}

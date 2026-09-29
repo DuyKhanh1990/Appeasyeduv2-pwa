@@ -651,7 +651,7 @@ function TodayScheduleSection({
 
 export default function HomeScreen() {
   const colors = useColors();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const { user, permissions } = useAuth();
   const perms = usePermissions();
   const insets = useSafeAreaInsets();
@@ -678,7 +678,7 @@ export default function HomeScreen() {
   const bottomPad = Platform.OS === "web" ? 34 : 0;
 
   const today = new Date();
-  const dateStr = today.toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "long" });
+  const dateStr = today.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" });
 
   const fetchNotifications = async () => {
     try {
@@ -1116,7 +1116,7 @@ export default function HomeScreen() {
                     <View style={[styles.quickIconWrap, { backgroundColor: it.iconBg }]}>
                       <Feather name={it.icon as any} size={22} color={it.iconColor} />
                     </View>
-                    <Text style={[styles.quickLabel, { color: colors.foreground }]} numberOfLines={2}>{it.title}</Text>
+                    <Text style={[styles.quickLabel, { color: colors.foreground }]} numberOfLines={2}>{t(it.title)}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -1208,7 +1208,7 @@ export default function HomeScreen() {
                   <View style={[styles.quickIconWrap, { backgroundColor: it.iconBg }]}>
                     <Feather name={it.icon as any} size={22} color={it.iconColor} />
                   </View>
-                  <Text style={[styles.quickLabel, { color: colors.foreground }]} numberOfLines={2}>{it.title}</Text>
+                  <Text style={[styles.quickLabel, { color: colors.foreground }]} numberOfLines={2}>{t(it.title)}</Text>
                 </TouchableOpacity>
                 );
               })}
