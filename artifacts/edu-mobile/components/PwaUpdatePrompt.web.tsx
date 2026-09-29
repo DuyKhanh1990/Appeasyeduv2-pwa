@@ -17,14 +17,36 @@ export function PwaUpdatePrompt() {
   const waitingWorker = useRef<ServiceWorker | null>(null);
   const deferredAt = useRef(0);
   const reloadRequested = useRef(false);
+  const reloadStarted = useRef(false);
   const reloadTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activationListener = useRef<{
+    worker: ServiceWorker;
+    handler: () => void;
+  } | null>(null);
   const [visible, setVisible] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { t } = useLanguage();
 
+  const clearActivationListener = useCallback(() => {
+    const listener = activationListener.current;
+    if (listener) {
+      listener.worker.removeEventListener("statechange", listener.handler);
+      activationListener.current = null;
+    }
+  }, []);
+
+  const reloadAfterUpdate = useCallback(() => {
+    if (!reloadRequested.current || reloadStarted.current) return;
+    reloadStarted.current = true;
+    if (reloadTimeout.current) clearTimeout(reloadTimeout.current);
+    reloadTimeout.current = null;
+    clearActivationListener();
+    window.location.reload();
+  }, [clearActivationListener]);
+
   const offerUpdate = useCallback((worker: ServiceWorker | null) => {
-    if (!worker) return;
+    if (!worker || worker.state !== "installed") return;
     waitingWorker.current = worker;
     if (Date.now() - deferredAt.current >= REMIND_AFTER_MS) {
       setVisible(true);
@@ -39,8 +61,7 @@ export function PwaUpdatePrompt() {
       waitingWorker.current = null;
       setVisible(false);
       if (!reloadRequested.current) return;
-      if (reloadTimeout.current) clearTimeout(reloadTimeout.current);
-      window.location.reload();
+      reloadAfterUpdate();
     };
 
     const handleVisibilityChange = () => {
@@ -79,7 +100,7 @@ export function PwaUpdatePrompt() {
               installingWorker.state === "installed" &&
               navigator.serviceWorker.controller
             ) {
-              offerUpdate(nextRegistration.waiting ?? installingWorker);
+              offerUpdate(nextRegistration.waiting);
             }
           });
         });
@@ -103,8 +124,9 @@ export function PwaUpdatePrompt() {
       );
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       if (reloadTimeout.current) clearTimeout(reloadTimeout.current);
+      clearActivationListener();
     };
-  }, [offerUpdate]);
+  }, [clearActivationListener, offerUpdate, reloadAfterUpdate]);
 
   const updateNow = () => {
     const worker = waitingWorker.current;
@@ -113,16 +135,55 @@ export function PwaUpdatePrompt() {
       return;
     }
 
+    if (worker.state === "redundant") {
+      waitingWorker.current = null;
+      setError(t("Bản cập nhật chưa sẵn sàng. Vui lòng thử lại."));
+      return;
+    }
+
     reloadRequested.current = true;
+    reloadStarted.current = false;
     setUpdating(true);
     setError(null);
-    worker.postMessage({ type: "SKIP_WAITING" });
 
+    if (worker.state === "activated") {
+      reloadAfterUpdate();
+      return;
+    }
+
+    const handleWorkerStateChange = () => {
+      if (worker.state === "activated") {
+        reloadAfterUpdate();
+      } else if (worker.state === "redundant") {
+        if (reloadTimeout.current) clearTimeout(reloadTimeout.current);
+        reloadTimeout.current = null;
+        reloadRequested.current = false;
+        clearActivationListener();
+        setUpdating(false);
+        setError(t("Bản cập nhật chưa sẵn sàng. Vui lòng thử lại."));
+      }
+    };
+    activationListener.current = { worker, handler: handleWorkerStateChange };
+    worker.addEventListener("statechange", handleWorkerStateChange);
     reloadTimeout.current = setTimeout(() => {
       reloadRequested.current = false;
+      reloadTimeout.current = null;
+      clearActivationListener();
       setUpdating(false);
-       setError(t("Chưa thể cập nhật. Vui lòng kiểm tra kết nối và thử lại."));
+      setError(t("Không thể kích hoạt bản cập nhật. Hãy tải lại trang để thử lại."));
     }, 15_000);
+
+    try {
+      worker.postMessage({ type: "SKIP_WAITING" });
+    } catch (updateError) {
+      if (reloadTimeout.current) clearTimeout(reloadTimeout.current);
+      reloadTimeout.current = null;
+      reloadRequested.current = false;
+      clearActivationListener();
+      setUpdating(false);
+      setError(t("Bản cập nhật chưa sẵn sàng. Vui lòng thử lại."));
+      console.warn("[pwa-update] Không gửi được yêu cầu kích hoạt:", updateError);
+    }
   };
 
   const deferUpdate = () => {

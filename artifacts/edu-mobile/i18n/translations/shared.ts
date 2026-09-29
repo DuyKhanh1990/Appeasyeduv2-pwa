@@ -54,7 +54,7 @@ const shared: Record<string, string> = {
   "Để sau": "Later",
   "EasyEdu có phiên bản mới": "EasyEdu has a new version",
   "Bản cập nhật chưa sẵn sàng. Vui lòng thử lại.": "The update is not ready. Please try again.",
-  "Chưa thể cập nhật. Vui lòng kiểm tra kết nối và thử lại.": "Unable to update. Check your connection and try again.",
+  "Không thể kích hoạt bản cập nhật. Hãy tải lại trang để thử lại.": "Couldn't activate the update. Reload the page and try again.",
 };
 
 export default shared;
