@@ -50,7 +50,13 @@ export async function registerWebServiceWorker(): Promise<ServiceWorkerRegistrat
     return null;
   }
 
-  return navigator.serviceWorker.register("./sw-v4.js", {
+  const workerUrl =
+    typeof window !== "undefined"
+      ? (window as Window & { __EASYEDU_SW_URL__?: string }).__EASYEDU_SW_URL__ ??
+        "./sw.js"
+      : "./sw.js";
+
+  return navigator.serviceWorker.register(workerUrl, {
     scope: "./",
     updateViaCache: "none",
   });
