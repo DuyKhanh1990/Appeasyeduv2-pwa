@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useColors } from "@/hooks/useColors";
 import { apiGet } from "@/lib/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface AttendanceDay {
@@ -49,9 +50,9 @@ interface HRSummary {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function fmtCurrency(n: number | null | undefined) {
+function fmtCurrency(n: number | null | undefined, locale = "vi-VN") {
   if (n === null || n === undefined || isNaN(Number(n))) return "—";
-  return Number(n).toLocaleString("vi-VN") + "đ";
+  return Number(n).toLocaleString(locale) + "đ";
 }
 
 const MONTH_NAMES = [
@@ -88,6 +89,7 @@ function MonthPicker({
   month: number; year: number;
   onChange: (m: number, y: number) => void;
 }) {
+  const { t } = useLanguage();
   const prev = () => {
     if (month === 1) onChange(12, year - 1);
     else onChange(month - 1, year);
@@ -112,7 +114,7 @@ function MonthPicker({
       </TouchableOpacity>
       <View style={{ alignItems: "center" }}>
         <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: "#fff" }}>
-          {MONTH_NAMES[month - 1]}
+          {t(MONTH_NAMES[month - 1])}
         </Text>
         <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.7)" }}>
           {year}
@@ -157,6 +159,7 @@ function SalaryRow({
 
 // ─── Payslip Card ─────────────────────────────────────────────────────────────
 function PayslipCard({ summary, colors }: { summary: HRSummary; colors: ReturnType<typeof useColors> }) {
+  const { t, locale } = useLanguage();
   const [expanded, setExpanded] = useState(false);
   const totalDeductions = summary.bhxh + summary.bhyt + summary.bhtn + summary.thueTNCN + summary.tamUng;
   return (
@@ -180,7 +183,7 @@ function PayslipCard({ summary, colors }: { summary: HRSummary; colors: ReturnTy
           <View style={[styles.statusBadge, { backgroundColor: summary.daChi ? "#f0fdf4" : "#fff7ed", borderColor: summary.daChi ? "#bbf7d0" : "#fed7aa" }]}>
             <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: summary.daChi ? "#16a34a" : "#f97316", marginRight: 5 }} />
             <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: summary.daChi ? "#15803d" : "#c2410c" }}>
-              {summary.daChi ? "Đã chi" : "Chưa chi"}
+              {summary.daChi ? t("Đã chi") : t("Chưa chi")}
             </Text>
           </View>
           <Feather name={expanded ? "chevron-up" : "chevron-down"} size={16} color={colors.mutedForeground} />
@@ -190,41 +193,41 @@ function PayslipCard({ summary, colors }: { summary: HRSummary; colors: ReturnTy
       {/* Collapsed: show thực nhận summary */}
       {!expanded && (
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12 }}>
-          <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>Thực nhận</Text>
-          <Text style={{ fontSize: 18, fontFamily: "Inter_700Bold", color: "#16a34a" }}>{fmtCurrency(summary.thucNhan)}</Text>
+          <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>{t("Thực nhận")}</Text>
+          <Text style={{ fontSize: 18, fontFamily: "Inter_700Bold", color: "#16a34a" }}>{fmtCurrency(summary.thucNhan, locale)}</Text>
         </View>
       )}
 
       {/* Expanded content */}
       {expanded && (
         <>
-          <SectionDivider title="Lương theo công" />
-          <SalaryRow label="Lương cơ bản" value={fmtCurrency(summary.luongCB)} />
-          <SalaryRow label="Số công thực tế" value={`${summary.soCong} công`} />
-          <SalaryRow label="Số công quy đổi" value={`${summary.congThuc} công`} />
-          <SalaryRow label="Lương theo công" value={fmtCurrency(summary.luongTheoCong)} bold />
+          <SectionDivider title={t("Lương theo công")} />
+          <SalaryRow label={t("Lương cơ bản")} value={fmtCurrency(summary.luongCB, locale)} />
+          <SalaryRow label={t("Số công thực tế")} value={`${summary.soCong} ${t("công")}`} />
+          <SalaryRow label={t("Số công quy đổi")} value={`${summary.congThuc} ${t("công")}`} />
+          <SalaryRow label={t("Lương theo công")} value={fmtCurrency(summary.luongTheoCong, locale)} bold />
 
-          <SectionDivider title="Cộng thêm" />
-          <SalaryRow label="Phụ cấp" value={fmtCurrency(summary.phuCap)} accent={summary.phuCap > 0 ? "#16a34a" : undefined} />
-          <SalaryRow label="Thưởng" value={fmtCurrency(summary.thuong)} accent={summary.thuong > 0 ? "#16a34a" : undefined} />
-          <SalaryRow label="Lương đứng lớp" value={fmtCurrency(summary.luongDungLop)} accent={summary.luongDungLop > 0 ? "#2563eb" : undefined} />
+          <SectionDivider title={t("Cộng thêm")} />
+          <SalaryRow label={t("Phụ cấp")} value={fmtCurrency(summary.phuCap, locale)} accent={summary.phuCap > 0 ? "#16a34a" : undefined} />
+          <SalaryRow label={t("Thưởng")} value={fmtCurrency(summary.thuong, locale)} accent={summary.thuong > 0 ? "#16a34a" : undefined} />
+          <SalaryRow label={t("Lương đứng lớp")} value={fmtCurrency(summary.luongDungLop, locale)} accent={summary.luongDungLop > 0 ? "#2563eb" : undefined} />
           {summary.phat > 0 && (
-            <SalaryRow label="Phạt / Khấu trừ" value={`-${fmtCurrency(summary.phat)}`} accent="#dc2626" />
+                <SalaryRow label={t("Phạt / Khấu trừ")} value={`-${fmtCurrency(summary.phat, locale)}`} accent="#dc2626" />
           )}
 
           <View style={{ marginHorizontal: 16, marginTop: 10, borderRadius: 10, backgroundColor: "#eff6ff", padding: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#1d4ed8" }}>Tổng lương (gross)</Text>
+            <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#1d4ed8" }}>{t("Tổng lương (gross)")}</Text>
             <Text style={{ fontSize: 17, fontFamily: "Inter_700Bold", color: "#1d4ed8" }}>{fmtCurrency(summary.tongLuong)}</Text>
           </View>
 
-          <SectionDivider title="Khấu trừ" />
-          <SalaryRow label="BHXH (8%)" value={`-${fmtCurrency(summary.bhxh)}`} accent={summary.bhxh > 0 ? "#dc2626" : undefined} dimLabel />
-          <SalaryRow label="BHYT (1.5%)" value={`-${fmtCurrency(summary.bhyt)}`} accent={summary.bhyt > 0 ? "#dc2626" : undefined} dimLabel />
-          <SalaryRow label="BHTN (1%)" value={`-${fmtCurrency(summary.bhtn)}`} accent={summary.bhtn > 0 ? "#dc2626" : undefined} dimLabel />
-          <SalaryRow label="Thuế TNCN" value={summary.thueTNCN > 0 ? `-${fmtCurrency(summary.thueTNCN)}` : "Không"} accent={summary.thueTNCN > 0 ? "#dc2626" : "#16a34a"} dimLabel />
-          <SalaryRow label="Tạm ứng" value={summary.tamUng > 0 ? `-${fmtCurrency(summary.tamUng)}` : "Không"} accent={summary.tamUng > 0 ? "#dc2626" : "#16a34a"} dimLabel />
+          <SectionDivider title={t("Khấu trừ")} />
+          <SalaryRow label={t("BHXH (8%)")} value={`-${fmtCurrency(summary.bhxh)}`} accent={summary.bhxh > 0 ? "#dc2626" : undefined} dimLabel />
+          <SalaryRow label={t("BHYT (1.5%)")} value={`-${fmtCurrency(summary.bhyt)}`} accent={summary.bhyt > 0 ? "#dc2626" : undefined} dimLabel />
+          <SalaryRow label={t("BHTN (1%)")} value={`-${fmtCurrency(summary.bhtn)}`} accent={summary.bhtn > 0 ? "#dc2626" : undefined} dimLabel />
+          <SalaryRow label={t("Thuế TNCN")} value={summary.thueTNCN > 0 ? `-${fmtCurrency(summary.thueTNCN)}` : t("Không")} accent={summary.thueTNCN > 0 ? "#dc2626" : "#16a34a"} dimLabel />
+          <SalaryRow label={t("Tạm ứng")} value={summary.tamUng > 0 ? `-${fmtCurrency(summary.tamUng)}` : t("Không")} accent={summary.tamUng > 0 ? "#dc2626" : "#16a34a"} dimLabel />
           {totalDeductions > 0 && (
-            <SalaryRow label="Tổng khấu trừ" value={`-${fmtCurrency(totalDeductions)}`} accent="#dc2626" bold />
+            <SalaryRow label={t("Tổng khấu trừ")} value={`-${fmtCurrency(totalDeductions)}`} accent="#dc2626" bold />
           )}
 
           <View style={{ margin: 16, marginTop: 12, borderRadius: 14, overflow: "hidden" }}>
@@ -232,9 +235,9 @@ function PayslipCard({ summary, colors }: { summary: HRSummary; colors: ReturnTy
               style={{ backgroundColor: "#16a34a", padding: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}
             >
               <View>
-                <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "rgba(255,255,255,0.8)" }}>Thực nhận</Text>
+                <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "rgba(255,255,255,0.8)" }}>{t("Thực nhận")}</Text>
                 <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.6)", marginTop: 2 }}>
-                  Sau tất cả khấu trừ
+                  {t("Sau tất cả khấu trừ")}
                 </Text>
               </View>
               <Text style={{ fontSize: 24, fontFamily: "Inter_700Bold", color: "#fff" }}>
@@ -250,15 +253,16 @@ function PayslipCard({ summary, colors }: { summary: HRSummary; colors: ReturnTy
 
 // ─── Attendance Stats strip ───────────────────────────────────────────────────
 function AttendanceStats({ days }: { days: AttendanceDay[] }) {
+  const { t } = useLanguage();
   const full     = days.filter((d) => roundCong(d.tongCong) === 1).length;
   const overtime = days.filter((d) => roundCong(d.tongCong) > 1).length;
   const half     = days.filter((d) => { const v = roundCong(d.tongCong); return v >= 0.5 && v < 1; }).length;
   const late     = days.filter((d) => { const v = roundCong(d.tongCong); return v > 0 && v < 0.5; }).length;
   const stats = [
-    { label: "Đủ công",  value: full,     color: "#16a34a", bg: "#f0fdf4" },
-    { label: "Tăng ca",  value: overtime, color: "#2563eb", bg: "#eff6ff" },
-    { label: "Nửa công", value: half,     color: "#d97706", bg: "#fffbeb" },
-    { label: "Đi muộn",  value: late,     color: "#ea580c", bg: "#fff7ed" },
+    { label: t("Đủ công"),  value: full,     color: "#16a34a", bg: "#f0fdf4" },
+    { label: t("Tăng ca"),  value: overtime, color: "#2563eb", bg: "#eff6ff" },
+    { label: t("Nửa công"), value: half,     color: "#d97706", bg: "#fffbeb" },
+    { label: t("Đi muộn"),  value: late,     color: "#ea580c", bg: "#fff7ed" },
   ];
   return (
     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
@@ -282,6 +286,7 @@ function AttendanceCalendar({
   month: number; year: number;
   colors: ReturnType<typeof useColors>;
 }) {
+  const { t } = useLanguage();
   const dayMap: Record<string, AttendanceDay> = {};
   days.forEach((d) => { dayMap[d.workDate] = d; });
 
@@ -343,7 +348,7 @@ function AttendanceCalendar({
         {/* Status badge */}
         <View style={{ backgroundColor: st.color + "22", borderRadius: 5, paddingHorizontal: 5, paddingVertical: 2, marginTop: 5, alignSelf: "stretch", alignItems: "center" }}>
           <Text style={{ fontSize: 9, fontFamily: "Inter_700Bold", color: st.color }} numberOfLines={1}>
-            {st.label}
+            {t(st.label)}
           </Text>
         </View>
 
@@ -370,7 +375,7 @@ function AttendanceCalendar({
           <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: st.color, lineHeight: 18 }}>
             {roundCong(att.tongCong)}
           </Text>
-          <Text style={{ fontSize: 8, fontFamily: "Inter_400Regular", color: st.color + "99" }}>công</Text>
+          <Text style={{ fontSize: 8, fontFamily: "Inter_400Regular", color: st.color + "99" }}>{t("công")}</Text>
         </View>
 
         {/* Note */}
@@ -388,7 +393,7 @@ function AttendanceCalendar({
       <View style={{ alignItems: "center", paddingVertical: 28, gap: 8 }}>
         <Feather name="calendar" size={32} color={colors.mutedForeground} />
         <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
-          Chưa có dữ liệu chấm công
+          {t("Chưa có dữ liệu chấm công")}
         </Text>
       </View>
     );
@@ -412,6 +417,7 @@ function AttendanceCalendar({
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function StaffSalarySummaryScreen() {
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const topPad = insets.top;
 
@@ -438,11 +444,11 @@ export default function StaffSalarySummaryScreen() {
       setAttendance(att.status === "fulfilled" && Array.isArray(att.value) ? att.value : []);
       if (hr.status === "rejected") {
         const err = hr.reason as any;
-        if (err?.status === 401) setErrorMsg("Phiên đăng nhập đã hết hạn.");
-        else if (err?.status === 403) setErrorMsg("Bạn không có quyền truy cập.");
+        if (err?.status === 401) setErrorMsg(t("Phiên đăng nhập đã hết hạn."));
+        else if (err?.status === 403) setErrorMsg(t("Bạn không có quyền truy cập."));
       }
     } catch {
-      setErrorMsg("Không thể tải dữ liệu. Vui lòng thử lại.");
+      setErrorMsg(t("Không thể tải dữ liệu. Vui lòng thử lại."));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -467,9 +473,9 @@ export default function StaffSalarySummaryScreen() {
             <Feather name="arrow-left" size={22} color="#1e1b4b" />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: "#1e1b4b" }}>Bảng tổng lương</Text>
+            <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: "#1e1b4b" }}>{t("Bảng tổng lương")}</Text>
             <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(30,27,75,0.65)", marginTop: 1 }}>
-              Lương tổng hợp nhân sự theo tháng
+              {t("Lương tổng hợp nhân sự theo tháng")}
             </Text>
           </View>
         </View>
@@ -480,7 +486,7 @@ export default function StaffSalarySummaryScreen() {
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
-            Đang tải bảng lương...
+            {t("Đang tải bảng lương...")}
           </Text>
         </View>
       ) : (
@@ -505,17 +511,17 @@ export default function StaffSalarySummaryScreen() {
                 <Feather name="file-text" size={28} color="#9ca3af" />
               </View>
               <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>
-                Chưa có phiếu lương
+                {t("Chưa có phiếu lương")}
               </Text>
               <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center", lineHeight: 20 }}>
-                Bộ phận kế toán chưa lập bảng lương cho {MONTH_NAMES[month - 1]} {year}.
+                 {t("Bộ phận kế toán chưa lập bảng lương cho")} {t(MONTH_NAMES[month - 1])} {year}.
               </Text>
               <TouchableOpacity
                 onPress={onRefresh}
                 style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: colors.primary }}
               >
                 <Feather name="refresh-cw" size={14} color={colors.primary} />
-                <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.primary }}>Kiểm tra lại</Text>
+                <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.primary }}>{t("Kiểm tra lại")}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -536,7 +542,7 @@ export default function StaffSalarySummaryScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: colors.foreground }}>
-                  Chấm công tháng
+                  {t("Chấm công tháng")}
                 </Text>
                 <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
                   {attendance.length} ngày · Tổng {roundCong(totalAttCong)} công

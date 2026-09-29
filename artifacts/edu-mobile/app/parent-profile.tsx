@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 import { apiGet } from "@/lib/api";
 
@@ -65,6 +66,7 @@ interface ParentProfileResponse {
 }
 
 function StudentCard({ student, colors }: { student: LinkedStudent; colors: ReturnType<typeof useColors> }) {
+  const { t } = useLanguage();
   const [expanded, setExpanded] = useState(false);
   const attendanceRate = student.enrolledClasses.length > 0
     ? Math.round(
@@ -91,7 +93,7 @@ function StudentCard({ student, colors }: { student: LinkedStudent; colors: Retu
         {attendanceRate !== null && (
           <View style={[styles.attendanceBadge, { backgroundColor: attendanceRate >= 80 ? colors.success + "18" : colors.warning + "18" }]}>
             <Text style={[styles.attendanceValue, { color: attendanceRate >= 80 ? colors.success : colors.warning }]}>{attendanceRate}%</Text>
-            <Text style={[styles.attendanceLabel, { color: attendanceRate >= 80 ? colors.success : colors.warning }]}>Chuyên cần</Text>
+             <Text style={[styles.attendanceLabel, { color: attendanceRate >= 80 ? colors.success : colors.warning }]}>{t("Chuyên cần")}</Text>
           </View>
         )}
       </View>
@@ -105,7 +107,7 @@ function StudentCard({ student, colors }: { student: LinkedStudent; colors: Retu
           >
             <Feather name="book" size={13} color={colors.primary} />
             <Text style={[styles.expandBtnText, { color: colors.primary }]}>
-              {student.enrolledClasses.length} lớp học
+               {student.enrolledClasses.length} {t("lớp học")}
             </Text>
             <Feather name={expanded ? "chevron-up" : "chevron-down"} size={13} color={colors.primary} />
           </TouchableOpacity>
@@ -123,9 +125,9 @@ function StudentCard({ student, colors }: { student: LinkedStudent; colors: Retu
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.className, { color: colors.foreground }]}>{cls.className}</Text>
                       <View style={styles.sessionStats}>
-                        <Text style={[styles.sessionStat, { color: colors.success }]}>✓ {cls.attendedSessions} buổi</Text>
-                        <Text style={[styles.sessionStat, { color: colors.mutedForeground }]}>/ {cls.totalSessions} tổng</Text>
-                        <Text style={[styles.sessionStat, { color: colors.warning }]}>· {cls.remainingSessions} còn lại</Text>
+                         <Text style={[styles.sessionStat, { color: colors.success }]}>✓ {cls.attendedSessions} {t("buổi")}</Text>
+                         <Text style={[styles.sessionStat, { color: colors.mutedForeground }]}>/ {cls.totalSessions} {t("tổng")}</Text>
+                         <Text style={[styles.sessionStat, { color: colors.warning }]}>· {cls.remainingSessions} {t("còn lại")}</Text>
                       </View>
                     </View>
                     {pct !== null && (
@@ -144,7 +146,7 @@ function StudentCard({ student, colors }: { student: LinkedStudent; colors: Retu
       {student.enrolledClasses.length === 0 && (
         <View style={[styles.noClass, { borderColor: colors.border }]}>
           <Feather name="book-open" size={13} color={colors.mutedForeground} />
-          <Text style={[styles.noClassText, { color: colors.mutedForeground }]}>Chưa đăng ký lớp nào</Text>
+          <Text style={[styles.noClassText, { color: colors.mutedForeground }]}>{t("Chưa đăng ký lớp nào")}</Text>
         </View>
       )}
     </View>
@@ -153,6 +155,7 @@ function StudentCard({ student, colors }: { student: LinkedStudent; colors: Retu
 
 export default function ParentProfileScreen() {
   const colors = useColors();
+  const { t } = useLanguage();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const topPad = insets.top;
@@ -170,12 +173,12 @@ export default function ParentProfileScreen() {
       const res = await apiGet<ParentProfileResponse>("/api/mobile/parent/profile");
       setData(res);
     } catch (e: any) {
-      setError(e?.message || "Không thể tải thông tin phụ huynh");
+       setError(e?.message || t("Không thể tải thông tin phụ huynh"));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   useFocusEffect(useCallback(() => { fetchProfile(); }, [fetchProfile]));
 
@@ -201,29 +204,29 @@ export default function ParentProfileScreen() {
             <Text style={styles.avatarText}>{avatarLetter}</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>{data?.parent.fullName || user?.name || user?.username || "Phụ huynh"}</Text>
-            <Text style={styles.headerSub}>{data?.parent.code ? `Mã: ${data.parent.code}` : "Tài khoản phụ huynh"}</Text>
+             <Text style={styles.headerTitle}>{data?.parent.fullName || user?.name || user?.username || t("Phụ huynh")}</Text>
+             <Text style={styles.headerSub}>{data?.parent.code ? `${t("Mã")}: ${data.parent.code}` : t("Tài khoản phụ huynh")}</Text>
           </View>
         </View>
         {data && (
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
               <Text style={styles.summaryValue}>{data.linkedStudents.length}</Text>
-              <Text style={styles.summaryLabel}>Học viên</Text>
+               <Text style={styles.summaryLabel}>{t("Học viên")}</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.summaryItem}>
               <Text style={styles.summaryValue}>
                 {data.linkedStudents.reduce((sum, s) => sum + s.enrolledClasses.length, 0)}
               </Text>
-              <Text style={styles.summaryLabel}>Lớp học</Text>
+               <Text style={styles.summaryLabel}>{t("Lớp học")}</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.summaryItem}>
               <Text style={styles.summaryValue}>
                 {data.linkedStudents.reduce((sum, s) => sum + s.enrolledClasses.reduce((a, c) => a + c.attendedSessions, 0), 0)}
               </Text>
-              <Text style={styles.summaryLabel}>Buổi đã học</Text>
+               <Text style={styles.summaryLabel}>{t("Buổi đã học")}</Text>
             </View>
           </View>
         )}
@@ -232,7 +235,7 @@ export default function ParentProfileScreen() {
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>Đang tải thông tin...</Text>
+           <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>{t("Đang tải thông tin...")}</Text>
         </View>
       ) : error ? (
         <View style={styles.center}>
@@ -247,14 +250,14 @@ export default function ParentProfileScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} progressBackgroundColor={colors.card} />}
         >
           <Text style={[styles.linkedTitle, { color: colors.foreground }]}>
-            Học viên liên kết{data.linkedStudents.length > 0 ? ` (${data.linkedStudents.length})` : ""}
+             {t("Học viên liên kết")}{data.linkedStudents.length > 0 ? ` (${data.linkedStudents.length})` : ""}
           </Text>
 
           {data.linkedStudents.length === 0 ? (
             <View style={[styles.emptyBox, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
               <Feather name="users" size={36} color={colors.mutedForeground} />
-              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Chưa liên kết học viên nào</Text>
-              <Text style={[styles.emptySubText, { color: colors.mutedForeground }]}>Liên hệ trung tâm để liên kết tài khoản con</Text>
+               <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>{t("Chưa liên kết học viên nào")}</Text>
+               <Text style={[styles.emptySubText, { color: colors.mutedForeground }]}>{t("Liên hệ trung tâm để liên kết tài khoản con")}</Text>
             </View>
           ) : (
             data.linkedStudents.map((student) => (

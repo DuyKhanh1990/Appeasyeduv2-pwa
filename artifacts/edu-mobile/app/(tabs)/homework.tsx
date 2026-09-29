@@ -22,6 +22,7 @@ import {
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useColors } from "@/hooks/useColors";
+import { useLanguage } from "@/context/LanguageContext";
 import { apiGet, apiPost, apiUpload, clearSession } from "@/lib/api";
 import { HtmlText } from "@/components/HtmlText";
 import { FileList, FileItem } from "@/components/FileViewer";
@@ -153,10 +154,11 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 ];
 
 function StatusBadge({ status }: { status?: string }) {
+  const { t } = useLanguage();
   const cfg = STATUS_CONFIG[status || "pending"] || STATUS_CONFIG.pending;
   return (
     <View style={{ backgroundColor: cfg.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 }}>
-      <Text style={{ color: cfg.text, fontSize: 11, fontFamily: "Inter_600SemiBold" }}>{cfg.label}</Text>
+      <Text style={{ color: cfg.text, fontSize: 11, fontFamily: "Inter_600SemiBold" }}>{t(cfg.label)}</Text>
     </View>
   );
 }
@@ -174,6 +176,7 @@ function SubmitModal({
   onSubmitted: (homeworkId: string, content: string, attachments: { name: string; url: string }[]) => void;
   colors: ReturnType<typeof useColors>;
 }) {
+  const { t } = useLanguage();
   const { height: screenH } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const panelH = Math.round((screenH - insets.top - insets.bottom) * 0.35);
@@ -191,7 +194,7 @@ function SubmitModal({
     if (!assignment?.homeworkId) return;
     const html = editorRef.current?.getContent() ?? "";
     if (isHtmlEmpty(html) && pickedFiles.length === 0) {
-      Alert.alert("Chú ý", "Vui lòng nhập nội dung bài làm hoặc đính kèm tệp");
+      Alert.alert(t("Chú ý"), t("Vui lòng nhập nội dung bài làm hoặc đính kèm tệp"));
       return;
     }
     setSubmitting(true);
@@ -214,7 +217,7 @@ function SubmitModal({
       onSubmitted(assignment.homeworkId, html, attachments);
       onClose();
     } catch {
-      Alert.alert("Lỗi", "Không thể nộp bài. Vui lòng thử lại.");
+      Alert.alert(t("Lỗi"), t("Không thể nộp bài. Vui lòng thử lại."));
     } finally {
       setSubmitting(false);
     }
@@ -234,7 +237,7 @@ function SubmitModal({
         setPickedFiles(prev => [...prev, ...docs]);
       }
     } catch {
-      Alert.alert("Lỗi", "Không thể mở tệp.");
+      Alert.alert(t("Lỗi"), t("Không thể mở tệp."));
     }
   };
 
@@ -256,7 +259,7 @@ function SubmitModal({
                 <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>
-                      {isEdit ? "Nộp lại bài" : "Nộp bài"}
+                      {t(isEdit ? "Nộp lại bài" : "Nộp bài")}
                     </Text>
                     <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginTop: 1 }} numberOfLines={1}>
                       {assignment.title}
@@ -291,12 +294,12 @@ function SubmitModal({
                           />
                         ) : (
                           <Text style={{ fontSize: 14, fontFamily: "Inter_400Regular", color: colors.mutedForeground, fontStyle: "italic" }}>
-                            (Không có mô tả)
+                            {t("(Không có mô tả)")}
                           </Text>
                         )}
                         {assignment.attachments && assignment.attachments.length > 0 && (
                           <View style={{ marginTop: 12 }}>
-                            <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground, marginBottom: 8 }}>Tệp đính kèm:</Text>
+                            <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground, marginBottom: 8 }}>{t("Tệp đính kèm:")}</Text>
                             <FileList files={assignment.attachments} />
                           </View>
                         )}
@@ -304,7 +307,7 @@ function SubmitModal({
                     ) : (
                       <View style={{ alignItems: "center", paddingTop: 24, gap: 8 }}>
                         <Feather name="file-text" size={32} color={colors.mutedForeground} />
-                        <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>Không có nội dung bài tập</Text>
+                        <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>{t("Không có nội dung bài tập")}</Text>
                       </View>
                     )}
                   </ScrollView>
@@ -316,7 +319,7 @@ function SubmitModal({
                   <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 6, flexDirection: "row", alignItems: "center", gap: 6, borderBottomWidth: 1, borderBottomColor: colors.border }}>
                     <Feather name="edit-3" size={13} color="#7c3aed" />
                     <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: "#7c3aed", textTransform: "uppercase", letterSpacing: 0.7 }}>
-                      Bài làm của bạn
+                      {t("Bài làm của bạn")}
                     </Text>
                   </View>
 
@@ -334,7 +337,7 @@ function SubmitModal({
                       style={{ flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", backgroundColor: colors.muted, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6 }}
                     >
                       <Feather name="paperclip" size={13} color={colors.mutedForeground} />
-                      <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground }}>Đính kèm file</Text>
+                      <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground }}>{t("Đính kèm file")}</Text>
                     </TouchableOpacity>
                     {pickedFiles.length > 0 && (
                       <View style={{ marginTop: 8, flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
@@ -369,7 +372,7 @@ function SubmitModal({
                         <>
                           <Feather name="send" size={15} color="#1e1b4b" />
                           <Text style={{ color: "#1e1b4b", fontSize: 15, fontFamily: "Inter_700Bold" }}>
-                            {isEdit ? "Nộp lại bài" : "Nộp bài"}
+                            {t(isEdit ? "Nộp lại bài" : "Nộp bài")}
                           </Text>
                         </>
                       )}
@@ -397,6 +400,7 @@ function AssignmentCard({
   onViewExamResult: (item: AssignmentRow) => void;
 }) {
   const insets = useSafeAreaInsets();
+  const { t, locale } = useLanguage();
   const [commentPopupVisible, setCommentPopupVisible] = useState(false);
   const [submissionPopupVisible, setSubmissionPopupVisible] = useState(false);
   const [resultPopupVisible, setResultPopupVisible] = useState(false);
@@ -405,7 +409,7 @@ function AssignmentCard({
   const isExam = item.itemType === "Bài kiểm tra";
 
   const dateStr = item.sessionDate
-    ? new Date(item.sessionDate).toLocaleDateString("vi-VN", { weekday: "short", day: "numeric", month: "numeric" })
+    ? new Date(item.sessionDate).toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "numeric" })
     : "";
 
   const isExamSubmitted = isExam && (item.submissionStatus === "submitted" || item.submissionStatus === "graded");
@@ -429,7 +433,7 @@ function AssignmentCard({
             <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: "#fef3c7", alignItems: "center", justifyContent: "center" }}>
               <Feather name="message-square" size={16} color="#d97706" />
             </View>
-            <Text style={{ flex: 1, fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>Nhận xét của giáo viên</Text>
+            <Text style={{ flex: 1, fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>{t("Nhận xét của giáo viên")}</Text>
             <TouchableOpacity onPress={() => setCommentPopupVisible(false)} style={{ padding: 4 }}>
               <Feather name="x" size={20} color={colors.mutedForeground} />
             </TouchableOpacity>
@@ -444,7 +448,7 @@ function AssignmentCard({
               onPress={() => setCommentPopupVisible(false)}
               style={{ backgroundColor: colors.primary, borderRadius: 12, paddingVertical: 13, alignItems: "center" }}
             >
-              <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Đóng</Text>
+              <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>{t("Đóng")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -469,7 +473,7 @@ function AssignmentCard({
                     <Feather name="award" size={17} color="#fff" />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: "#fff" }}>Kết quả bài kiểm tra</Text>
+                    <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: "#fff" }}>{t("Kết quả bài kiểm tra")}</Text>
                     <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.75)", marginTop: 1 }} numberOfLines={1}>{item.title}</Text>
                   </View>
                   <TouchableOpacity onPress={() => setResultPopupVisible(false)} style={{ padding: 4 }}>
@@ -486,10 +490,10 @@ function AssignmentCard({
                     <View style={{ alignItems: "center", marginBottom: 4 }}>
                       <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: "#f0fdf4", borderWidth: 3, borderColor: "#22c55e", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
                         <Text style={{ fontSize: 30, fontFamily: "Inter_700Bold", color: "#16a34a", lineHeight: 34 }}>{item.score}</Text>
-                        <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: "#16a34a", marginTop: 1 }}>điểm</Text>
+                        <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: "#16a34a", marginTop: 1 }}>{t("điểm")}</Text>
                       </View>
                       <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
-                        {item.submittedAt ? `Nộp lúc ${new Date(item.submittedAt).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "numeric", month: "numeric" })}` : "Đã nộp"}
+                        {item.submittedAt ? `${t("Nộp lúc")} ${new Date(item.submittedAt).toLocaleString(locale, { hour: "2-digit", minute: "2-digit", day: "numeric", month: "numeric" })}` : t("Đã nộp")}
                       </Text>
                     </View>
                   ) : (
@@ -497,7 +501,7 @@ function AssignmentCard({
                       <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: "#fef9c3", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
                         <Feather name="clock" size={28} color="#ca8a04" />
                       </View>
-                      <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#92400e" }}>Chờ giáo viên chấm điểm</Text>
+                      <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#92400e" }}>{t("Chờ giáo viên chấm điểm")}</Text>
                     </View>
                   )}
                 </View>
@@ -507,7 +511,7 @@ function AssignmentCard({
                   <View style={{ marginHorizontal: 20, marginBottom: 20, backgroundColor: "#fffbeb", borderRadius: 12, padding: 14, borderLeftWidth: 3, borderLeftColor: "#f59e0b" }}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
                       <Feather name="message-square" size={13} color="#d97706" />
-                      <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: "#d97706", textTransform: "uppercase", letterSpacing: 0.5 }}>Nhận xét của giáo viên</Text>
+                      <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: "#d97706", textTransform: "uppercase", letterSpacing: 0.5 }}>{t("Nhận xét của giáo viên")}</Text>
                     </View>
                     <HtmlText html={item.comment ?? ""} style={{ color: "#78350f" } as any} />
                   </View>
@@ -542,7 +546,7 @@ function AssignmentCard({
             <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: "#eff6ff", alignItems: "center", justifyContent: "center" }}>
               <Feather name="file-text" size={16} color={colors.primary} />
             </View>
-            <Text style={{ flex: 1, fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>Bài đã nộp</Text>
+            <Text style={{ flex: 1, fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>{t("Bài đã nộp")}</Text>
             <TouchableOpacity onPress={() => setSubmissionPopupVisible(false)} style={{ padding: 4 }}>
               <Feather name="x" size={20} color={colors.mutedForeground} />
             </TouchableOpacity>
@@ -553,7 +557,7 @@ function AssignmentCard({
             {/* Nội dung bài tập (đề bài) */}
             {(item.description || (item.attachments && item.attachments.length > 0)) && (
               <View style={{ marginBottom: 16 }}>
-                <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 }}>Nội dung bài tập</Text>
+                <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 }}>{t("Nội dung bài tập")}</Text>
                 <View style={{ backgroundColor: colors.card, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.border }}>
                   {item.title ? <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: colors.foreground, marginBottom: item.description ? 8 : 0 }}>{item.title}</Text> : null}
                   {item.description ? (
@@ -569,7 +573,7 @@ function AssignmentCard({
             )}
 
             {/* Bài nộp của học viên */}
-            <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 }}>Bài nộp của học viên</Text>
+            <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 }}>{t("Bài nộp của học viên")}</Text>
             {item.submissionContent ? (
               <View style={{ backgroundColor: "#eff6ff", borderRadius: 12, padding: 14, borderLeftWidth: 3, borderLeftColor: colors.primary, marginBottom: 12, borderWidth: 1, borderColor: "#bfdbfe" }}>
                 <HtmlText html={item.submissionContent} style={{ color: "#1e3a5f" }} />
@@ -582,7 +586,7 @@ function AssignmentCard({
                 <FileList files={normaliseSubmissionFiles(item.submissionAttachments as unknown[])} />
               </View>
             ) : !item.submissionContent ? (
-              <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>Học viên không để lại nội dung.</Text>
+              <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>{t("Học viên không để lại nội dung.")}</Text>
             ) : null}
           </ScrollView>
 
@@ -593,13 +597,13 @@ function AssignmentCard({
               style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.muted }}
             >
               <Feather name="send" size={13} color={colors.primary} />
-              <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.primary }}>Nộp lại</Text>
+              <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.primary }}>{t("Nộp lại")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setSubmissionPopupVisible(false)}
               style={{ flex: 1, paddingVertical: 12, backgroundColor: colors.primary, borderRadius: 12, alignItems: "center" }}
             >
-              <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Đóng</Text>
+              <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#fff" }}>{t("Đóng")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -611,7 +615,7 @@ function AssignmentCard({
           {item.score != null && (
             <View style={{ position: "absolute", right: 0, top: 0, alignItems: "center", justifyContent: "center", minWidth: 52, backgroundColor: "#f0fdf4", borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 }}>
               <Text style={{ fontSize: 26, fontFamily: "Inter_700Bold", color: "#16a34a", lineHeight: 30 }}>{item.score}</Text>
-              <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: "#16a34a", marginTop: 1 }}>điểm</Text>
+              <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: "#16a34a", marginTop: 1 }}>{t("điểm")}</Text>
             </View>
           )}
 
@@ -662,7 +666,7 @@ function AssignmentCard({
                 style={{ backgroundColor: "#eff6ff", paddingHorizontal: 9, paddingVertical: 5, borderRadius: 10, flexDirection: "row", alignItems: "center", gap: 4 }}
               >
                 <Feather name="file-text" size={12} color={colors.primary} />
-                <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: colors.primary }}>Xem bài nộp</Text>
+                <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: colors.primary }}>{t("Xem bài nộp")}</Text>
               </TouchableOpacity>
             )}
             {item.comment ? (
@@ -672,12 +676,12 @@ function AssignmentCard({
                 style={{ backgroundColor: "#fef3c7", paddingHorizontal: 9, paddingVertical: 5, borderRadius: 10, flexDirection: "row", alignItems: "center", gap: 4 }}
               >
                 <Feather name="eye" size={13} color="#d97706" />
-                <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#d97706" }}>Nhận xét</Text>
+                <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#d97706" }}>{t("Nhận xét")}</Text>
               </TouchableOpacity>
             ) : null}
             {item.isPersonalized && (
               <View style={{ backgroundColor: "#faf5ff", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
-                <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: "#7c3aed" }}>Cá nhân hoá</Text>
+                <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: "#7c3aed" }}>{t("Cá nhân hoá")}</Text>
               </View>
             )}
             {isExam && item.submittedAt && (
@@ -735,7 +739,7 @@ function AssignmentCard({
               activeOpacity={0.8}
             >
               <Feather name="send" size={13} color="#fff" />
-              <Text style={[styles.actionBtnText, { color: "#fff" }]}>Nộp bài</Text>
+              <Text style={[styles.actionBtnText, { color: "#fff" }]}>{t("Nộp bài")}</Text>
             </TouchableOpacity>
           )}
 
@@ -752,7 +756,7 @@ function AssignmentCard({
               activeOpacity={0.8}
             >
               <Feather name="book-open" size={13} color="#fff" />
-              <Text style={[styles.actionBtnText, { color: "#fff" }]}>Làm bài kiểm tra</Text>
+              <Text style={[styles.actionBtnText, { color: "#fff" }]}>{t("Làm bài kiểm tra")}</Text>
             </TouchableOpacity>
           )}
 
@@ -766,7 +770,7 @@ function AssignmentCard({
                   style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#fdf2f8", borderWidth: 1, borderColor: "#f9a8d4", paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 }}
                 >
                   <Feather name="book-open" size={12} color="#be185d" />
-                  <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#be185d" }}>Làm lại</Text>
+                  <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#be185d" }}>{t("Làm lại")}</Text>
                 </TouchableOpacity>
               )}
               <TouchableOpacity
@@ -775,7 +779,7 @@ function AssignmentCard({
                 style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: colors.primary, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 }}
               >
                 <Feather name="eye" size={12} color="#fff" />
-                <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Xem kết quả</Text>
+                <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#fff" }}>{t("Xem kết quả")}</Text>
               </TouchableOpacity>
             </>
           )}
@@ -787,6 +791,7 @@ function AssignmentCard({
 
 export default function HomeworkScreen() {
   const colors = useColors();
+  const { t, locale } = useLanguage();
   const insets = useSafeAreaInsets();
 
   const topPad = insets.top;
@@ -1068,7 +1073,7 @@ export default function HomeworkScreen() {
           <TouchableOpacity onPress={() => goMonth(-1)} style={styles.navBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Feather name="chevron-left" size={22} color="#1e1b4b" />
           </TouchableOpacity>
-          <Text style={styles.monthTitle}>{MONTH_NAMES[viewMonth]}, {viewYear}</Text>
+          <Text style={styles.monthTitle}>{t(MONTH_NAMES[viewMonth])}, {viewYear}</Text>
           <TouchableOpacity onPress={() => goMonth(1)} style={styles.navBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Feather name="chevron-right" size={22} color="#1e1b4b" />
           </TouchableOpacity>
@@ -1100,7 +1105,7 @@ export default function HomeworkScreen() {
               borderRadius: 20,
             }]}
           >
-            <Text style={[styles.filterText, { color: filter === f.key ? "#fff" : colors.mutedForeground }]}>{f.label}</Text>
+            <Text style={[styles.filterText, { color: filter === f.key ? "#fff" : colors.mutedForeground }]}>{t(f.label)}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -1123,7 +1128,7 @@ export default function HomeworkScreen() {
         {loading ? (
           <View style={styles.center}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 10 }}>Đang tải bài tập...</Text>
+            <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 10 }}>{t("Đang tải bài tập...")}</Text>
           </View>
         ) : fetchError ? (
           <View style={styles.center}>
@@ -1138,14 +1143,14 @@ export default function HomeworkScreen() {
               onPress={() => fetchAssignments()}
               style={{ marginTop: 16, backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20 }}
             >
-              <Text style={{ color: "#fff", fontFamily: "Inter_600SemiBold", fontSize: 14 }}>Thử lại</Text>
+              <Text style={{ color: "#fff", fontFamily: "Inter_600SemiBold", fontSize: 14 }}>{t("Thử lại")}</Text>
             </TouchableOpacity>
           </View>
         ) : filtered.length === 0 ? (
           <View style={styles.center}>
             <Feather name="book-open" size={48} color={colors.mutedForeground} />
-            <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_500Medium", fontSize: 15, marginTop: 10 }}>Không có bài tập</Text>
-            <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 4 }}>Tháng này chưa có bài tập nào</Text>
+            <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_500Medium", fontSize: 15, marginTop: 10 }}>{t("Không có bài tập")}</Text>
+            <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 4 }}>{t("Tháng này chưa có bài tập nào")}</Text>
           </View>
         ) : (
           (() => {

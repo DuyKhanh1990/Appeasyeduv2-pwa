@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import { CommentRichEditor } from "@/components/CommentRichEditor";
 import { useColors } from "@/hooks/useColors";
 import { apiGet, apiPost, apiPut } from "@/lib/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 
 
@@ -120,6 +121,7 @@ function PickerModal<T>({
   colors: ReturnType<typeof useColors>;
 }) {
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <TouchableOpacity style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)" }} activeOpacity={1} onPress={onClose} />
@@ -147,7 +149,7 @@ function PickerModal<T>({
           })}
           {items.length === 0 && (
             <View style={{ padding: 32, alignItems: "center" }}>
-              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>Không có dữ liệu</Text>
+              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>{t("Không có dữ liệu")}</Text>
             </View>
           )}
         </ScrollView>
@@ -162,6 +164,7 @@ export default function StaffGradeBookEditScreen() {
   const gradeBookId = params.id;
   const isEditing = !!gradeBookId;
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = useState(true);
@@ -242,7 +245,7 @@ export default function StaffGradeBookEditScreen() {
         setSelectedSheetId(sheetsData[0].id);
       }
     } catch (err) {
-      Alert.alert("Lỗi", "Không tải được dữ liệu. Vui lòng thử lại.");
+      Alert.alert(t("Lỗi"), t("Không tải được dữ liệu. Vui lòng thử lại."));
     } finally {
       setLoading(false);
     }
@@ -257,7 +260,7 @@ export default function StaffGradeBookEditScreen() {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập tiêu đề bảng điểm.");
+      Alert.alert(t("Thiếu thông tin"), t("Vui lòng nhập tiêu đề bảng điểm."));
       return;
     }
     setSaving(true);
@@ -295,7 +298,7 @@ export default function StaffGradeBookEditScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
     } catch (err) {
-      Alert.alert("Lỗi", "Không thể lưu bảng điểm. Vui lòng thử lại.");
+      Alert.alert(t("Lỗi"), t("Không thể lưu bảng điểm. Vui lòng thử lại."));
     } finally {
       setSaving(false);
     }
@@ -308,7 +311,7 @@ export default function StaffGradeBookEditScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center", gap: 14 }}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>Đang tải dữ liệu...</Text>
+        <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>{t("Đang tải dữ liệu...")}</Text>
       </View>
     );
   }
@@ -332,7 +335,7 @@ export default function StaffGradeBookEditScreen() {
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 18, fontFamily: "Inter_700Bold", color: "#1e1b4b" }}>
-              {isEditing ? "Chỉnh sửa bảng điểm" : "Tạo bảng điểm mới"}
+              {isEditing ? t("Chỉnh sửa bảng điểm") : t("Tạo bảng điểm mới")}
             </Text>
           </View>
           <TouchableOpacity
@@ -341,7 +344,7 @@ export default function StaffGradeBookEditScreen() {
             style={{ backgroundColor: "rgba(30,27,75,0.1)", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 6 }}
           >
             {saving ? <ActivityIndicator size="small" color="#1e1b4b" /> : <Feather name="check" size={16} color="#1e1b4b" />}
-            <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#1e1b4b" }}>Lưu</Text>
+            <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#1e1b4b" }}>{t("Lưu")}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -351,11 +354,11 @@ export default function StaffGradeBookEditScreen() {
         <View style={{ padding: 16, gap: 14 }}>
           {/* Title */}
           <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.label, { color: colors.mutedForeground }]}>Tiêu đề</Text>
+            <Text style={[styles.label, { color: colors.mutedForeground }]}>{t("Tiêu đề")}</Text>
             <TextInput
               value={title}
               onChangeText={setTitle}
-              placeholder="Nhập tiêu đề bảng điểm..."
+              placeholder={t("Nhập tiêu đề bảng điểm...")}
               placeholderTextColor={colors.mutedForeground}
               style={[styles.input, { color: colors.foreground, borderColor: colors.border }]}
             />
@@ -370,11 +373,11 @@ export default function StaffGradeBookEditScreen() {
             >
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
                 <Feather name="file-text" size={15} color={colors.primary} />
-                <Text style={[styles.label, { color: colors.mutedForeground, marginBottom: 0 }]}>Mẫu điểm</Text>
+                <Text style={[styles.label, { color: colors.mutedForeground, marginBottom: 0 }]}>{t("Mẫu điểm")}</Text>
               </View>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                 <Text style={{ fontSize: 14, fontFamily: "Inter_400Regular", color: selectedSheet ? colors.foreground : colors.mutedForeground }} numberOfLines={1}>
-                  {selectedSheet ? selectedSheet.name : "Chọn mẫu..."}
+                  {selectedSheet ? selectedSheet.name : t("Chọn mẫu...")}
                 </Text>
                 <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
               </View>
@@ -387,11 +390,11 @@ export default function StaffGradeBookEditScreen() {
             >
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
                 <Feather name="calendar" size={15} color={colors.primary} />
-                <Text style={[styles.label, { color: colors.mutedForeground, marginBottom: 0 }]}>Buổi học</Text>
+                <Text style={[styles.label, { color: colors.mutedForeground, marginBottom: 0 }]}>{t("Buổi học")}</Text>
               </View>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                 <Text style={{ fontSize: 14, fontFamily: "Inter_400Regular", color: selectedSession ? colors.foreground : colors.mutedForeground }} numberOfLines={1}>
-                  {selectedSession ? `Buổi ${selectedSession.sessionIndex} · ${formatSessionDate(selectedSession.sessionDate)}` : "Không gắn buổi"}
+                  {selectedSession ? `${t("Buổi")} ${selectedSession.sessionIndex} · ${formatSessionDate(selectedSession.sessionDate)}` : t("Không gắn buổi")}
                 </Text>
                 <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
               </View>
@@ -401,7 +404,7 @@ export default function StaffGradeBookEditScreen() {
             <View style={[styles.pickerRow, { borderBottomWidth: 0 }]}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
                 <Feather name="send" size={15} color={colors.primary} />
-                <Text style={[styles.label, { color: colors.mutedForeground, marginBottom: 0 }]}>Công bố cho học viên</Text>
+                <Text style={[styles.label, { color: colors.mutedForeground, marginBottom: 0 }]}>{t("Công bố cho học viên")}</Text>
               </View>
               <Switch
                 value={published}
@@ -417,13 +420,13 @@ export default function StaffGradeBookEditScreen() {
             <>
               <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border, gap: 0, overflow: "hidden", padding: 0 }]}>
                 <Text style={[styles.sectionTitle, { color: colors.foreground, borderBottomColor: colors.border }]}>
-                  Nhập điểm ({students.length} học viên)
+                  {t("Nhập điểm")} ({students.length} {t("học viên")})
                 </Text>
 
                 {students.length === 0 ? (
                   <View style={{ padding: 24, alignItems: "center", gap: 8 }}>
                     <Feather name="users" size={24} color={colors.mutedForeground} />
-                    <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>Chưa có học viên trong lớp</Text>
+                    <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>{t("Chưa có học viên trong lớp")}</Text>
                   </View>
                 ) : (
                   <ScrollView horizontal showsHorizontalScrollIndicator={true} bounces={false}>
@@ -431,7 +434,7 @@ export default function StaffGradeBookEditScreen() {
                       {/* Header row */}
                       <View style={{ flexDirection: "row", borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.muted }}>
                         <View style={{ width: 150, paddingHorizontal: 12, paddingVertical: 8, justifyContent: "center" }}>
-                          <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground }}>Học viên</Text>
+                          <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground }}>{t("Học viên")}</Text>
                         </View>
                         {categories.map((cat) => (
                           <View key={cat.id} style={{ width: 82, borderLeftWidth: 1, borderLeftColor: colors.border, paddingHorizontal: 4, paddingVertical: 8, alignItems: "center", justifyContent: "center" }}>
@@ -524,7 +527,7 @@ export default function StaffGradeBookEditScreen() {
             <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border, alignItems: "center", padding: 24, gap: 8 }]}>
               <Feather name="file-text" size={28} color={colors.mutedForeground} />
               <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>
-                Chọn mẫu điểm ở trên để bắt đầu nhập điểm.
+                {t("Chọn mẫu điểm ở trên để bắt đầu nhập điểm.")}
               </Text>
             </View>
           )}
@@ -536,7 +539,7 @@ export default function StaffGradeBookEditScreen() {
       {/* Pickers */}
       <PickerModal
         visible={sheetPickerVisible}
-        title="Chọn mẫu điểm"
+        title={t("Chọn mẫu điểm")}
         items={sheets}
         selectedId={selectedSheetId}
         onSelect={(s: ScoreSheet) => { setSelectedSheetId(s.id); }}
@@ -547,12 +550,12 @@ export default function StaffGradeBookEditScreen() {
       />
       <PickerModal
         visible={sessionPickerVisible}
-        title="Chọn buổi học"
+        title={t("Chọn buổi học")}
         items={[{ id: "__none__", sessionIndex: null, sessionDate: null, weekday: null, startTime: "", endTime: "" }, ...sessions] as any[]}
         selectedId={selectedSessionId ?? "__none__"}
         onSelect={(s: any) => setSelectedSessionId(s.id === "__none__" ? null : s.id)}
         onClose={() => setSessionPickerVisible(false)}
-        renderLabel={(s: any) => s.id === "__none__" ? "Không gắn buổi học" : `Buổi ${s.sessionIndex} · ${formatSessionDate(s.sessionDate ?? "")} (${s.startTime}–${s.endTime})`}
+        renderLabel={(s: any) => s.id === "__none__" ? t("Không gắn buổi học") : `${t("Buổi")} ${s.sessionIndex} · ${formatSessionDate(s.sessionDate ?? "")} (${s.startTime}–${s.endTime})`}
         getItemId={(s: any) => s.id}
         colors={colors}
       />

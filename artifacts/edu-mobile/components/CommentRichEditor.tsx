@@ -30,6 +30,7 @@ import {
 
 import { useColors } from "@/hooks/useColors";
 import { apiUpload } from "@/lib/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface Props {
   student?: { fullName: string; code: string };
@@ -47,6 +48,7 @@ export function CommentRichEditor({
   onClose,
 }: Props) {
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const [uploading, setUploading] = useState(false);
 
@@ -68,7 +70,7 @@ export function CommentRichEditor({
   const handlePickImage = useCallback(async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert("Cần quyền truy cập", "Vui lòng cho phép truy cập thư viện ảnh.");
+      Alert.alert(t("Cần quyền truy cập"), t("Vui lòng cho phép truy cập thư viện ảnh."));
       return;
     }
 
@@ -93,14 +95,15 @@ export function CommentRichEditor({
       if (uploaded[0]?.url) {
         editor.setImage(uploaded[0].url);
       } else {
-        Alert.alert("Lỗi", "Không nhận được URL ảnh sau khi tải lên.");
+        Alert.alert(t("Lỗi"), t("Không nhận được URL ảnh sau khi tải lên."));
       }
-    } catch {
-      Alert.alert("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại.");
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      Alert.alert(t("Lỗi"), `${t("Không thể tải ảnh lên. Vui lòng thử lại.")}${detail ? `: ${detail}` : ""}`);
     } finally {
       setUploading(false);
     }
-  }, [editor]);
+  }, [editor, t]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -120,7 +123,7 @@ export function CommentRichEditor({
       >
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>
-            Nhận xét
+            {t("Nhận xét")}
           </Text>
           {student ? (
             <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginTop: 2 }}>
@@ -181,7 +184,7 @@ export function CommentRichEditor({
               <Feather name="image" size={16} color={colors.primary} />
             )}
             <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.primary }}>
-              {uploading ? "Đang tải ảnh..." : "Chèn ảnh"}
+              {uploading ? t("Đang tải ảnh...") : t("Chèn ảnh")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -212,7 +215,7 @@ export function CommentRichEditor({
             }}
           >
             <Text style={{ fontSize: 14, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>
-              Xoá nhận xét
+              {t("Xoá nhận xét")}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -226,7 +229,7 @@ export function CommentRichEditor({
             }}
           >
             <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>
-              Lưu
+              {t("Lưu")}
             </Text>
           </TouchableOpacity>
         </View>

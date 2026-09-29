@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useColors } from "@/hooks/useColors";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useLanguage } from "@/context/LanguageContext";
 import { apiGet } from "@/lib/api";
 
 interface FeatureCard {
@@ -121,6 +122,7 @@ function CardGrid({ cards, colors, onPress }: {
   colors: ReturnType<typeof useColors>;
   onPress: (id: string) => void;
 }) {
+  const { t } = useLanguage();
   return (
     <View style={styles.grid}>
       {cards.map((card) => (
@@ -144,7 +146,7 @@ function CardGrid({ cards, colors, onPress }: {
               </View>
             )}
           </View>
-          <Text style={[styles.cardTitle, { color: colors.foreground }]}>{card.title}</Text>
+          <Text style={[styles.cardTitle, { color: colors.foreground }]}>{t(card.title)}</Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -153,6 +155,7 @@ function CardGrid({ cards, colors, onPress }: {
 
 export default function AcademicScreen() {
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const topPad = insets.top;
   const perms = usePermissions();
@@ -218,10 +221,10 @@ export default function AcademicScreen() {
         }}
       >
         <Text style={{ fontSize: 22, fontFamily: "Inter_700Bold", color: "#1e1b4b" }}>
-          Học vụ - Hành chính
+          {t("Học vụ - Hành chính")}
         </Text>
         <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: "rgba(30,27,75,0.65)", marginTop: 2 }}>
-          Quản lý học vụ & hành chính
+          {t("Quản lý học vụ & hành chính")}
         </Text>
       </View>
 
@@ -230,12 +233,12 @@ export default function AcademicScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: 100 + insets.bottom }}
         showsVerticalScrollIndicator={false}
       >
-        <SectionTitle title="HỌC VỤ" color="#F97316" colors={colors} />
+        <SectionTitle title={t("HỌC VỤ")} color="#F97316" colors={colors} />
         <CardGrid cards={hocVuCards} colors={colors} onPress={handlePress} />
 
         <View style={{ height: 24 }} />
 
-        <SectionTitle title="HÀNH CHÍNH" color="#8B5CF6" colors={colors} />
+        <SectionTitle title={t("HÀNH CHÍNH")} color="#8B5CF6" colors={colors} />
         <CardGrid cards={hanhChinhCards} colors={colors} onPress={handlePress} />
       </ScrollView>
     </View>

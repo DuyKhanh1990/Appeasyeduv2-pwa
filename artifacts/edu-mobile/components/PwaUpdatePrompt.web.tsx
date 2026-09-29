@@ -9,6 +9,7 @@ import {
 } from "react-native";
 
 import { registerWebServiceWorker } from "@/lib/pushNotifications";
+import { useLanguage } from "@/context/LanguageContext";
 
 const REMIND_AFTER_MS = 60 * 60 * 1000;
 
@@ -20,6 +21,7 @@ export function PwaUpdatePrompt() {
   const [visible, setVisible] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   const offerUpdate = useCallback((worker: ServiceWorker | null) => {
     if (!worker) return;
@@ -107,7 +109,7 @@ export function PwaUpdatePrompt() {
   const updateNow = () => {
     const worker = waitingWorker.current;
     if (!worker) {
-      setError("Bản cập nhật chưa sẵn sàng. Vui lòng thử lại.");
+       setError(t("Bản cập nhật chưa sẵn sàng. Vui lòng thử lại."));
       return;
     }
 
@@ -119,7 +121,7 @@ export function PwaUpdatePrompt() {
     reloadTimeout.current = setTimeout(() => {
       reloadRequested.current = false;
       setUpdating(false);
-      setError("Chưa thể cập nhật. Vui lòng kiểm tra kết nối và thử lại.");
+       setError(t("Chưa thể cập nhật. Vui lòng kiểm tra kết nối và thử lại."));
     }, 15_000);
   };
 
@@ -139,14 +141,13 @@ export function PwaUpdatePrompt() {
       <View style={styles.backdrop}>
         <View
           accessibilityViewIsModal
-          accessibilityLabel="EasyEdu có phiên bản mới"
+          accessibilityLabel={t("EasyEdu có phiên bản mới")}
           style={styles.card}
         >
           <Text style={styles.emoji}>🎉</Text>
-          <Text style={styles.title}>Có phiên bản mới</Text>
+          <Text style={styles.title}>{t("Có phiên bản mới")}</Text>
           <Text style={styles.description}>
-            EasyEdu đã có phiên bản cập nhật. Vui lòng cập nhật để sử dụng các
-            tính năng và cải tiến mới nhất.
+            {t("EasyEdu đã có phiên bản cập nhật. Vui lòng cập nhật để sử dụng các tính năng và cải tiến mới nhất.")}
           </Text>
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -164,7 +165,7 @@ export function PwaUpdatePrompt() {
             {updating ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.primaryButtonText}>Cập nhật ngay</Text>
+              <Text style={styles.primaryButtonText}>{t("Cập nhật ngay")}</Text>
             )}
           </Pressable>
 
@@ -177,7 +178,7 @@ export function PwaUpdatePrompt() {
               pressed && !updating && styles.pressed,
             ]}
           >
-            <Text style={styles.secondaryButtonText}>Để sau</Text>
+            <Text style={styles.secondaryButtonText}>{t("Để sau")}</Text>
           </Pressable>
         </View>
       </View>

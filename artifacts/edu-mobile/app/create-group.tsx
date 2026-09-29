@@ -17,21 +17,23 @@ import {
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useColors } from "@/hooks/useColors";
+import { useLanguage } from "@/context/LanguageContext";
 import { apiGet, apiPost } from "@/lib/api";
 
 interface UserResult { userId: string; displayName: string; role: string; tinodeLogin: string; tinodeUid: string; }
 interface ClassResult { id: string; name: string; classCode: string; }
 interface ClassMember { userId: string; displayName: string; role: string; }
 
-function roleLabel(role: string): string {
-  if (role === "staff") return "Nhân viên";
-  if (role === "teacher") return "Giáo viên";
-  if (role === "admin") return "Admin";
-  return "Học viên";
+function roleLabel(role: string, t: (sourceText: string) => string): string {
+  if (role === "staff") return t("Nhân viên");
+  if (role === "teacher") return t("Giáo viên");
+  if (role === "admin") return t("Admin");
+  return t("Học viên");
 }
 
 export default function CreateGroupScreen() {
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
 
   const [groupName, setGroupName] = useState("");
@@ -114,14 +116,14 @@ export default function CreateGroupScreen() {
     } catch (err) {
       const status = (err as { status?: number }).status;
       if (status === 403) {
-        Alert.alert("Không có quyền", "Bạn không được phép tạo nhóm chat.");
+         Alert.alert(t("Không có quyền"), t("Bạn không được phép tạo nhóm chat."));
       } else {
-        Alert.alert("Lỗi", "Không thể tạo nhóm. Vui lòng thử lại.");
+         Alert.alert(t("Lỗi"), t("Không thể tạo nhóm. Vui lòng thử lại."));
       }
     } finally {
       setCreating(false);
     }
-  }, [groupName, selectedMembers, selectedClass, creating]);
+  }, [groupName, selectedMembers, selectedClass, creating, t]);
 
   const toggleMember = useCallback((u: UserResult) => {
     setSelectedMembers(prev =>
@@ -140,7 +142,7 @@ export default function CreateGroupScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Tạo nhóm mới</Text>
+         <Text style={[styles.headerTitle, { color: colors.foreground }]}>{t("Tạo nhóm mới")}</Text>
         <TouchableOpacity
           onPress={handleCreate}
           disabled={!canCreate || creating}
@@ -148,7 +150,7 @@ export default function CreateGroupScreen() {
         >
           {creating
             ? <ActivityIndicator size="small" color="#fff" />
-            : <Text style={[styles.createBtnText, { color: canCreate ? "#fff" : colors.mutedForeground }]}>Tạo</Text>}
+             : <Text style={[styles.createBtnText, { color: canCreate ? "#fff" : colors.mutedForeground }]}>{t("Tạo")}</Text>}
         </TouchableOpacity>
       </View>
 
@@ -165,10 +167,10 @@ export default function CreateGroupScreen() {
         >
           {/* Tên nhóm */}
           <View style={[styles.section, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.label, { color: colors.mutedForeground }]}>TÊN NHÓM <Text style={{ color: "#ef4444" }}>*</Text></Text>
+             <Text style={[styles.label, { color: colors.mutedForeground }]}>{t("TÊN NHÓM")} <Text style={{ color: "#ef4444" }}>*</Text></Text>
             <TextInput
               style={[styles.nameInput, { color: colors.foreground, borderBottomColor: colors.border }]}
-              placeholder="Nhập tên nhóm..."
+               placeholder={t("Nhập tên nhóm...")}
               placeholderTextColor={colors.mutedForeground}
               value={groupName}
               onChangeText={setGroupName}
@@ -180,7 +182,7 @@ export default function CreateGroupScreen() {
 
           {/* Từ lớp học */}
           <View style={[styles.section, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.label, { color: colors.mutedForeground }]}>TỪ LỚP HỌC <Text style={[styles.optional, { color: colors.mutedForeground }]}>(tuỳ chọn)</Text></Text>
+             <Text style={[styles.label, { color: colors.mutedForeground }]}>{t("TỪ LỚP HỌC")} <Text style={[styles.optional, { color: colors.mutedForeground }]}>({t("tuỳ chọn")})</Text></Text>
 
             {selectedClass ? (
               <View style={[styles.selectedClass, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "40" }]}>
@@ -202,7 +204,7 @@ export default function CreateGroupScreen() {
                   <Feather name="search" size={15} color={colors.mutedForeground} />
                   <TextInput
                     style={[styles.searchInput, { color: colors.foreground }]}
-                    placeholder="Tìm tên lớp học..."
+                     placeholder={t("Tìm tên lớp học...")}
                     placeholderTextColor={colors.mutedForeground}
                     value={classQ}
                     onChangeText={q => {
@@ -245,7 +247,7 @@ export default function CreateGroupScreen() {
                   </TouchableOpacity>
                 ))}
                 {!classSearching && classQ.trim().length > 0 && classResults.length === 0 && (
-                  <Text style={[styles.noResult, { color: colors.mutedForeground }]}>Không tìm thấy lớp nào</Text>
+                   <Text style={[styles.noResult, { color: colors.mutedForeground }]}>{t("Không tìm thấy lớp nào")}</Text>
                 )}
               </>
             )}
@@ -256,7 +258,7 @@ export default function CreateGroupScreen() {
                 {existingClassGroups.length > 0 && (
                   <View style={[styles.warning, { backgroundColor: "#fef3c7", borderColor: "#fcd34d" }]}>
                     <Feather name="alert-triangle" size={14} color="#d97706" />
-                    <Text style={styles.warningText}>{`Lớp đã có nhóm: ${existingClassGroups.map(g => g.name).join(", ")}. Vẫn muốn tạo thêm?`}</Text>
+                     <Text style={styles.warningText}>{`${t("Lớp đã có nhóm")}: ${existingClassGroups.map(g => g.name).join(", ")}. ${t("Vẫn muốn tạo thêm?")}`}</Text>
                   </View>
                 )}
                 {loadingClassMembers ? (
@@ -264,7 +266,7 @@ export default function CreateGroupScreen() {
                 ) : classMembers.length > 0 ? (
                   <View style={{ marginTop: 10 }}>
                     <Text style={[styles.memberCount, { color: colors.mutedForeground }]}>
-                      {classMembers.length} thành viên sẽ được thêm tự động
+                       {classMembers.length} {t("thành viên sẽ được thêm tự động")}
                     </Text>
                     <View style={styles.chipRow}>
                       {classMembers.slice(0, 12).map(m => (
@@ -287,7 +289,7 @@ export default function CreateGroupScreen() {
           {/* Thành viên — chỉ hiện khi không chọn lớp */}
           {!selectedClass && (
             <View style={[styles.section, { borderBottomColor: colors.border }]}>
-              <Text style={[styles.label, { color: colors.mutedForeground }]}>THÀNH VIÊN</Text>
+               <Text style={[styles.label, { color: colors.mutedForeground }]}>{t("THÀNH VIÊN")}</Text>
 
               {/* Selected chips */}
               {selectedMembers.length > 0 && (
@@ -310,7 +312,7 @@ export default function CreateGroupScreen() {
                 <Feather name="search" size={15} color={colors.mutedForeground} />
                 <TextInput
                   style={[styles.searchInput, { color: colors.foreground }]}
-                  placeholder="Tìm theo tên..."
+                     placeholder={t("Tìm theo tên...")}
                   placeholderTextColor={colors.mutedForeground}
                   value={memberQ}
                   onChangeText={q => {
@@ -329,7 +331,7 @@ export default function CreateGroupScreen() {
 
               {/* Member results inline — no popup */}
               {memberQ.trim().length > 0 && !memberSearching && memberResults.length === 0 && (
-                <Text style={[styles.noResult, { color: colors.mutedForeground }]}>Không tìm thấy người dùng</Text>
+                 <Text style={[styles.noResult, { color: colors.mutedForeground }]}>{t("Không tìm thấy người dùng")}</Text>
               )}
               {memberResults.map(u => {
                 const sel = selectedMembers.some(m => m.userId === u.userId);
@@ -347,7 +349,7 @@ export default function CreateGroupScreen() {
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.resultName, { color: colors.foreground }]}>{u.displayName}</Text>
-                      <Text style={[styles.resultSub, { color: colors.mutedForeground }]}>{roleLabel(u.role)}</Text>
+                       <Text style={[styles.resultSub, { color: colors.mutedForeground }]}>{roleLabel(u.role, t)}</Text>
                     </View>
                     {sel && <Feather name="check-circle" size={18} color={colors.primary} />}
                   </TouchableOpacity>

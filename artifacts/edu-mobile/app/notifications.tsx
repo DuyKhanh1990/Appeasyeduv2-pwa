@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 import { apiGet, apiPatch } from "@/lib/api";
 import { navigateDeeplink, DEEPLINK_ROUTES, type DeepLink } from "@/lib/deeplinkNavigator";
@@ -79,17 +80,17 @@ const ALL_CATEGORIES = ["all", "attendance", "schedule", "content", "finance", "
 // Categories ẩn khỏi trang Thông báo (chỉ ẩn UI, không xoá dữ liệu)
 const HIDDEN_CATEGORIES = ["chat"];
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, t: (source: string) => string): string {
   const now = new Date();
   const d = new Date(dateStr);
   const diffMs = now.getTime() - d.getTime();
   const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 1) return "Vừa xong";
-  if (diffMins < 60) return `${diffMins} phút trước`;
+   if (diffMins < 1) return t("Vừa xong");
+   if (diffMins < 60) return `${diffMins} ${t("phút trước")}`;
   const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours} giờ trước`;
+   if (diffHours < 24) return `${diffHours} ${t("giờ trước")}`;
   const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 7) return `${diffDays} ngày trước`;
+   if (diffDays < 7) return `${diffDays} ${t("ngày trước")}`;
   return d.toLocaleDateString("vi-VN", { day: "numeric", month: "numeric", year: "numeric" });
 }
 
@@ -116,10 +117,12 @@ function NotifCard({
   item,
   colors,
   onRead,
+  t,
 }: {
   item: NotificationItem;
   colors: ReturnType<typeof useColors>;
   onRead: (id: string) => void;
+  t: (source: string) => string;
 }) {
   const [expanded, setExpanded] = useState(false);
   // So sánh chiều cao: text bị clamp (numberOfLines=3) vs text tự nhiên (không giới hạn).
@@ -142,7 +145,7 @@ function NotifCard({
       onPress={() => { if (!item.isRead) onRead(item.id); setExpanded(true); }}
       style={styles.expandBtn}
     >
-      <Text style={[styles.expandHint, { color: colors.primary }]}>Xem thêm</Text>
+       <Text style={[styles.expandHint, { color: colors.primary }]}>{t("Xem thêm")}</Text>
     </TouchableOpacity>
   ) : null;
 
@@ -179,11 +182,11 @@ function NotifCard({
           <View style={styles.cardTopRow}>
             <View style={[styles.categoryPill, { backgroundColor: dotColor + "15" }]}>
               <Text style={[styles.categoryPillText, { color: dotColor }]}>
-                {CATEGORY_LABELS[item.category] || item.category}
+                 {t(CATEGORY_LABELS[item.category] || item.category)}
               </Text>
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-              <Text style={[styles.cardTime, { color: colors.mutedForeground }]}>{timeAgo(item.createdAt)}</Text>
+              <Text style={[styles.cardTime, { color: colors.mutedForeground }]}>{timeAgo(item.createdAt, t)}</Text>
               {!item.isRead && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
             </View>
           </View>
@@ -239,6 +242,7 @@ function NotifCard({
 
 export default function NotificationsScreen() {
   const colors = useColors();
+  const { t } = useLanguage();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const topPad = insets.top;
@@ -266,7 +270,7 @@ export default function NotificationsScreen() {
       setItems(Array.isArray(data?.items) ? data.items : []);
       setTotalUnread(data?.totalUnread ?? 0);
     } catch (e: any) {
-      setError(e?.message || "Không thể tải thông báo");
+      setError(e?.message || t("Không thể tải thông báo"));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -323,15 +327,15 @@ export default function NotificationsScreen() {
             <Feather name="arrow-left" size={20} color="#1e1b4b" />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>Thông báo</Text>
+             <Text style={styles.headerTitle}>{t("Thông báo")}</Text>
             {visibleUnread > 0 && (
-              <Text style={styles.headerSub}>{visibleUnread} chưa đọc</Text>
+               <Text style={styles.headerSub}>{visibleUnread} {t("chưa đọc")}</Text>
             )}
           </View>
           {visibleUnread > 0 && (
             <TouchableOpacity onPress={markAllRead} activeOpacity={0.8} style={styles.readAllBtn}>
               <Feather name="check-circle" size={14} color="#1e1b4b" />
-              <Text style={styles.readAllText}>Đọc tất cả</Text>
+               <Text style={styles.readAllText}>{t("Đọc tất cả")}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -362,7 +366,7 @@ export default function NotificationsScreen() {
                   ]}
                 >
                   <Text style={[styles.filterPillText, { color: isActive ? "#fff" : "#1e1b4b" }]}>
-                    {cat === "all" ? "Tất cả" : CATEGORY_LABELS[cat]}
+                     {cat === "all" ? t("Tất cả") : t(CATEGORY_LABELS[cat])}
                   </Text>
                   {unreadInCat > 0 && (
                     <View style={[styles.filterBadge, { backgroundColor: isActive ? "#fff" : "rgba(30,27,75,0.5)" }]}>
@@ -381,14 +385,14 @@ export default function NotificationsScreen() {
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>Đang tải thông báo...</Text>
+          <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>{t("Đang tải thông báo...")}</Text>
         </View>
       ) : error ? (
         <View style={styles.center}>
           <Feather name="alert-circle" size={36} color={colors.destructive} />
           <Text style={[styles.errorText, { color: colors.destructive }]}>{error}</Text>
           <TouchableOpacity onPress={() => fetchNotifications()} style={[styles.retryBtn, { backgroundColor: colors.primary }]}>
-            <Text style={styles.retryText}>Thử lại</Text>
+             <Text style={styles.retryText}>{t("Thử lại")}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -401,14 +405,14 @@ export default function NotificationsScreen() {
           {filtered.length === 0 ? (
             <View style={[styles.emptyBox, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
               <Feather name="bell-off" size={36} color={colors.mutedForeground} />
-              <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Không có thông báo</Text>
+               <Text style={[styles.emptyTitle, { color: colors.foreground }]}>{t("Không có thông báo")}</Text>
               <Text style={[styles.emptySubText, { color: colors.mutedForeground }]}>
-                {activeCategory === "all" ? "Chưa có thông báo nào" : `Không có thông báo loại "${CATEGORY_LABELS[activeCategory] ?? activeCategory}"`}
+                 {activeCategory === "all" ? t("Chưa có thông báo nào") : `${t("Không có thông báo loại")} "${t(CATEGORY_LABELS[activeCategory] ?? activeCategory)}"`}
               </Text>
             </View>
           ) : (
             filtered.map((item) => (
-              <NotifCard key={item.id} item={item} colors={colors} onRead={markAsRead} />
+              <NotifCard key={item.id} item={item} colors={colors} onRead={markAsRead} t={t} />
             ))
           )}
         </ScrollView>

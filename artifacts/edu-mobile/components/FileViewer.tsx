@@ -26,6 +26,7 @@ import { WebView } from "react-native-webview";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import { useColors } from "@/hooks/useColors";
 import { getCenterUrl, getAuthToken } from "@/lib/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 /** Chuyển URL tương đối (/api/...) thành URL tuyệt đối.
  *  React Native fetch() không có base URL — relative URL sẽ throw ngay lập tức. */
@@ -104,10 +105,11 @@ function ModalHeader({
 
 // ─── Error View ────────────────────────────────────────────────────────────────
 function ErrorView({ url, onClose, detail }: { url: string; onClose: () => void; detail?: string }) {
+  const { t } = useLanguage();
   return (
     <View style={dv.errorBox}>
       <Feather name="alert-circle" size={36} color="#ef4444" />
-      <Text style={dv.errorText}>Không thể tải xem trước</Text>
+      <Text style={dv.errorText}>{t("Không thể tải xem trước")}</Text>
       {!!detail && (
         <Text style={dv.errorDetailText} selectable>{detail}</Text>
       )}
@@ -122,7 +124,7 @@ function ErrorView({ url, onClose, detail }: { url: string; onClose: () => void;
           onClose();
         }}
       >
-        <Text style={dv.openBtnText}>Mở trình duyệt</Text>
+        <Text style={dv.openBtnText}>{t("Mở trình duyệt")}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -140,6 +142,7 @@ function ErrorView({ url, onClose, detail }: { url: string; onClose: () => void;
 //   ✅  Lần 2 mở cùng file: instant (đọc từ cache, không download lại)
 //   ✅  Không còn "lúc nhanh lúc chậm" — chỉ có 1 spinner rõ ràng khi tải lần đầu
 function PdfViewerModal({ file, onClose }: { file: FileItem; onClose: () => void }) {
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const [stage, setStage] = useState<"downloading" | "native" | "webview" | "error">("downloading");
   const [webViewReady, setWebViewReady] = useState(false);
@@ -225,7 +228,7 @@ function PdfViewerModal({ file, onClose }: { file: FileItem; onClose: () => void
         {stage === "downloading" && (
           <View style={dv.loadingOverlay}>
             <ActivityIndicator size="large" color="#6366f1" />
-            <Text style={dv.loadingText}>Đang tải PDF…</Text>
+            <Text style={dv.loadingText}>{t("Đang tải PDF…")}</Text>
           </View>
         )}
 
@@ -252,7 +255,7 @@ function PdfViewerModal({ file, onClose }: { file: FileItem; onClose: () => void
             {!webViewReady && (
               <View style={dv.loadingOverlay}>
                 <ActivityIndicator size="large" color="#6366f1" />
-                <Text style={dv.loadingText}>Đang tải qua Google Docs…</Text>
+                <Text style={dv.loadingText}>{t("Đang tải qua Google Docs…")}</Text>
               </View>
             )}
             <WebView
@@ -403,6 +406,7 @@ async function openWithNativeApp(
 
 // ─── Office Online Viewer Modal (WebView) ─────────────────────────────────────
 function OfficeViewerModal({ file, onClose }: { file: FileItem; onClose: () => void }) {
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -433,7 +437,7 @@ function OfficeViewerModal({ file, onClose }: { file: FileItem; onClose: () => v
         {loading && !error && (
           <View style={dv.loadingOverlay}>
             <ActivityIndicator size="large" color="#6366f1" />
-            <Text style={dv.loadingText}>Đang tải…</Text>
+            <Text style={dv.loadingText}>{t("Đang tải…")}</Text>
           </View>
         )}
         {error ? (
@@ -488,6 +492,9 @@ function DocActionSheet({
   onClose: () => void;
   onOpenOffice: () => void;
 }) {
+  const { t } = useLanguage();
+  const translatedDetail = (detail: string | undefined) =>
+    detail === "Thiết bị không hỗ trợ mở file." ? t(detail) : detail;
   const insets = useSafeAreaInsets();
   const slideY = useRef(new Animated.Value(300)).current;
   const [openingWithApp, setOpeningWithApp] = useState(false);
@@ -517,10 +524,10 @@ function DocActionSheet({
       if (err === "share_unavailable" || err === "error") {
         console.warn(`[FileViewer] DocActionSheet: openWithNativeApp callback err="${err}" detail="${detail}"`);
         Alert.alert(
-          "Không mở được",
+          t("Không mở được"),
           err === "share_unavailable"
-            ? `Thiết bị không có ứng dụng phù hợp. Hãy thử "Xem trực tiếp".\n\n${detail ?? ""}`
-            : `Không tải được file.\n\n${detail ?? "Lỗi không xác định"}`,
+            ? `${t("Thiết bị không có ứng dụng phù hợp. Hãy thử \"Xem trực tiếp\".")}\n\n${translatedDetail(detail) ?? ""}`
+            : `${t("Không tải được file.")}\n\n${translatedDetail(detail) ?? t("Lỗi không xác định")}`,
           [{ text: "OK" }],
         );
       } else {
@@ -591,8 +598,8 @@ function DocActionSheet({
             )}
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={bs.optionTitle}>Mở bằng ứng dụng</Text>
-            <Text style={bs.optionSub}>Excel, WPS, Google Sheets…</Text>
+            <Text style={bs.optionTitle}>{t("Mở bằng ứng dụng")}</Text>
+            <Text style={bs.optionSub}>{t("Excel, WPS, Google Sheets…")}</Text>
           </View>
           <Feather name="chevron-right" size={16} color="#9ca3af" />
         </TouchableOpacity>
@@ -607,15 +614,15 @@ function DocActionSheet({
             <Feather name="eye" size={18} color="#2563eb" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={bs.optionTitle}>Xem trực tiếp</Text>
-            <Text style={bs.optionSub}>Xem trong app, không cần cài thêm</Text>
+            <Text style={bs.optionTitle}>{t("Xem trực tiếp")}</Text>
+            <Text style={bs.optionSub}>{t("Xem trong app, không cần cài thêm")}</Text>
           </View>
           <Feather name="chevron-right" size={16} color="#9ca3af" />
         </TouchableOpacity>
 
         {/* Huỷ */}
         <TouchableOpacity style={bs.cancel} onPress={dismiss} activeOpacity={0.7}>
-          <Text style={bs.cancelText}>Huỷ</Text>
+          <Text style={bs.cancelText}>{t("Huỷ")}</Text>
         </TouchableOpacity>
       </Animated.View>
     </Modal>
@@ -732,6 +739,7 @@ interface FileViewerProps {
 
 export function FileViewer({ file, imageSize = 88 }: FileViewerProps) {
   const colors = useColors();
+  const { t } = useLanguage();
   const [fsOpen, setFsOpen] = useState(false);
   const [docOpen, setDocOpen] = useState(false);
   const kind = detectKind(file);
@@ -792,7 +800,7 @@ export function FileViewer({ file, imageSize = 88 }: FileViewerProps) {
               {file.name}
             </Text>
             <Text style={[s.pillSub, { color: colors.mutedForeground }]}>
-              {kind === "pdf" ? "Xem PDF" : "Xem file"}
+              {kind === "pdf" ? t("Xem PDF") : t("Xem file")}
             </Text>
           </View>
           <Feather name="maximize-2" size={14} color={colors.mutedForeground} />
@@ -822,7 +830,7 @@ export function FileViewer({ file, imageSize = 88 }: FileViewerProps) {
           {file.name}
         </Text>
         <Text style={[s.pillSub, { color: colors.mutedForeground }]}>
-          {kind === "audio" ? "Nhấn để nghe" : "Mở file"}
+          {kind === "audio" ? t("Nhấn để nghe") : t("Mở file")}
         </Text>
       </View>
       <Feather name="external-link" size={14} color={colors.mutedForeground} />

@@ -24,6 +24,7 @@ import {
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 import { apiGet, apiPost } from "@/lib/api";
 import { FileList } from "@/components/FileViewer";
@@ -183,10 +184,11 @@ function extractDateStr(sessionDate: string): string {
 // ─── Student components ───────────────────────────────────────────────────────
 
 function AttendanceBadge({ status }: { status: string }) {
+  const { t } = useLanguage();
   const s = ATTENDANCE_MAP[status] || ATTENDANCE_MAP.pending;
   return (
     <View style={{ backgroundColor: s.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 }}>
-      <Text style={{ color: s.text, fontSize: 12, fontFamily: "Inter_600SemiBold" }}>{s.label}</Text>
+      <Text style={{ color: s.text, fontSize: 12, fontFamily: "Inter_600SemiBold" }}>{t(s.label)}</Text>
     </View>
   );
 }
@@ -198,6 +200,7 @@ function ContentDetailModal({ item, visible, onClose, color, colors }: {
   color: string;
   colors: ReturnType<typeof useColors>;
 }) {
+  const { t } = useLanguage();
   const { height: screenH } = useWindowDimensions();
   const maxCardH = screenH * 0.82;
   const HEADER_H = 72;
@@ -229,13 +232,13 @@ function ContentDetailModal({ item, visible, onClose, color, colors }: {
                 </View>
               ) : (
                 <View style={{ padding: 20, paddingBottom: item.attachments?.length ? 8 : 20 }}>
-                  <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>Không có mô tả chi tiết</Text>
+                  <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>{t("Không có mô tả chi tiết")}</Text>
                 </View>
               )}
               {item.attachments && item.attachments.length > 0 && (
                 <View style={{ paddingHorizontal: 20, paddingBottom: 20, gap: 8 }}>
                   <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 2 }}>
-                    File đính kèm
+                    {t("File đính kèm")}
                   </Text>
                   <FileList files={item.attachments} />
                 </View>
@@ -254,6 +257,7 @@ function ReviewModal({ visible, reviewData, onClose, colors }: {
   onClose: () => void;
   colors: ReturnType<typeof useColors>;
 }) {
+  const { t } = useLanguage();
   const { height: screenH } = useWindowDimensions();
   // header padding+icon+title ≈ 72px; use explicit maxHeight so ScrollView renders on Android
   // (flex:1 inside a maxHeight-only parent collapses to 0 on Android)
@@ -270,7 +274,7 @@ function ReviewModal({ visible, reviewData, onClose, colors }: {
                   <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: "#f59e0b20", alignItems: "center", justifyContent: "center" }}>
                     <Feather name="eye" size={15} color="#f59e0b" />
                   </View>
-                  <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>Nhận xét</Text>
+                  <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>{t("Nhận xét")}</Text>
                 </View>
                 <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Feather name="x" size={20} color={colors.mutedForeground} />
@@ -302,6 +306,7 @@ function StudentSessionCard({
   highlighted?: boolean;
   onLayout?: (y: number) => void;
 }) {
+  const { t } = useLanguage();
   const [joiningOnline, setJoiningOnline] = useState(false);
   const isCancelledSession = session.sessionStatus === "cancelled";
   const effectiveAttendanceStatus = session.attendanceStatus || "pending";
@@ -332,7 +337,7 @@ function StudentSessionCard({
             <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: colors.foreground }}>{session.classCode || session.className}</Text>
             {session.isTestSession && (
               <View style={{ backgroundColor: "#fef3c7", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
-                <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#92400e" }}>Kiểm tra</Text>
+                <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#92400e" }}>{t("Kiểm tra")}</Text>
               </View>
             )}
           </View>
@@ -366,7 +371,7 @@ function StudentSessionCard({
               <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                 <Feather name="users" size={11} color={colors.mutedForeground} />
                 <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
-                  Sĩ số: {session.enrolledCount}
+                  {t("Sĩ số")}: {session.enrolledCount}
                 </Text>
               </View>
             ) : null}
@@ -375,7 +380,7 @@ function StudentSessionCard({
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 }}>
             {isCancelledSession ? (
               <View style={{ backgroundColor: "#fee2e2", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 }}>
-                <Text style={{ color: "#991b1b", fontSize: 12, fontFamily: "Inter_600SemiBold" }}>Đã huỷ</Text>
+                <Text style={{ color: "#991b1b", fontSize: 12, fontFamily: "Inter_600SemiBold" }}>{t("Đã huỷ")}</Text>
               </View>
             ) : session.attendanceStatus ? (
               <AttendanceBadge status={session.attendanceStatus} />
@@ -440,8 +445,8 @@ function StudentSessionCard({
                     } catch (error) {
                       const serverMessage = (error as { serverMessage?: string })?.serverMessage;
                       Alert.alert(
-                        "Không thể vào học online",
-                        serverMessage || "Chưa ghi nhận được lượt vào học. Vui lòng thử lại.",
+                        t("Không thể vào học online"),
+                        serverMessage || t("Chưa ghi nhận được lượt vào học. Vui lòng thử lại."),
                       );
                       return;
                     } finally {
@@ -450,7 +455,7 @@ function StudentSessionCard({
                     try {
                       await Linking.openURL(session.onlineLink);
                     } catch {
-                      Alert.alert("Không thể mở lớp học", "Link học online không thể mở trên thiết bị này.");
+                      Alert.alert(t("Không thể mở lớp học"), t("Link học online không thể mở trên thiết bị này."));
                     }
                   }}
                   style={{
@@ -468,11 +473,11 @@ function StudentSessionCard({
                   ) : (
                     <MaterialCommunityIcons name="video-outline" size={13} color="#fff" />
                   )}
-                  <Text style={{ color: "#fff", fontSize: 12, fontFamily: "Inter_600SemiBold" }}>Vào học online</Text>
+                  <Text style={{ color: "#fff", fontSize: 12, fontFamily: "Inter_600SemiBold" }}>{t("Vào học online")}</Text>
                 </TouchableOpacity>
                 {!canJoin && (
                   <Text style={{ fontSize: 11, color: "#ef4444", fontFamily: "Inter_400Regular" }}>
-                    Mở lúc {joinOpenLabel}
+                    {t("Mở lúc")} {joinOpenLabel}
                   </Text>
                 )}
               </View>
@@ -497,6 +502,7 @@ function StaffSessionCard({
   highlighted?: boolean;
   onLayout?: (y: number) => void;
 }) {
+  const { t } = useLanguage();
   const isCancelled = session.sessionStatus === "cancelled";
   const accentColor = isCancelled ? "#ef4444" : colors.primary;
 
@@ -528,11 +534,11 @@ function StaffSessionCard({
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
             <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: colors.foreground }}>{session.className}</Text>
             {session.sessionIndex != null ? (
-              <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>· Buổi {session.sessionIndex}</Text>
+              <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>· {t("Buổi")} {session.sessionIndex}</Text>
             ) : null}
             {session.isTestSession ? (
               <View style={{ backgroundColor: "#fef3c7", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
-                <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#92400e" }}>Kiểm tra</Text>
+                <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#92400e" }}>{t("Kiểm tra")}</Text>
               </View>
             ) : null}
           </View>
@@ -556,20 +562,20 @@ function StaffSessionCard({
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                       <Feather name="users" size={11} color={colors.mutedForeground} />
                       <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
-                        Sĩ số: {total}
+                        {t("Sĩ số")}: {total}
                       </Text>
                     </View>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                       <Feather name="check-circle" size={11} color="#10b981" />
                       <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
-                        Đã điểm danh ({attended}/{total})
+                        {t("Đã điểm danh")} ({attended}/{total})
                       </Text>
                     </View>
                     {reviewed != null && (
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                         <Feather name="message-circle" size={11} color="#8b5cf6" />
                         <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
-                          Đã nhận xét ({reviewed}/{total})
+                          {t("Đã nhận xét")} ({reviewed}/{total})
                         </Text>
                       </View>
                     )}
@@ -582,11 +588,11 @@ function StaffSessionCard({
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
             {isCancelled ? (
               <View style={{ backgroundColor: "#fee2e2", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
-                <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#991b1b" }}>Đã huỷ</Text>
+                <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#991b1b" }}>{t("Đã huỷ")}</Text>
               </View>
             ) : (
               <View style={{ backgroundColor: "#dcfce7", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
-                <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#166534" }}>Đang diễn ra</Text>
+                <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#166534" }}>{t("Đang diễn ra")}</Text>
               </View>
             )}
 
@@ -640,11 +646,11 @@ function StaffSessionCard({
                   }}
                 >
                   <MaterialCommunityIcons name="video-outline" size={13} color="#fff" />
-                  <Text style={{ color: "#fff", fontSize: 12, fontFamily: "Inter_600SemiBold" }}>Vào dạy online</Text>
+                  <Text style={{ color: "#fff", fontSize: 12, fontFamily: "Inter_600SemiBold" }}>{t("Vào dạy online")}</Text>
                 </TouchableOpacity>
                 {!canJoin && (
                   <Text style={{ fontSize: 11, color: "#ef4444", fontFamily: "Inter_400Regular" }}>
-                    Mở lúc {joinOpenLabel}
+                    {t("Mở lúc")} {joinOpenLabel}
                   </Text>
                 )}
               </View>
@@ -659,6 +665,7 @@ function StaffSessionCard({
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function ScheduleScreen() {
+  const { t, locale } = useLanguage();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user, isLoading: authLoading } = useAuth();
@@ -1083,7 +1090,7 @@ export default function ScheduleScreen() {
   }, [isStaff, staffDaySessions, staffSessions, selectedDate]);
 
   const selectedDateObj = parseYMD(selectedDate);
-  const selectedDisplayStr = selectedDateObj.toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const selectedDisplayStr = selectedDateObj.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
   return (
     <View style={{ flex: 1, backgroundColor: SCHEDULE_PAGE_TINT }}>
@@ -1096,7 +1103,7 @@ export default function ScheduleScreen() {
             <Feather name="chevron-left" size={22} color={SCHEDULE_AQUA_DARK} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setMode(calendarMode === 2 ? 0 : 2)}>
-            <Text style={styles.monthTitle}>{MONTH_NAMES[viewMonth]}, {viewYear}</Text>
+            <Text style={styles.monthTitle}>{t(MONTH_NAMES[viewMonth])}, {viewYear}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => goMonth(1)} style={styles.navBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Feather name="chevron-right" size={22} color={SCHEDULE_AQUA_DARK} />
@@ -1105,7 +1112,7 @@ export default function ScheduleScreen() {
 
         <View style={styles.weekLabels}>
           {WEEKDAY_DISPLAY.map((d) => (
-            <Text key={d} style={styles.weekLabel}>{d}</Text>
+            <Text key={d} style={styles.weekLabel}>{t(d)}</Text>
           ))}
         </View>
 
@@ -1189,13 +1196,13 @@ export default function ScheduleScreen() {
           loadingStaffDay ? (
             <View style={styles.loadingBox}>
               <ActivityIndicator size="large" color={colors.primary} />
-              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 8 }}>Đang tải lịch dạy...</Text>
+              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 8 }}>{t("Đang tải lịch dạy...")}</Text>
             </View>
           ) : sessionsForDay.length === 0 ? (
             <View style={styles.emptyBox}>
               <MaterialCommunityIcons name="calendar-blank-outline" size={48} color={colors.mutedForeground} />
-              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_500Medium", fontSize: 15, marginTop: 10 }}>Không có lịch dạy</Text>
-              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 4 }}>Ngày này không có buổi dạy nào</Text>
+              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_500Medium", fontSize: 15, marginTop: 10 }}>{t("Không có lịch dạy")}</Text>
+              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 4 }}>{t("Ngày này không có buổi dạy nào")}</Text>
             </View>
           ) : (
             <View style={{ gap: 12 }}>
@@ -1222,13 +1229,13 @@ export default function ScheduleScreen() {
           loadingDay ? (
             <View style={styles.loadingBox}>
               <ActivityIndicator size="large" color={colors.primary} />
-              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 8 }}>Đang tải lịch học...</Text>
+              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 8 }}>{t("Đang tải lịch học...")}</Text>
             </View>
           ) : !daySchedule || daySchedule.sessions.length === 0 ? (
             <View style={styles.emptyBox}>
               <MaterialCommunityIcons name="calendar-blank-outline" size={48} color={colors.mutedForeground} />
-              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_500Medium", fontSize: 15, marginTop: 10 }}>Không có lịch học</Text>
-              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 4 }}>Ngày này không có buổi học nào</Text>
+              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_500Medium", fontSize: 15, marginTop: 10 }}>{t("Không có lịch học")}</Text>
+              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 4 }}>{t("Ngày này không có buổi học nào")}</Text>
             </View>
           ) : (
             <View style={{ gap: 12 }}>

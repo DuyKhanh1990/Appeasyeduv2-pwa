@@ -1,11 +1,12 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import { Alert, Linking, Platform, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useAuth, type UserRole } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 
 interface MenuItem {
@@ -23,13 +24,13 @@ interface MenuSection {
   items: MenuItem[];
 }
 
-function getRoleLabel(role?: string) {
+function getRoleLabel(role: string | undefined, t: (text: string) => string) {
   switch (role) {
-    case "teacher": return "Giáo viên";
-    case "staff": return "Nhân viên";
-    case "admin": return "Quản lý";
-    case "parent": return "Phụ huynh";
-    default: return "Học viên";
+    case "teacher": return t("Giáo viên");
+    case "staff": return t("Nhân viên");
+    case "admin": return t("Quản lý");
+    case "parent": return t("Phụ huynh");
+    default: return t("Học viên");
   }
 }
 
@@ -37,21 +38,22 @@ export default function MenuScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user, logout, setUserRole } = useAuth();
-  const [isEnglish, setIsEnglish] = useState(false);
+  const { language, setLanguage, t } = useLanguage();
+  const isEnglish = language === "en";
   const bottomPad = Platform.OS === "web" ? 34 : 0;
 
   const handleSwitchRole = () => {
     const options: { label: string; role: UserRole }[] = [
-      { label: "Học viên", role: "student" },
-      { label: "Giáo viên", role: "teacher" },
-      { label: "Nhân viên", role: "staff" },
-      { label: "Quản lý", role: "admin" },
-      { label: "Phụ huynh", role: "parent" },
+      { label: t("Học viên"), role: "student" },
+      { label: t("Giáo viên"), role: "teacher" },
+      { label: t("Nhân viên"), role: "staff" },
+      { label: t("Quản lý"), role: "admin" },
+      { label: t("Phụ huynh"), role: "parent" },
     ];
 
     if (Platform.OS === "web") {
       const choice = window.prompt(
-        `Chọn loại tài khoản:\n${options.map((o, i) => `${i + 1}. ${o.label}`).join("\n")}\n\nNhập số (1-${options.length}):`
+        `${t("Chọn loại tài khoản")}:\n${options.map((o, i) => `${i + 1}. ${o.label}`).join("\n")}\n\n${t("Nhập số")}: 1-${options.length}`
       );
       const idx = parseInt(choice ?? "", 10) - 1;
       if (idx >= 0 && idx < options.length) {
@@ -61,41 +63,43 @@ export default function MenuScreen() {
     }
 
     Alert.alert(
-      "Loại tài khoản",
-      "Chọn loại tài khoản phù hợp với bạn:",
+      t("Loại tài khoản"),
+      t("Chọn loại tài khoản phù hợp với bạn:"),
       [
         ...options.map((o) => ({
           text: o.label + (user?.role === o.role ? " ✓" : ""),
           onPress: () => setUserRole(o.role),
         })),
-        { text: "Hủy", style: "cancel" as const },
+        { text: t("Hủy"), style: "cancel" as const },
       ]
     );
   };
 
   const sections: MenuSection[] = [
     {
-      title: "Hỗ trợ",
+      title: t("Hỗ trợ"),
       items: [
         // Chỉ hiện với tài khoản admin
         ...(user?.role === "admin" ? [
-          { icon: <Feather name="send" size={20} color={colors.warning} />, label: "Test Push Notification", sub: "Lấy token & thử thông báo", onPress: () => router.push("/push-test") },
+          { icon: <Feather name="send" size={20} color={colors.warning} />, label: t("Test Push Notification"), sub: t("Lấy token & thử thông báo"), onPress: () => router.push("/push-test") },
         ] : []),
-        { icon: <Feather name="info" size={20} color={colors.warning} />, label: "Về chúng tôi", sub: "easyedu.vn", onPress: () => Linking.openURL("https://easyedu.vn/") },
-        { icon: <Feather name="file-text" size={20} color={colors.warning} />, label: "Điều khoản và dịch vụ", sub: "Chính sách sử dụng", onPress: () => Linking.openURL("https://easyedu.vn/dieu-khoan-dich-vu/") },
+        { icon: <Feather name="info" size={20} color={colors.warning} />, label: t("Về chúng tôi"), sub: "easyedu.vn", onPress: () => Linking.openURL("https://easyedu.vn/") },
+        { icon: <Feather name="file-text" size={20} color={colors.warning} />, label: t("Điều khoản và dịch vụ"), sub: t("Chính sách sử dụng"), onPress: () => Linking.openURL("https://easyedu.vn/dieu-khoan-dich-vu/") },
       ],
     },
     {
-      title: "Tùy chọn",
+      title: t("Tùy chọn"),
       items: [
         {
           icon: <Feather name="globe" size={20} color={colors.primary} />,
-          label: "Ngôn ngữ",
-          sub: isEnglish ? "English" : "Tiếng Việt",
+          label: t("Ngôn ngữ"),
+          sub: t(isEnglish ? "English" : "Tiếng Việt"),
           rightElement: (
             <Switch
               value={isEnglish}
-              onValueChange={setIsEnglish}
+              onValueChange={(value) => {
+                void setLanguage(value ? "en" : "vi");
+              }}
               trackColor={{ false: colors.border, true: colors.primary }}
               thumbColor={colors.card}
               ios_backgroundColor={colors.border}
@@ -107,12 +111,12 @@ export default function MenuScreen() {
       ],
     },
     {
-      title: "Tài khoản",
+      title: t("Tài khoản"),
       items: [
         {
           icon: <Feather name="users" size={20} color={colors.primary} />,
-          label: "Loại tài khoản",
-          sub: `Hiện tại: ${getRoleLabel(user?.role)}`,
+          label: t("Loại tài khoản"),
+          sub: `${t("Hiện tại")}: ${getRoleLabel(user?.role, t)}`,
           onPress: handleSwitchRole,
         },
       ],
@@ -133,11 +137,11 @@ export default function MenuScreen() {
       return;
     }
     Alert.alert(
-      "Đăng xuất",
-      "Bạn có chắc muốn đăng xuất không?",
+      t("Đăng xuất"),
+      t("Bạn có chắc muốn đăng xuất không?"),
       [
-        { text: "Hủy", style: "cancel" },
-        { text: "Đăng xuất", style: "destructive", onPress: doLogout },
+        { text: t("Hủy"), style: "cancel" },
+        { text: t("Đăng xuất"), style: "destructive", onPress: doLogout },
       ]
     );
   };
@@ -152,7 +156,7 @@ export default function MenuScreen() {
           <Text style={styles.avatarLargeText}>{(user?.name || user?.profileCode || user?.username || "H")[0].toUpperCase()}</Text>
         </View>
         <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>{user?.name || user?.username || "Học sinh"}</Text>
+          <Text style={styles.profileName}>{user?.name || user?.username || t("Học sinh")}</Text>
           {(user?.profileCode || user?.username) && (
             <Text style={styles.profileRole}>{user.profileCode || user.username}</Text>
           )}
@@ -204,7 +208,7 @@ export default function MenuScreen() {
             activeOpacity={0.8}
           >
             <Feather name="log-out" size={18} color={colors.destructive} />
-            <Text style={[styles.logoutText, { color: colors.destructive }]}>Đăng xuất</Text>
+            <Text style={[styles.logoutText, { color: colors.destructive }]}>{t("Đăng xuất")}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

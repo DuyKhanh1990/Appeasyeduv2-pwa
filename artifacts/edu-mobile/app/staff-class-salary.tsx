@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import { useColors } from "@/hooks/useColors";
 import { apiGet } from "@/lib/api";
 import { type SalarySummary } from "@/lib/salaryStore";
+import { useLanguage } from "@/context/LanguageContext";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmtDate(d: string) {
@@ -38,6 +39,7 @@ function SalaryCard({
   onPress: () => void;
   colors: ReturnType<typeof useColors>;
 }) {
+  const { t } = useLanguage();
   const grandTotal = Number(table.grandTotal);
   const totalEligible = table.classes.reduce((sum, c) => sum + Number(c.totalEligibleSessions), 0);
   const withPackage = table.classes.filter((c) => c.packageId).length;
@@ -78,7 +80,7 @@ function SalaryCard({
           </Text>
           <View style={{ backgroundColor: "#dcfce7", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
             <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#15803d" }}>
-              {totalEligible} buổi hợp lệ
+              {totalEligible} {t("buổi hợp lệ")}
             </Text>
           </View>
         </View>
@@ -92,14 +94,14 @@ function SalaryCard({
         <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
           <Feather name="layers" size={12} color="#2563eb" />
           <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#2563eb" }}>
-            {table.classes.length} lớp
+            {table.classes.length} {t("lớp")}
           </Text>
         </View>
         {withPackage > 0 && (
           <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
             <Feather name="check-square" size={12} color="#16a34a" />
             <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#16a34a" }}>
-              {withPackage} có gói lương
+              {withPackage} {t("có gói lương")}
             </Text>
           </View>
         )}
@@ -107,7 +109,7 @@ function SalaryCard({
           <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
             <Feather name="alert-circle" size={12} color="#7c3aed" />
             <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#7c3aed" }}>
-              {withoutPackage} chưa gắn
+              {withoutPackage} {t("chưa gắn")}
             </Text>
           </View>
         )}
@@ -122,6 +124,7 @@ function SalaryCard({
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function StaffClassSalaryScreen() {
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const topPad = insets.top;
 
@@ -175,14 +178,14 @@ export default function StaffClassSalaryScreen() {
             <Feather name="arrow-left" size={22} color="#1e1b4b" />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: "#1e1b4b" }}>Lương đứng lớp</Text>
+          <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: "#1e1b4b" }}>{t("Lương đứng lớp")}</Text>
             <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(30,27,75,0.65)", marginTop: 1 }}>
-              Bảng lương đã công bố
+              {t("Bảng lương đã công bố")}
             </Text>
           </View>
           {overallTotal > 0 && (
             <View style={{ backgroundColor: "rgba(30,27,75,0.1)", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6, alignItems: "flex-end" }}>
-              <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: "rgba(30,27,75,0.65)" }}>Tổng nhận</Text>
+               <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: "rgba(30,27,75,0.65)" }}>{t("Tổng nhận")}</Text>
               <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: "#1e1b4b" }}>
                 {overallTotal.toLocaleString("vi-VN")}đ
               </Text>
@@ -195,7 +198,7 @@ export default function StaffClassSalaryScreen() {
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={{ marginTop: 12, fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
-            Đang tải dữ liệu lương...
+             {t("Đang tải dữ liệu lương...")}
           </Text>
         </View>
       ) : errorMsg ? (
@@ -204,13 +207,13 @@ export default function StaffClassSalaryScreen() {
             <Feather name="alert-circle" size={28} color="#ef4444" />
           </View>
           <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground, textAlign: "center" }}>
-            Không thể tải dữ liệu
+             {t("Không thể tải dữ liệu")}
           </Text>
           <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>
             {errorMsg}
           </Text>
           <TouchableOpacity onPress={() => fetchAll()} style={{ marginTop: 4, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 10, backgroundColor: colors.primary }}>
-            <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Thử lại</Text>
+             <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>{t("Thử lại")}</Text>
           </TouchableOpacity>
         </View>
       ) : isEmpty ? (
@@ -219,14 +222,14 @@ export default function StaffClassSalaryScreen() {
             <Feather name="file-text" size={32} color="#2563eb" />
           </View>
           <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground, textAlign: "center" }}>
-            Bảng lương chưa được công bố
+             {t("Bảng lương chưa được công bố")}
           </Text>
           <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center", lineHeight: 20 }}>
-            Bộ phận kế toán chưa công bố bảng lương cho kỳ này. Vui lòng kiểm tra lại sau.
+             {t("Bộ phận kế toán chưa công bố bảng lương cho kỳ này. Vui lòng kiểm tra lại sau.")}
           </Text>
           <TouchableOpacity onPress={onRefresh} style={{ marginTop: 4, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: colors.primary }}>
             <Feather name="refresh-cw" size={14} color={colors.primary} />
-            <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.primary }}>Kiểm tra lại</Text>
+             <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.primary }}>{t("Kiểm tra lại")}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -243,7 +246,7 @@ export default function StaffClassSalaryScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#15803d" }}>
-                  Tổng tất cả ({tables.length} bảng lương)
+                   {t("Tổng tất cả")} ({tables.length} {t("bảng lương")})
                 </Text>
                 <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: "#16a34a" }}>
                   {overallTotal.toLocaleString("vi-VN")}đ

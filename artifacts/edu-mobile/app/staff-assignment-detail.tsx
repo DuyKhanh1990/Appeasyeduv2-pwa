@@ -17,6 +17,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
+import { useLanguage } from "@/context/LanguageContext";
 
 import { useColors } from "@/hooks/useColors";
 import { apiPost } from "@/lib/api";
@@ -28,16 +29,16 @@ import { HomeworkRichEditor, HomeworkRichEditorHandle } from "@/components/Homew
  *  Old data may be plain URL strings or objects where name === url.
  *  In either case we cannot recover the original filename, so we show
  *  a generic label and preserve the URL for opening. */
-function normaliseAttachments(raw: unknown[]): FileItem[] {
+function normaliseAttachments(raw: unknown[], attachmentLabel: string): FileItem[] {
   return raw.map((a) => {
     if (typeof a === "string") {
-      return { name: "File đính kèm", url: a };
+      return { name: attachmentLabel, url: a };
     }
     const item = a as FileItem;
     const nameIsUrl =
       (item.name || "").startsWith("http") ||
       (item.name || "").startsWith("/api/");
-    return { ...item, name: nameIsUrl ? "File đính kèm" : item.name };
+    return { ...item, name: nameIsUrl ? attachmentLabel : item.name };
   });
 }
 import { HtmlText } from "@/components/HtmlText";
@@ -120,6 +121,7 @@ const sec = StyleSheet.create({
 
 export default function StaffAssignmentDetailScreen() {
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const topPad = insets.top;
 
@@ -153,7 +155,7 @@ export default function StaffAssignmentDetailScreen() {
   const typeColor = isBTVN ? "#2563eb" : "#9333ea";
   const hasHomeworkFiles = (row.homeworkAttachments?.length ?? 0) > 0;
   const hasSubmissionFiles = (row.submissionAttachments?.length ?? 0) > 0;
-  const submissionFiles = normaliseAttachments((row.submissionAttachments ?? []) as unknown[]);
+  const submissionFiles = normaliseAttachments((row.submissionAttachments ?? []) as unknown[], t("File đính kèm"));
 
   const handleSave = async () => {
     setSaving(true);
@@ -171,7 +173,7 @@ export default function StaffAssignmentDetailScreen() {
       updateCurrentAssignment(patch);
       setTimeout(() => setSaved(false), 2500);
     } catch {
-      Alert.alert("Lỗi", "Không thể lưu điểm. Vui lòng thử lại.");
+      Alert.alert(t("Lỗi"), t("Không thể lưu điểm. Vui lòng thử lại."));
     } finally {
       setSaving(false);
     }
@@ -213,14 +215,14 @@ export default function StaffAssignmentDetailScreen() {
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Feather name="layers" size={12} color="rgba(255,255,255,0.7)" />
-            <Text style={styles.statText}>Buổi {row.sessionIndex}</Text>
+            <Text style={styles.statText}>{t("Buổi ")}{row.sessionIndex}</Text>
           </View>
           {(row.score !== null && row.score !== undefined && row.score !== "") && (
             <>
               <View style={styles.statDivider} />
               <View style={styles.statItem}>
                 <Feather name="award" size={12} color="rgba(255,255,255,0.7)" />
-                <Text style={styles.statText}>Điểm: {row.score}</Text>
+                <Text style={styles.statText}>{t("Điểm: ")}{row.score}</Text>
               </View>
             </>
           )}
@@ -233,7 +235,7 @@ export default function StaffAssignmentDetailScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Section label="Đề bài" icon="edit-3" accent="#2563eb" colors={colors}>
+        <Section label={t("Đề bài")} icon="edit-3" accent="#2563eb" colors={colors}>
           <Text style={[styles.homeworkTitle, { color: colors.foreground }]}>{row.homeworkTitle}</Text>
           {row.homeworkDescription ? (
             <HtmlText html={row.homeworkDescription} style={{ fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21, color: colors.mutedForeground }} />
@@ -244,12 +246,12 @@ export default function StaffAssignmentDetailScreen() {
             </View>
           )}
           {!row.homeworkDescription && !hasHomeworkFiles && (
-            <Text style={[styles.emptyHint, { color: colors.mutedForeground }]}>Không có mô tả hoặc file đính kèm</Text>
+            <Text style={[styles.emptyHint, { color: colors.mutedForeground }]}>{t("Không có mô tả hoặc file đính kèm")}</Text>
           )}
         </Section>
 
         {isSubmitted ? (
-          <Section label="Bài nộp của học viên" icon="upload" accent="#16a34a" colors={colors}>
+          <Section label={t("Bài nộp của học viên")} icon="upload" accent="#16a34a" colors={colors}>
             {row.submissionContent ? (
               <HtmlText html={row.submissionContent} style={{ fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21, color: colors.foreground }} />
             ) : null}
@@ -260,25 +262,25 @@ export default function StaffAssignmentDetailScreen() {
             ) : null}
             {isExam && (
               <Text style={[styles.emptyHint, { color: colors.mutedForeground }]}>
-                Bài kiểm tra được chấm qua hệ thống thi riêng
+                {t("Bài kiểm tra được chấm qua hệ thống thi riêng")}
               </Text>
             )}
             {!row.submissionContent && !hasSubmissionFiles && !isExam && (
               <Text style={[styles.emptyHint, { color: colors.mutedForeground }]}>
-                Học viên không để lại nội dung
+                {t("Học viên không để lại nội dung")}
               </Text>
             )}
           </Section>
         ) : (
           <View style={[styles.notSubmittedBanner, { backgroundColor: "#fff7ed", borderColor: "#fed7aa" }]}>
             <Feather name="clock" size={16} color="#c2410c" />
-            <Text style={styles.notSubmittedText}>Học viên chưa nộp bài</Text>
+            <Text style={styles.notSubmittedText}>{t("Học viên chưa nộp bài")}</Text>
           </View>
         )}
 
-        <Section label="Chấm điểm" icon="star" accent="#f59e0b" colors={colors}>
+        <Section label={t("Chấm điểm")} icon="star" accent="#f59e0b" colors={colors}>
           <View style={styles.fieldGroup}>
-            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Điểm số</Text>
+            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>{t("Điểm số")}</Text>
             <TextInput
               style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
               value={score}
@@ -290,7 +292,7 @@ export default function StaffAssignmentDetailScreen() {
             />
           </View>
           <View style={styles.fieldGroup}>
-            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Nhận xét</Text>
+            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>{t("Nhận xét")}</Text>
             <View style={[styles.editorWrapper, { borderColor: colors.border }]}>
               <HomeworkRichEditor
                 ref={editorRef}
@@ -314,7 +316,7 @@ export default function StaffAssignmentDetailScreen() {
           ) : (
             <>
               <Feather name={saved ? "check" : "save"} size={16} color="#fff" />
-              <Text style={styles.saveBtnText}>{saved ? "Đã lưu!" : "Lưu điểm"}</Text>
+              <Text style={styles.saveBtnText}>{saved ? t("Đã lưu!") : t("Lưu điểm")}</Text>
             </>
           )}
         </TouchableOpacity>

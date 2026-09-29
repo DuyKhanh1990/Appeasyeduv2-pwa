@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useColors } from "@/hooks/useColors";
 import { apiGet, apiPost, apiDelete, apiUpload } from "@/lib/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 const MANUAL_CONTENT_TYPES = ["Bài học", "Bài tập về nhà", "Giáo trình"] as const;
 type ContentType = "Bài học" | "Bài tập về nhà" | "Giáo trình" | "Bài kiểm tra";
@@ -93,6 +94,7 @@ interface Props {
 
 export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }: Props) {
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
 
   const [activeTab, setActiveTab] = useState<"general" | "student">("general");
@@ -252,7 +254,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
     } catch (e: any) {
       setExams([]);
       setExamLoaded(true);
-      Alert.alert("Lỗi tải bài kiểm tra", e?.message ?? String(e));
+      Alert.alert(t("Lỗi tải bài kiểm tra"), e?.message ?? String(e));
     } finally {
       setExamLoading(false);
       setExamLoadingMore(false);
@@ -415,7 +417,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
       setManualAttachments(prev => [...prev, ...uploaded.map(f => ({ name: f.name, url: f.url }))]);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e: any) {
-      Alert.alert("Lỗi tải file", e?.message ?? "Không thể tải file lên. Vui lòng thử lại.");
+      Alert.alert(t("Lỗi tải file"), e?.message ?? t("Không thể tải file lên. Vui lòng thử lại."));
     } finally {
       setUploadingFile(false);
     }
@@ -425,7 +427,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
 
   const handleSubmitManual = async () => {
     if (!manualTitle.trim()) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập tiêu đề nội dung.");
+      Alert.alert(t("Thiếu thông tin"), t("Vui lòng nhập tiêu đề nội dung."));
       return;
     }
     setSubmittingManual(true);
@@ -468,12 +470,12 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
         console.log(`[Library] Lưu vào thư viện thất bại:`, e);
         setSubmittingManual(false);
         Alert.alert(
-          "Không thể lưu vào thư viện",
-          `Nội dung "${title}" không thể lưu vào thư viện. Lỗi: ${e?.message ?? "Không xác định"}.\n\nBạn có muốn giao nội dung này trực tiếp vào buổi học mà không lưu thư viện không?`,
+          t("Không thể lưu vào thư viện"),
+          `${t("Nội dung")} "${title}" ${t("không thể lưu vào thư viện")}. ${t("Lỗi")}: ${e?.message ?? "Không xác định"}.\n\n${t("Bạn có muốn giao nội dung này trực tiếp vào buổi học mà không lưu thư viện không?")}`,
           [
-            { text: "Huỷ", style: "cancel" },
+            { text: t("Huỷ"), style: "cancel" },
             {
-              text: "Giao trực tiếp",
+              text: t("Giao trực tiếp"),
               onPress: () => {
                 if (forStudent) {
                   setPendingStudentAdds(prev => [...prev, {
@@ -598,7 +600,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
       onSaved?.();
       onClose();
     } catch {
-      Alert.alert("Lỗi", "Không thể lưu nội dung. Vui lòng thử lại.");
+      Alert.alert(t("Lỗi"), t("Không thể lưu nội dung. Vui lòng thử lại."));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setSaving(false);
@@ -662,7 +664,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
             <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: "#8b5cf620", alignItems: "center", justifyContent: "center" }}>
               <Feather name="send" size={15} color="#8b5cf6" />
             </View>
-            <Text style={{ fontSize: 17, fontFamily: "Inter_700Bold", color: colors.foreground }}>Giao nội dung</Text>
+            <Text style={{ fontSize: 17, fontFamily: "Inter_700Bold", color: colors.foreground }}>{t("Giao nội dung")}</Text>
           </View>
         </View>
 
@@ -686,7 +688,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
                 fontSize: 13, fontFamily: "Inter_600SemiBold",
                 color: activeTab === tab ? colors.foreground : colors.mutedForeground,
               }}>
-                {tab === "general" ? "Nội dung chung" : "Cá nhân"}
+                {tab === "general" ? t("Nội dung chung") : t("Cá nhân")}
               </Text>
             </TouchableOpacity>
           ))}
@@ -695,7 +697,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
         {loading ? (
           <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
             <ActivityIndicator size="large" color="#8b5cf6" />
-            <Text style={{ marginTop: 10, color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13 }}>Đang tải...</Text>
+            <Text style={{ marginTop: 10, color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13 }}>{t("Đang tải...")}</Text>
           </View>
         ) : (
           <>
@@ -712,8 +714,8 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
                         <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: colors.muted, alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
                           <Feather name="book-open" size={22} color={colors.mutedForeground} />
                         </View>
-                        <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 4 }}>Chưa có nội dung</Text>
-                        <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>Thêm nội dung từ thư viện hoặc tạo mới</Text>
+                        <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 4 }}>{t("Chưa có nội dung")}</Text>
+                        <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>{t("Thêm nội dung từ thư viện hoặc tạo mới")}</Text>
                       </View>
                     )}
 
@@ -729,14 +731,14 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
                         }}>
                           <TypeBadge type={item.contentType} />
                           <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2 }}>{item.contentType}</Text>
+                            <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2 }}>{t(item.contentType)}</Text>
                             <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: isDeleted ? "#ef4444" : colors.foreground }} numberOfLines={2}>{item.title}</Text>
                           </View>
                           {isDeleted ? (
                             <TouchableOpacity onPress={() => handleUndoDeleteGeneral(item.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                               <View style={{ backgroundColor: "#ef444420", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 4 }}>
                                 <Feather name="rotate-ccw" size={12} color="#ef4444" />
-                                <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#ef4444" }}>Hoàn tác</Text>
+                                <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#ef4444" }}>{t("Hoàn tác")}</Text>
                               </View>
                             </TouchableOpacity>
                           ) : (
@@ -760,7 +762,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
                       }}>
                         <TypeBadge type={item.contentType} />
                         <View style={{ flex: 1 }}>
-                          <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#8b5cf6", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2 }}>{item.contentType} · Mới</Text>
+                          <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#8b5cf6", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2 }}>{t(item.contentType)} · {t("Mới")}</Text>
                           <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.foreground }} numberOfLines={2}>{item.title}</Text>
                         </View>
                         <TouchableOpacity onPress={() => handleDeletePendingGeneral(item._key)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -783,7 +785,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
                         }}
                       >
                         <Feather name="book-open" size={15} color="#8b5cf6" />
-                        <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#8b5cf6" }}>Từ thư viện</Text>
+                        <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#8b5cf6" }}>{t("Từ thư viện")}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         activeOpacity={0.8}
@@ -795,7 +797,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
                         }}
                       >
                         <Feather name="plus" size={15} color={colors.primary} />
-                        <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.primary }}>Thêm nội dung</Text>
+                        <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.primary }}>{t("Thêm nội dung")}</Text>
                       </TouchableOpacity>
                     </View>
                   </>
@@ -806,8 +808,8 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
                         <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: colors.muted, alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
                           <Feather name="users" size={22} color={colors.mutedForeground} />
                         </View>
-                        <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 4 }}>Không có học viên</Text>
-                        <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>Chưa có học viên nào trong buổi học này</Text>
+                        <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 4 }}>{t("Không có học viên")}</Text>
+                        <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>{t("Chưa có học viên nào trong buổi học này")}</Text>
                       </View>
                     ) : students.map(s => {
                       const existingForStudent = studentContents.filter(c => c.studentId === s.studentId);
@@ -837,7 +839,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
                               }}
                             >
                               <Feather name="plus" size={13} color="#8b5cf6" />
-                              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#8b5cf6" }}>Thêm</Text>
+                              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#8b5cf6" }}>{t("Thêm")}</Text>
                             </TouchableOpacity>
                           </View>
 
@@ -856,7 +858,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
                                       <TouchableOpacity onPress={() => handleUndoDeleteStudent(item.studentSessionContentId)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                                         <View style={{ backgroundColor: "#ef444420", borderRadius: 8, paddingHorizontal: 7, paddingVertical: 3, flexDirection: "row", alignItems: "center", gap: 3 }}>
                                           <Feather name="rotate-ccw" size={11} color="#ef4444" />
-                                          <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#ef4444" }}>Hoàn tác</Text>
+                                          <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#ef4444" }}>{t("Hoàn tác")}</Text>
                                         </View>
                                       </TouchableOpacity>
                                     ) : (
@@ -873,7 +875,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
                                 <View key={item._key} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                                   <TypeBadge type={item.contentType} small />
                                   <Text style={{ flex: 1, fontSize: 13, fontFamily: "Inter_500Medium", color: "#8b5cf6" }} numberOfLines={1}>
-                                    {item.title} <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11 }}>· Mới</Text>
+                                    {item.title} <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11 }}>· {t("Mới")}</Text>
                                   </Text>
                                   <TouchableOpacity onPress={() => handleDeletePendingStudent(item._key)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                                     <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: "#ef444415", alignItems: "center", justifyContent: "center" }}>
@@ -912,7 +914,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
                     fontSize: 15, fontFamily: "Inter_700Bold",
                     color: hasChanges ? "#fff" : colors.mutedForeground,
                   }}>
-                    {saving ? "Đang lưu..." : hasChanges ? `Giao nội dung` : "Đóng"}
+                    {saving ? t("Đang lưu...") : hasChanges ? t("Giao nội dung") : t("Đóng")}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -939,7 +941,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
               <Feather name="arrow-left" size={20} color={colors.foreground} />
             </TouchableOpacity>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>Thư viện nội dung</Text>
+              <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>{t("Thư viện nội dung")}</Text>
               {pendingStudentForContent && (
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 }}>
                   <Feather name="user" size={11} color="#6366f1" />
@@ -957,7 +959,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
             <TextInput
               value={librarySearchText}
               onChangeText={setLibrarySearchText}
-              placeholder="Tìm kiếm nội dung..."
+              placeholder={t("Tìm kiếm nội dung...")}
               placeholderTextColor={colors.mutedForeground}
               style={{ flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", color: colors.foreground }}
             />
@@ -970,26 +972,26 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
 
           {/* Main tabs: Tài liệu / Bài kiểm tra */}
           <View style={{ flexDirection: "row", marginHorizontal: 16, marginTop: 12, backgroundColor: colors.muted, borderRadius: 10, padding: 3 }}>
-            {(["content", "exam"] as const).map(t => (
+            {(["content", "exam"] as const).map(tab => (
               <TouchableOpacity
-                key={t}
+                key={tab}
                 onPress={() => {
-                  setLibraryTab(t);
-                  if (t === "exam" && !examLoaded && !examLoading) {
+                  setLibraryTab(tab);
+                  if (tab === "exam" && !examLoaded && !examLoading) {
                     loadExams(librarySearchText);
                   }
                   Haptics.selectionAsync();
                 }}
                 style={{
                   flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: "center",
-                  backgroundColor: libraryTab === t ? colors.card : "transparent",
-                  shadowColor: libraryTab === t ? "#000" : "transparent",
-                  shadowOffset: { width: 0, height: 1 }, shadowOpacity: libraryTab === t ? 0.06 : 0, shadowRadius: 4,
-                  elevation: libraryTab === t ? 2 : 0,
+                  backgroundColor: libraryTab === tab ? colors.card : "transparent",
+                  shadowColor: libraryTab === tab ? "#000" : "transparent",
+                  shadowOffset: { width: 0, height: 1 }, shadowOpacity: libraryTab === tab ? 0.06 : 0, shadowRadius: 4,
+                  elevation: libraryTab === tab ? 2 : 0,
                 }}
               >
-                <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: libraryTab === t ? colors.foreground : colors.mutedForeground }}>
-                  {t === "content" ? `Tài liệu (${searchedLibrary.length})` : `Bài kiểm tra (${filteredExams.length})`}
+                <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: libraryTab === tab ? colors.foreground : colors.mutedForeground }}>
+                  {tab === "content" ? `${t("Tài liệu")} (${searchedLibrary.length})` : `${t("Bài kiểm tra")} (${filteredExams.length})`}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -1020,7 +1022,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
                     }}
                   >
                     <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: c.text }}>
-                      {opt}{opt !== "Tất cả" ? ` (${typeFilterCounts[opt]})` : ` (${typeFilterCounts["Tất cả"]})`}
+                      {t(opt)}{opt !== "Tất cả" ? ` (${typeFilterCounts[opt]})` : ` (${typeFilterCounts["Tất cả"]})`}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -1033,14 +1035,14 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
               libraryLoading ? (
                 <View style={{ alignItems: "center", paddingVertical: 48 }}>
                   <ActivityIndicator size="large" color="#8b5cf6" />
-                  <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 14, marginTop: 12 }}>Đang tải thư viện...</Text>
+                  <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 14, marginTop: 12 }}>{t("Đang tải thư viện...")}</Text>
                 </View>
               ) : filteredLibrary.length === 0 ? (
                 <View style={{ alignItems: "center", paddingVertical: 40 }}>
                   <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: colors.muted, alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
                     <Feather name="search" size={22} color={colors.mutedForeground} />
                   </View>
-                  <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 14 }}>Không tìm thấy tài liệu</Text>
+                  <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 14 }}>{t("Không tìm thấy tài liệu")}</Text>
                 </View>
               ) : (
                 <>
@@ -1055,19 +1057,19 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
                           <TypeChip type={(item.type as ContentType) || "Bài học"} />
                           {item.sessionNumber ? (
                             <View style={{ backgroundColor: colors.muted, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 }}>
-                              <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>Buổi {item.sessionNumber}</Text>
+                              <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>{t("Buổi")} {item.sessionNumber}</Text>
                             </View>
                           ) : null}
                           <View style={{ flex: 1 }} />
                           {selected ? (
                             <View style={{ backgroundColor: "#ef444415", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, flexDirection: "row", alignItems: "center", gap: 5 }}>
                               <Feather name="x" size={13} color="#ef4444" />
-                              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#ef4444" }}>Bỏ chọn</Text>
+                              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#ef4444" }}>{t("Bỏ chọn")}</Text>
                             </View>
                           ) : (
                             <View style={{ backgroundColor: "#8b5cf615", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, flexDirection: "row", alignItems: "center", gap: 5 }}>
                               <Feather name="plus" size={13} color="#8b5cf6" />
-                              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#8b5cf6" }}>Thêm</Text>
+                              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#8b5cf6" }}>{t("Thêm")}</Text>
                             </View>
                           )}
                         </View>
@@ -1075,7 +1077,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
                         {item.attachments && item.attachments.length > 0 && (
                           <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                             <Feather name="paperclip" size={11} color={colors.mutedForeground} />
-                            <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>{item.attachments.length} file đính kèm</Text>
+                            <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>{item.attachments.length} {t("file đính kèm")}</Text>
                           </View>
                         )}
                       </TouchableOpacity>
@@ -1098,7 +1100,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
                         : <Feather name="chevron-down" size={16} color="#8b5cf6" />
                       }
                       <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#8b5cf6" }}>
-                        {libraryLoadingMore ? "Đang tải..." : "Tải thêm"}
+                        {libraryLoadingMore ? t("Đang tải...") : t("Tải thêm")}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -1108,14 +1110,14 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
               examLoading ? (
                 <View style={{ alignItems: "center", paddingVertical: 48 }}>
                   <ActivityIndicator size="large" color="#8b5cf6" />
-                  <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 14, marginTop: 12 }}>Đang tải bài kiểm tra...</Text>
+                  <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 14, marginTop: 12 }}>{t("Đang tải bài kiểm tra...")}</Text>
                 </View>
               ) : filteredExams.length === 0 ? (
                 <View style={{ alignItems: "center", paddingVertical: 40 }}>
                   <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: colors.muted, alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
                     <Feather name="search" size={22} color={colors.mutedForeground} />
                   </View>
-                  <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 14 }}>Không tìm thấy bài kiểm tra</Text>
+                  <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 14 }}>{t("Không tìm thấy bài kiểm tra")}</Text>
                 </View>
               ) : (
                 <>
@@ -1135,19 +1137,19 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
                       {selected ? (
                         <View style={{ backgroundColor: "#ef444415", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, flexDirection: "row", alignItems: "center", gap: 5 }}>
                           <Feather name="x" size={13} color="#ef4444" />
-                          <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#ef4444" }}>Bỏ chọn</Text>
+                          <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#ef4444" }}>{t("Bỏ chọn")}</Text>
                         </View>
                       ) : (
                         <View style={{ backgroundColor: "#8b5cf615", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, flexDirection: "row", alignItems: "center", gap: 5 }}>
                           <Feather name="plus" size={13} color="#8b5cf6" />
-                          <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#8b5cf6" }}>Thêm</Text>
+                          <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#8b5cf6" }}>{t("Thêm")}</Text>
                         </View>
                       )}
                     </View>
                     <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground }} numberOfLines={1}>{exam.name}</Text>
                     <View style={{ flexDirection: "row", gap: 10 }}>
-                      {exam.timeLimitMinutes ? <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>{exam.timeLimitMinutes} phút</Text> : null}
-                      {exam.passingScore ? <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>Điểm đạt: {exam.passingScore}</Text> : null}
+                      {exam.timeLimitMinutes ? <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>{exam.timeLimitMinutes} {t("phút")}</Text> : null}
+                      {exam.passingScore ? <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>{t("Điểm đạt")}: {exam.passingScore}</Text> : null}
                     </View>
                   </TouchableOpacity>
                 );
@@ -1202,7 +1204,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
               >
                 <Feather name="check" size={17} color="#fff" />
                 <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: "#fff" }}>
-                  Xong · {selectedLibraryIds.size + selectedExamIds.size} nội dung
+                  {t("Xong")} · {selectedLibraryIds.size + selectedExamIds.size} {t("nội dung")}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1233,7 +1235,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
                 <Feather name="plus-circle" size={15} color="#8b5cf6" />
               </View>
               <Text style={{ fontSize: 17, fontFamily: "Inter_700Bold", color: colors.foreground }} numberOfLines={1}>
-                {manualForStudent ? `Thêm cho ${manualForStudent.studentName}` : "Thêm nội dung"}
+                {manualForStudent ? `${t("Thêm cho")} ${manualForStudent.studentName}` : t("Thêm nội dung")}
               </Text>
             </View>
           </View>
@@ -1246,7 +1248,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
           >
             {/* Type selector */}
             <View style={{ gap: 6 }}>
-              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.5 }}>Loại nội dung</Text>
+              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.5 }}>{t("Loại nội dung")}</Text>
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
                 {MANUAL_CONTENT_TYPES.map(type => (
                   <TouchableOpacity key={type} onPress={() => { setManualType(type); Haptics.selectionAsync(); }} style={{
@@ -1262,11 +1264,11 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
 
             {/* Title */}
             <View style={{ gap: 6 }}>
-              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.5 }}>Tiêu đề <Text style={{ color: "#ef4444" }}>*</Text></Text>
+              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.5 }}>{t("Tiêu đề")} <Text style={{ color: "#ef4444" }}>*</Text></Text>
               <TextInput
                 value={manualTitle}
                 onChangeText={setManualTitle}
-                placeholder="Nhập tiêu đề nội dung..."
+                placeholder={t("Nhập tiêu đề nội dung...")}
                 placeholderTextColor={colors.mutedForeground}
                 style={{
                   backgroundColor: colors.muted, borderRadius: 12,
@@ -1279,11 +1281,11 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
 
             {/* Description */}
             <View style={{ gap: 6 }}>
-              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.5 }}>Mô tả (tùy chọn)</Text>
+              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.5 }}>{t("Mô tả (tùy chọn)")}</Text>
               <TextInput
                 value={manualDesc}
                 onChangeText={setManualDesc}
-                placeholder="Mô tả thêm về nội dung..."
+                placeholder={t("Mô tả thêm về nội dung...")}
                 placeholderTextColor={colors.mutedForeground}
                 multiline
                 numberOfLines={3}
@@ -1299,7 +1301,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
 
             {/* Attachments */}
             <View style={{ gap: 8 }}>
-              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.5 }}>Đính kèm file</Text>
+              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.5 }}>{t("Đính kèm file")}</Text>
               {manualAttachments.map((att, idx) => (
                 <View key={idx} style={{
                   flexDirection: "row", alignItems: "center", gap: 10,
@@ -1332,7 +1334,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
                   : <Feather name="upload" size={14} color="#8b5cf6" />
                 }
                 <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#8b5cf6" }}>
-                  {uploadingFile ? "Đang tải lên..." : "Chọn file đính kèm"}
+                  {uploadingFile ? t("Đang tải lên...") : t("Chọn file đính kèm")}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1355,7 +1357,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
                 : <Feather name="plus" size={17} color={submittingManual || uploadingFile ? colors.mutedForeground : "#fff"} />
               }
               <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: submittingManual || uploadingFile ? colors.mutedForeground : "#fff" }}>
-                {submittingManual ? "Đang lưu..." : "Thêm nội dung"}
+                {submittingManual ? t("Đang lưu...") : t("Thêm nội dung")}
               </Text>
             </TouchableOpacity>
           </View>
@@ -1381,7 +1383,7 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
               paddingHorizontal: 20, paddingVertical: 14,
               borderBottomWidth: 1, borderBottomColor: colors.border,
             }}>
-              <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>Chọn học viên</Text>
+              <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>{t("Chọn học viên")}</Text>
               <TouchableOpacity onPress={() => setShowStudentPicker(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                 <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: colors.muted, alignItems: "center", justifyContent: "center" }}>
                   <Feather name="x" size={16} color={colors.mutedForeground} />
@@ -1392,9 +1394,9 @@ export function AssignContentSheet({ visible, onClose, classSessionId, onSaved }
               {students.length === 0 && (
                 <View style={{ alignItems: "center", paddingVertical: 32, gap: 8 }}>
                   <Feather name="users" size={36} color={colors.mutedForeground} />
-                  <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>Không có học viên</Text>
+                  <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{t("Không có học viên")}</Text>
                   <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>
-                    Không tìm thấy danh sách học viên cho buổi học này
+                    {t("Không tìm thấy danh sách học viên cho buổi học này")}
                   </Text>
                 </View>
               )}
@@ -1463,6 +1465,7 @@ function TypeBadge({ type, small }: { type: string; small?: boolean }) {
 }
 
 function TypeChip({ type }: { type: string }) {
+  const { t } = useLanguage();
   const c = TYPE_COLORS[type] || { bg: "#8b5cf620", text: "#8b5cf6" };
   const icons: Record<string, string> = {
     "Bài học":         "book",
@@ -1477,7 +1480,7 @@ function TypeChip({ type }: { type: string }) {
       paddingHorizontal: 9, paddingVertical: 4, flexShrink: 0,
     }}>
       <Feather name={(icons[type] || "file") as any} size={11} color={c.text} />
-      <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: c.text }}>{type || "Tài liệu"}</Text>
+      <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: c.text }}>{type ? t(type) : t("Tài liệu")}</Text>
     </View>
   );
 }

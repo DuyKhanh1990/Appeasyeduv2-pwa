@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import { HtmlText } from "@/components/HtmlText";
 import { useColors } from "@/hooks/useColors";
 import { apiGet } from "@/lib/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface ScoreCategory {
   categoryId: string;
@@ -88,10 +89,10 @@ const WEEKDAYS_VI = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 function getDateKey(dateStr: string): string {
   return dateStr ? dateStr.slice(0, 10) : "";
 }
-function formatTimelineDate(dateKey: string): string {
+function formatTimelineDate(dateKey: string, t: (source: string) => string): string {
   const d = new Date(dateKey + "T00:00:00");
   if (isNaN(d.getTime())) return dateKey;
-  const wd = WEEKDAYS_VI[d.getDay()];
+  const wd = t(WEEKDAYS_VI[d.getDay()]);
   return `${wd}, ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 }
 function groupByDate<T>(items: T[], getKey: (item: T) => string): { dateKey: string; items: T[] }[] {
@@ -106,6 +107,7 @@ function groupByDate<T>(items: T[], getKey: (item: T) => string): { dateKey: str
 
 function ScoreDetailPage({ item, visible, onClose }: { item: ScoreSheet; visible: boolean; onClose: () => void }) {
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
 
   const safeScores = item.scores ?? [];
@@ -132,13 +134,13 @@ function ScoreDetailPage({ item, visible, onClose }: { item: ScoreSheet; visible
             </Text>
             <Text style={[styles.detailPageSub, { color: colors.mutedForeground }]} numberOfLines={1}>
               {item.classCode || item.className}
-              {item.sessionIndex !== null ? ` · Buổi ${item.sessionIndex}` : ""}
+              {item.sessionIndex !== null ? ` · ${t("Buổi")} ${item.sessionIndex}` : ""}
             </Text>
           </View>
           {totalScore !== null && (
             <View style={[styles.detailPageBadge, { backgroundColor: scoreColor + "18" }]}>
               <Text style={[styles.detailPageScore, { color: scoreColor }]}>{totalCategory?.score ?? totalScore}</Text>
-              <Text style={[styles.detailPageScoreLabel, { color: scoreColor }]}>{totalCategory?.categoryName ?? "Điểm"}</Text>
+              <Text style={[styles.detailPageScoreLabel, { color: scoreColor }]}>{totalCategory?.categoryName ?? t("Điểm")}</Text>
             </View>
           )}
         </View>
@@ -211,14 +213,14 @@ function ScoreDetailPage({ item, visible, onClose }: { item: ScoreSheet; visible
             <View style={[styles.commentBox, { backgroundColor: colors.primary + "0d", borderColor: colors.primary + "30" }]}>
               <View style={styles.commentHeader}>
                 <Feather name="message-circle" size={13} color={colors.primary} />
-                <Text style={[styles.commentLabel, { color: colors.primary }]}>Nhận xét</Text>
+                <Text style={[styles.commentLabel, { color: colors.primary }]}>{t("Nhận xét")}</Text>
               </View>
               <HtmlText html={item.teacherComment} style={{ color: colors.foreground }} compactImages />
             </View>
           ) : (
             <View style={[styles.noCommentBox, { borderColor: colors.border }]}>
               <Feather name="message-circle" size={13} color={colors.mutedForeground} />
-              <Text style={[styles.noCommentText, { color: colors.mutedForeground }]}>Chưa có nhận xét</Text>
+              <Text style={[styles.noCommentText, { color: colors.mutedForeground }]}>{t("Chưa có nhận xét")}</Text>
             </View>
           )}
         </ScrollView>
@@ -229,6 +231,7 @@ function ScoreDetailPage({ item, visible, onClose }: { item: ScoreSheet; visible
 
 function ScoreSheetCard({ item }: { item: ScoreSheet }) {
   const colors = useColors();
+  const { t } = useLanguage();
   const [modalVisible, setModalVisible] = useState(false);
 
   const safeScores = item.scores ?? [];
@@ -265,7 +268,7 @@ function ScoreSheetCard({ item }: { item: ScoreSheet }) {
           )}
           {item.sessionIndex !== null && (
             <Text style={[styles.sessionInfo, { color: colors.mutedForeground }]}>
-              {`Buổi ${item.sessionIndex}`}
+              {`${t("Buổi")} ${item.sessionIndex}`}
               {item.sessionDate !== null ? ` · ${formatSessionDate(item.sessionDate)}` : ""}
               {item.startTime ? ` · ${item.startTime}${item.endTime ? `–${item.endTime}` : ""}` : ""}
             </Text>
@@ -274,7 +277,7 @@ function ScoreSheetCard({ item }: { item: ScoreSheet }) {
         {totalScore !== null && (
           <View style={[styles.totalBadge, { backgroundColor: scoreColor + "18" }]}>
             <Text style={[styles.totalScore, { color: scoreColor }]}>{totalCategory?.score ?? totalScore}</Text>
-            <Text style={[styles.totalLabel, { color: scoreColor }]}>{totalCategory?.categoryName ?? "Điểm"}</Text>
+            <Text style={[styles.totalLabel, { color: scoreColor }]}>{totalCategory?.categoryName ?? t("Điểm")}</Text>
           </View>
         )}
       </View>
@@ -284,7 +287,7 @@ function ScoreSheetCard({ item }: { item: ScoreSheet }) {
         activeOpacity={0.7}
         style={[styles.detailBtn, { borderColor: colors.border }]}
       >
-        <Text style={[styles.detailBtnText, { color: colors.primary }]}>Xem chi tiết</Text>
+        <Text style={[styles.detailBtnText, { color: colors.primary }]}>{t("Xem chi tiết")}</Text>
         <Feather name="chevron-right" size={15} color={colors.primary} />
       </TouchableOpacity>
 
@@ -297,6 +300,7 @@ const MONTH_NAMES = ["Tháng 1","Tháng 2","Tháng 3","Tháng 4","Tháng 5","Th�
 
 export default function GradesScreen() {
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const topPad = insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
@@ -354,7 +358,7 @@ export default function GradesScreen() {
       }
       currentPageRef.current = page;
     } catch (e: any) {
-      if (page === 1) setError("Không thể tải bảng điểm. Vui lòng thử lại.");
+      if (page === 1) setError(t("Không thể tải bảng điểm. Vui lòng thử lại."));
     } finally {
       if (page === 1) {
         setLoading(false);
@@ -364,7 +368,7 @@ export default function GradesScreen() {
         loadingMoreRef.current = false;
       }
     }
-  }, [monthKey]);
+  }, [monthKey, t]);
 
   const loadMore = useCallback(() => {
     if (loadingMoreRef.current || !hasMore || loading) return;
@@ -440,14 +444,14 @@ export default function GradesScreen() {
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
               <Text style={styles.summaryValue}>{filtered.length}</Text>
-              <Text style={styles.summaryLabel}>Bảng điểm</Text>
+              <Text style={styles.summaryLabel}>{t("Bảng điểm")}</Text>
             </View>
             {highestScore !== null && (
               <>
                 <View style={styles.divider} />
                 <View style={styles.summaryItem}>
                   <Text style={styles.summaryValue}>{highestScore % 1 === 0 ? highestScore : highestScore.toFixed(1)}</Text>
-                  <Text style={styles.summaryLabel}>Cao nhất</Text>
+                  <Text style={styles.summaryLabel}>{t("Cao nhất")}</Text>
                 </View>
               </>
             )}
@@ -456,7 +460,7 @@ export default function GradesScreen() {
                 <View style={styles.divider} />
                 <View style={styles.summaryItem}>
                   <Text style={styles.summaryValue}>{lowestScore % 1 === 0 ? lowestScore : lowestScore.toFixed(1)}</Text>
-                  <Text style={styles.summaryLabel}>Thấp nhất</Text>
+                  <Text style={styles.summaryLabel}>{t("Thấp nhất")}</Text>
                 </View>
               </>
             )}
@@ -480,7 +484,7 @@ export default function GradesScreen() {
               }}
             >
               <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: selectedClass === null ? "#fff" : colors.mutedForeground }}>
-                Tất cả
+                {t("Tất cả")}
               </Text>
             </TouchableOpacity>
             {allClasses.map(cls => (
@@ -505,7 +509,7 @@ export default function GradesScreen() {
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>Đang tải bảng điểm...</Text>
+          <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>{t("Đang tải bảng điểm...")}</Text>
         </View>
       ) : error ? (
         <View style={styles.center}>
@@ -516,10 +520,10 @@ export default function GradesScreen() {
         <View style={styles.center}>
           <Feather name="bar-chart-2" size={48} color={colors.mutedForeground} />
           <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-            {`Không có bảng điểm trong ${MONTH_NAMES[viewMonth]}`}
+            {`${t("Không có bảng điểm trong")} ${t(MONTH_NAMES[viewMonth])}`}
           </Text>
           <Text style={[styles.emptySubText, { color: colors.mutedForeground }]}>
-            Chuyển tháng để xem bảng điểm khác
+            {t("Chuyển tháng để xem bảng điểm khác")}
           </Text>
         </View>
       ) : (
@@ -542,11 +546,11 @@ export default function GradesScreen() {
             <View key={dateKey}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10, marginTop: 4 }}>
                 <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#7c3aed" }}>
-                  {formatTimelineDate(dateKey)}
+                   {formatTimelineDate(dateKey, t)}
                 </Text>
                 <View style={{ backgroundColor: "#7c3aed18", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 }}>
                   <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#7c3aed" }}>
-                    {groupItems.length} bảng
+                    {groupItems.length} {t("bảng")}
                   </Text>
                 </View>
               </View>
@@ -559,13 +563,13 @@ export default function GradesScreen() {
             <View style={{ paddingVertical: 20, alignItems: "center" }}>
               <ActivityIndicator size="small" color={colors.primary} />
               <Text style={{ color: colors.mutedForeground, fontSize: 12, marginTop: 6, fontFamily: "Inter_400Regular" }}>
-                Đang tải thêm...
+                {t("Đang tải thêm...")}
               </Text>
             </View>
           )}
           {!loadingMore && !hasMore && sheets.length > 0 && (
             <Text style={{ textAlign: "center", color: colors.mutedForeground, fontSize: 12, fontFamily: "Inter_400Regular", paddingVertical: 12 }}>
-              Đã hiển thị tất cả {sheets.length} bảng điểm
+              {t("Đã hiển thị tất cả")} {sheets.length} {t("bảng điểm")}
             </Text>
           )}
         </ScrollView>

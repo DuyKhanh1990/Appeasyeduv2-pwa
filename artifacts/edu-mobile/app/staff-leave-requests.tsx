@@ -15,6 +15,7 @@ import {
 
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import { apiGet, apiPost } from "@/lib/api";
@@ -119,14 +120,15 @@ function Header({
   onBack: () => void;
   action?: React.ReactNode;
 }) {
+  const { t } = useLanguage();
   return (
     <View style={[styles.header, { paddingTop: topInset + 10, backgroundColor: colors.gradientStart }]}>
       <TouchableOpacity onPress={onBack} style={styles.backButton} activeOpacity={0.75}>
         <Feather name="arrow-left" size={21} color="#1e1b4b" />
       </TouchableOpacity>
       <View style={styles.headerCopy}>
-        <Text style={styles.headerTitle}>{title}</Text>
-        {subtitle ? <Text style={styles.headerSubtitle}>{subtitle}</Text> : null}
+        <Text style={styles.headerTitle}>{t(title)}</Text>
+        {subtitle ? <Text style={styles.headerSubtitle}>{t(subtitle)}</Text> : null}
       </View>
       {action}
     </View>
@@ -142,17 +144,19 @@ function SectionTitle({
   title: string;
   colors: ReturnType<typeof useColors>;
 }) {
+  const { t } = useLanguage();
   return (
     <View style={styles.sectionTitleRow}>
       <View style={[styles.sectionIcon, { backgroundColor: colors.primary + "18" }]}>
         <Feather name={icon} size={16} color={colors.primary} />
       </View>
-      <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{title}</Text>
+      <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t(title)}</Text>
     </View>
   );
 }
 
 function StatusBadge({ status }: { status: string }) {
+  const { t } = useLanguage();
   const meta = STATUS_META[status] ?? {
     label: status || "Chưa xác định",
     color: "#6b7280",
@@ -160,7 +164,7 @@ function StatusBadge({ status }: { status: string }) {
   };
   return (
     <View style={[styles.statusBadge, { backgroundColor: meta.background }]}>
-      <Text style={[styles.statusText, { color: meta.color }]}>{meta.label}</Text>
+      <Text style={[styles.statusText, { color: meta.color }]}>{t(meta.label)}</Text>
     </View>
   );
 }
@@ -172,6 +176,7 @@ function RequestCard({
   request: StaffLeaveRequest;
   colors: ReturnType<typeof useColors>;
 }) {
+  const { t } = useLanguage();
   const typeMeta = TYPE_META[request.type as LeaveType];
   const isOvertime = request.type === "tang_ca";
   return (
@@ -184,7 +189,7 @@ function RequestCard({
           </Text>
           <View style={styles.typeRow}>
             <Feather name={typeMeta?.icon ?? "file-text"} size={14} color={colors.primary} />
-            <Text style={[styles.typeText, { color: colors.primary }]}>{typeMeta?.label ?? request.type}</Text>
+            <Text style={[styles.typeText, { color: colors.primary }]}>{typeMeta ? t(typeMeta.label) : request.type}</Text>
           </View>
         </View>
         <StatusBadge status={request.status} />
@@ -193,21 +198,21 @@ function RequestCard({
       <View style={styles.requestMetaRow}>
         <Feather name="clock" size={14} color={colors.mutedForeground} />
         <Text style={[styles.requestMetaText, { color: colors.mutedForeground }]}>
-          {request.hours ? `${request.hours} giờ` : "Chưa nhập số giờ"}
+          {request.hours ? `${request.hours} ${t("giờ")}` : t("Chưa nhập số giờ")}
           {isOvertime && request.overtimeFrom && request.overtimeTo
             ? ` · ${request.overtimeFrom} – ${request.overtimeTo}`
             : ""}
         </Text>
       </View>
 
-      <Text style={[styles.reasonLabel, { color: colors.mutedForeground }]}>Lý do</Text>
+      <Text style={[styles.reasonLabel, { color: colors.mutedForeground }]}>{t("Lý do")}</Text>
       <Text style={[styles.reasonText, { color: colors.foreground }]}>
-        {request.reason?.trim() || "Không có lý do"}
+        {request.reason?.trim() || t("Không có lý do")}
       </Text>
 
       {request.status === "rejected" && request.adminNote ? (
         <View style={styles.rejectionBox}>
-          <Text style={styles.rejectionLabel}>Lý do từ chối</Text>
+          <Text style={styles.rejectionLabel}>{t("Lý do từ chối")}</Text>
           <Text style={styles.rejectionText}>{request.adminNote}</Text>
         </View>
       ) : null}
@@ -216,6 +221,7 @@ function RequestCard({
 }
 
 export default function StaffLeaveRequestsScreen() {
+  const { t } = useLanguage();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
@@ -253,7 +259,7 @@ export default function StaffLeaveRequestsScreen() {
       const response = await apiGet<any>("/api/my-space/don-tu");
       setRequests(extractRequests(response));
     } catch (err: unknown) {
-      setError(errorMessage(err, "Không thể tải đơn xin nghỉ của bạn"));
+      setError(errorMessage(err, t("Không thể tải đơn xin nghỉ của bạn")));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -284,11 +290,11 @@ export default function StaffLeaveRequestsScreen() {
 
   const submitRequest = async () => {
     if (!dateRangeValid) {
-      Alert.alert("Kiểm tra ngày", "Vui lòng chọn ngày hợp lệ và bảo đảm ngày bắt đầu không sau ngày kết thúc.");
+      Alert.alert(t("Kiểm tra ngày"), t("Vui lòng chọn ngày hợp lệ và bảo đảm ngày bắt đầu không sau ngày kết thúc."));
       return;
     }
     if (isOvertime && !overtimeValid) {
-      Alert.alert("Kiểm tra thời gian", "Giờ kết thúc tăng ca phải lớn hơn giờ bắt đầu.");
+      Alert.alert(t("Kiểm tra thời gian"), t("Giờ kết thúc tăng ca phải lớn hơn giờ bắt đầu."));
       return;
     }
 
@@ -306,9 +312,9 @@ export default function StaffLeaveRequestsScreen() {
       await apiPost<StaffLeaveRequest>("/api/leave-requests/self", body);
       await loadData(true);
       resetForm();
-      Alert.alert("Đã gửi đơn", "Đơn của bạn đã được gửi và đang chờ duyệt.");
+      Alert.alert(t("Đã gửi đơn"), t("Đơn của bạn đã được gửi và đang chờ duyệt."));
     } catch (err: unknown) {
-      Alert.alert("Không thể gửi đơn", errorMessage(err, "Vui lòng thử lại sau."));
+      Alert.alert(t("Không thể gửi đơn"), errorMessage(err, t("Vui lòng thử lại sau.")));
     } finally {
       setCreating(false);
     }
@@ -368,7 +374,7 @@ export default function StaffLeaveRequestsScreen() {
         <Header title="Xin nghỉ" colors={colors} topInset={insets.top} onBack={() => router.back()} />
         <View style={styles.centerState}>
           <Feather name="lock" size={38} color={colors.mutedForeground} />
-          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Tính năng dành cho nhân sự</Text>
+          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>{t("Tính năng dành cho nhân sự")}</Text>
         </View>
       </View>
     );
@@ -389,7 +395,7 @@ export default function StaffLeaveRequestsScreen() {
             activeOpacity={0.75}
           >
             <Feather name={formVisible ? "x" : "plus"} size={18} color="#1e1b4b" />
-            <Text style={styles.headerActionText}>{formVisible ? "Đóng" : "Tạo đơn"}</Text>
+            <Text style={styles.headerActionText}>{formVisible ? t("Đóng") : t("Tạo đơn")}</Text>
           </TouchableOpacity>
         }
       />
@@ -412,24 +418,24 @@ export default function StaffLeaveRequestsScreen() {
         {loading ? (
           <View style={styles.centerState}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={[styles.centerText, { color: colors.mutedForeground }]}>Đang tải đơn xin nghỉ...</Text>
+            <Text style={[styles.centerText, { color: colors.mutedForeground }]}>{t("Đang tải đơn xin nghỉ...")}</Text>
           </View>
         ) : error ? (
           <View style={[styles.errorCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Feather name="alert-circle" size={22} color={colors.destructive} />
             <Text style={[styles.errorText, { color: colors.destructive }]}>{error}</Text>
             <TouchableOpacity onPress={() => loadData()} style={[styles.retryButton, { backgroundColor: colors.primary }]}>
-              <Text style={styles.retryText}>Thử lại</Text>
+              <Text style={styles.retryText}>{t("Thử lại")}</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <>
             {formVisible ? (
               <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <SectionTitle icon="edit-2" title="Tạo đơn xin nghỉ" colors={colors} />
+                <SectionTitle icon="edit-2" title={t("Tạo đơn xin nghỉ")} colors={colors} />
 
                 <View style={styles.fieldGroup}>
-                  <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Loại đơn</Text>
+                  <Text style={[styles.fieldLabel, { color: colors.foreground }]}>{t("Loại đơn")}</Text>
                   <View style={styles.typeOptions}>
                     {(Object.keys(TYPE_META) as LeaveType[]).map((item) => {
                       const active = item === type;
@@ -448,7 +454,7 @@ export default function StaffLeaveRequestsScreen() {
                         >
                           <Feather name={TYPE_META[item].icon} size={15} color={active ? "#fff" : colors.mutedForeground} />
                           <Text style={[styles.typeOptionText, { color: active ? "#fff" : colors.foreground }]}>
-                            {TYPE_META[item].label}
+                            {t(TYPE_META[item].label)}
                           </Text>
                         </TouchableOpacity>
                       );
@@ -458,7 +464,7 @@ export default function StaffLeaveRequestsScreen() {
 
                 <View style={styles.dateRow}>
                   <View style={styles.dateField}>
-                    <Text style={[styles.fieldLabel, { color: colors.foreground }]}>{isOvertime ? "Ngày tăng ca" : "Từ ngày"}</Text>
+                    <Text style={[styles.fieldLabel, { color: colors.foreground }]}>{isOvertime ? t("Ngày tăng ca") : t("Từ ngày")}</Text>
                     <TouchableOpacity
                       onPress={() => openDatePicker("from")}
                       style={[styles.dateButton, { borderColor: colors.border, backgroundColor: colors.muted }]}
@@ -470,7 +476,7 @@ export default function StaffLeaveRequestsScreen() {
                   </View>
                   {!isOvertime ? (
                     <View style={styles.dateField}>
-                      <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Đến ngày</Text>
+                      <Text style={[styles.fieldLabel, { color: colors.foreground }]}>{t("Đến ngày")}</Text>
                       <TouchableOpacity
                         onPress={() => openDatePicker("to")}
                         style={[styles.dateButton, { borderColor: colors.border, backgroundColor: colors.muted }]}
@@ -484,12 +490,12 @@ export default function StaffLeaveRequestsScreen() {
                 </View>
 
                 {!dateRangeValid ? (
-                  <Text style={styles.inlineError}>Ngày không hợp lệ hoặc ngày bắt đầu đang sau ngày kết thúc.</Text>
+                  <Text style={styles.inlineError}>{t("Ngày không hợp lệ hoặc ngày bắt đầu đang sau ngày kết thúc.")}</Text>
                 ) : null}
 
                 {isOvertime ? (
                   <View style={styles.fieldGroup}>
-                    <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Thời gian tăng ca</Text>
+                    <Text style={[styles.fieldLabel, { color: colors.foreground }]}>{t("Thời gian tăng ca")}</Text>
                     <View style={styles.timeRow}>
                       <TextInput
                         value={overtimeFrom}
@@ -500,7 +506,7 @@ export default function StaffLeaveRequestsScreen() {
                         maxLength={5}
                         style={[styles.timeInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.muted }]}
                       />
-                      <Text style={[styles.timeSeparator, { color: colors.mutedForeground }]}>đến</Text>
+                      <Text style={[styles.timeSeparator, { color: colors.mutedForeground }]}>{t("đến")}</Text>
                       <TextInput
                         value={overtimeTo}
                         onChangeText={setOvertimeTo}
@@ -512,7 +518,7 @@ export default function StaffLeaveRequestsScreen() {
                       />
                     </View>
                     {!overtimeValid ? (
-                      <Text style={styles.inlineError}>Giờ kết thúc phải lớn hơn giờ bắt đầu, theo dạng HH:mm.</Text>
+                      <Text style={styles.inlineError}>{t("Giờ kết thúc phải lớn hơn giờ bắt đầu, theo dạng HH:mm.")}</Text>
                     ) : null}
                   </View>
                 ) : null}
@@ -520,16 +526,16 @@ export default function StaffLeaveRequestsScreen() {
                 <View style={[styles.hoursHint, { backgroundColor: colors.muted }]}>
                   <Feather name="clock" size={15} color={colors.primary} />
                   <Text style={[styles.hoursText, { color: colors.mutedForeground }]}>
-                    Tổng số giờ dự kiến: <Text style={{ color: colors.foreground, fontFamily: "Inter_700Bold" }}>{hours} giờ</Text>
+                    {t("Tổng số giờ dự kiến")}: <Text style={{ color: colors.foreground, fontFamily: "Inter_700Bold" }}>{hours} {t("giờ")}</Text>
                   </Text>
                 </View>
 
                 <View style={styles.fieldGroup}>
-                  <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Lý do <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>(không bắt buộc)</Text></Text>
+                  <Text style={[styles.fieldLabel, { color: colors.foreground }]}>{t("Lý do")} <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>({t("không bắt buộc")})</Text></Text>
                   <TextInput
                     value={reason}
                     onChangeText={setReason}
-                    placeholder="Ví dụ: Có việc gia đình."
+                    placeholder={t("Ví dụ: Có việc gia đình.")}
                     placeholderTextColor={colors.mutedForeground}
                     multiline
                     textAlignVertical="top"
@@ -551,7 +557,7 @@ export default function StaffLeaveRequestsScreen() {
                   activeOpacity={0.8}
                 >
                   {creating ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="send" size={17} color="#fff" />}
-                  <Text style={styles.submitText}>{creating ? "Đang gửi..." : "Gửi đơn xin nghỉ"}</Text>
+                  <Text style={styles.submitText}>{creating ? t("Đang gửi...") : t("Gửi đơn xin nghỉ")}</Text>
                 </TouchableOpacity>
               </View>
             ) : null}
@@ -560,7 +566,7 @@ export default function StaffLeaveRequestsScreen() {
               <View style={styles.listSection}>
                 <View style={styles.listHeader}>
                   <SectionTitle icon="file-text" title="Đơn đã gửi" colors={colors} />
-                  <Text style={[styles.listCount, { color: colors.mutedForeground }]}>{requests.length} đơn</Text>
+                  <Text style={[styles.listCount, { color: colors.mutedForeground }]}>{requests.length} {t("đơn")}</Text>
                 </View>
 
                 {requests.length === 0 ? (
@@ -568,9 +574,9 @@ export default function StaffLeaveRequestsScreen() {
                     <View style={[styles.emptyIcon, { backgroundColor: colors.muted }]}>
                       <Feather name="calendar" size={24} color={colors.mutedForeground} />
                     </View>
-                    <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Chưa có đơn xin nghỉ</Text>
+                    <Text style={[styles.emptyTitle, { color: colors.foreground }]}>{t("Chưa có đơn xin nghỉ")}</Text>
                     <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                      Nhấn “Tạo đơn” để gửi đơn nghỉ phép hoặc tăng ca.
+                      {t("Nhấn “Tạo đơn” để gửi đơn nghỉ phép hoặc tăng ca.")}
                     </Text>
                   </View>
                 ) : (
@@ -594,7 +600,7 @@ export default function StaffLeaveRequestsScreen() {
         <View style={[styles.calendarSheet, { backgroundColor: colors.card, borderColor: colors.border, paddingBottom: insets.bottom + 16 }]}>
           <View style={[styles.calendarHeader, { borderBottomColor: colors.border }]}>
             <Text style={[styles.calendarTitle, { color: colors.foreground }]}>
-              {datePickerTarget === "from" ? "Chọn ngày bắt đầu" : "Chọn ngày kết thúc"}
+              {datePickerTarget === "from" ? t("Chọn ngày bắt đầu") : t("Chọn ngày kết thúc")}
             </Text>
             <TouchableOpacity onPress={() => setDatePickerTarget(null)} hitSlop={8}>
               <Feather name="x" size={20} color={colors.mutedForeground} />
@@ -605,7 +611,7 @@ export default function StaffLeaveRequestsScreen() {
               <Feather name="chevron-left" size={22} color={colors.foreground} />
             </TouchableOpacity>
             <Text style={[styles.calendarMonthTitle, { color: colors.foreground }]}>
-              {MONTH_NAMES[pickerMonth]} {pickerYear}
+              {t(MONTH_NAMES[pickerMonth])} {pickerYear}
             </Text>
             <TouchableOpacity onPress={() => goPickerMonth(1)} hitSlop={8}>
               <Feather name="chevron-right" size={22} color={colors.foreground} />
@@ -613,7 +619,7 @@ export default function StaffLeaveRequestsScreen() {
           </View>
           <View style={styles.calendarWeekRow}>
             {WEEKDAY_NAMES.map((day) => (
-              <Text key={day} style={[styles.calendarWeekday, { color: colors.mutedForeground }]}>{day}</Text>
+              <Text key={day} style={[styles.calendarWeekday, { color: colors.mutedForeground }]}>{t(day)}</Text>
             ))}
           </View>
           <View style={styles.calendarGrid}>

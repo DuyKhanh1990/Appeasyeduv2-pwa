@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useColors } from "@/hooks/useColors";
 import { apiGet } from "@/lib/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface StaffClass {
   id: string;
@@ -59,6 +60,7 @@ function GradeBookCard({
   showClassName: boolean;
   colors: ReturnType<typeof useColors>;
 }) {
+  const { t } = useLanguage();
   const handleEdit = () => {
     Haptics.selectionAsync();
     router.push({ pathname: "/staff-grade-book-edit", params: { classId: item.classId, id: item.id } } as any);
@@ -78,7 +80,7 @@ function GradeBookCard({
           ) : null}
           {item.scoreSheetName ? (
             <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
-              Mẫu: {item.scoreSheetName}
+              {t("Mẫu:")} {item.scoreSheetName}
             </Text>
           ) : null}
           {item.sessionDate ? (
@@ -93,7 +95,7 @@ function GradeBookCard({
             paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8,
           }}>
             <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: item.published ? "#16a34a" : "#ea580c" }}>
-              {item.published ? "Đã công bố" : "Nháp"}
+              {item.published ? t("Đã công bố") : t("Nháp")}
             </Text>
           </View>
         </View>
@@ -118,7 +120,7 @@ function GradeBookCard({
           hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
         >
           <Feather name="edit-2" size={13} color={colors.primary} />
-          <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: colors.primary }}>Sửa</Text>
+          <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: colors.primary }}>{t("Sửa")}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -138,6 +140,7 @@ interface PaginatedResponse {
 
 export default function StaffGradeBooksScreen() {
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const topPad = insets.top;
 
@@ -264,8 +267,8 @@ export default function StaffGradeBooksScreen() {
             <Feather name="arrow-left" size={20} color="#1e1b4b" />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: "#1e1b4b" }}>Bảng điểm</Text>
-            <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: "rgba(30,27,75,0.65)" }}>Quản lý điểm số học viên</Text>
+            <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: "#1e1b4b" }}>{t("Bảng điểm")}</Text>
+            <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: "rgba(30,27,75,0.65)" }}>{t("Quản lý điểm số học viên")}</Text>
           </View>
         </View>
       </View>
@@ -283,7 +286,7 @@ export default function StaffGradeBooksScreen() {
               }}
             >
               <Text style={{ fontSize: 13, fontFamily: selectedClassId === ALL_TAB ? "Inter_600SemiBold" : "Inter_400Regular", color: selectedClassId === ALL_TAB ? "#fff" : colors.foreground }}>
-                Tất cả
+                {t("Tất cả")}
               </Text>
             </TouchableOpacity>
             {classes.map((cls) => {
@@ -312,21 +315,21 @@ export default function StaffGradeBooksScreen() {
       {loadingClasses ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>Đang tải...</Text>
+          <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>{t("Đang tải...")}</Text>
         </View>
       ) : error ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 32 }}>
           <Feather name="alert-circle" size={32} color={colors.destructive} />
-          <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>Không tải được dữ liệu</Text>
+          <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{t("Không tải được dữ liệu")}</Text>
           <TouchableOpacity onPress={() => load()} style={{ backgroundColor: colors.primary, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20 }}>
-            <Text style={{ color: "#fff", fontFamily: "Inter_600SemiBold" }}>Thử lại</Text>
+            <Text style={{ color: "#fff", fontFamily: "Inter_600SemiBold" }}>{t("Thử lại")}</Text>
           </TouchableOpacity>
         </View>
       ) : classes.length === 0 ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 32 }}>
           <Feather name="book-open" size={40} color={colors.mutedForeground} />
-          <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground, textAlign: "center" }}>Bạn chưa phụ trách lớp nào</Text>
-          <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>Liên hệ quản lý để được phân công lớp học.</Text>
+          <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground, textAlign: "center" }}>{t("Bạn chưa phụ trách lớp nào")}</Text>
+          <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>{t("Liên hệ quản lý để được phân công lớp học.")}</Text>
         </View>
       ) : (
         <ScrollView
@@ -338,26 +341,26 @@ export default function StaffGradeBooksScreen() {
           {loadingBooks ? (
             <View style={{ alignItems: "center", paddingTop: 40, gap: 10 }}>
               <ActivityIndicator color={colors.primary} />
-              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>Đang tải bảng điểm...</Text>
+              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>{t("Đang tải bảng điểm...")}</Text>
             </View>
           ) : gradeBooks.length === 0 ? (
             <View style={{ alignItems: "center", paddingTop: 60, gap: 12 }}>
               <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: colors.primary + "15", alignItems: "center", justifyContent: "center" }}>
                 <Feather name="bar-chart-2" size={28} color={colors.primary} />
               </View>
-              <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>Chưa có bảng điểm</Text>
-              <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>Nhấn nút + bên dưới để tạo bảng điểm mới.</Text>
+              <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{t("Chưa có bảng điểm")}</Text>
+              <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>{t("Nhấn nút + bên dưới để tạo bảng điểm mới.")}</Text>
             </View>
           ) : (
             <>
               {groupedByDate.map(([dateKey, books]) => {
                 const isNoDate = dateKey === "__nodate__";
-                let dateLabel = "Không rõ ngày";
+                let dateLabel = t("Không rõ ngày");
                 if (!isNoDate) {
                   const d = new Date(dateKey + "T00:00:00");
                   const weekdays = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
                   const wd = weekdays[d.getDay()];
-                  dateLabel = `${wd}, ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+                   dateLabel = `${t(wd)}, ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
                 }
                 return (
                   <View key={dateKey} style={{ marginBottom: 20 }}>
@@ -368,7 +371,7 @@ export default function StaffGradeBooksScreen() {
                       </Text>
                       <View style={{ marginLeft: 8, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10, backgroundColor: (isNoDate ? colors.mutedForeground : colors.primary) + "18" }}>
                         <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: isNoDate ? colors.mutedForeground : colors.primary }}>
-                          {books.length} bảng
+                          {books.length} {t("bảng")}
                         </Text>
                       </View>
                     </View>
@@ -397,7 +400,7 @@ export default function StaffGradeBooksScreen() {
                     <Feather name="chevron-down" size={16} color={colors.primary} />
                   )}
                   <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.primary }}>
-                    {loadingMore ? "Đang tải..." : "Xem thêm"}
+                    {loadingMore ? t("Đang tải...") : t("Xem thêm")}
                   </Text>
                 </TouchableOpacity>
               ) : null}

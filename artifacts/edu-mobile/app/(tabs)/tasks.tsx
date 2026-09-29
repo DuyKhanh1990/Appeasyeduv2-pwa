@@ -25,6 +25,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import { HtmlText } from "@/components/HtmlText";
 import { useColors } from "@/hooks/useColors";
 import { apiDelete, apiGet, apiPatch, apiPost, getCenterUrl, getAuthToken } from "@/lib/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -224,6 +225,7 @@ function PersonAvatar({ person, size = 30, overlap = false, borderColor = "#fff"
 // ─── Task Card ───────────────────────────────────────────────────────────────
 
 function TaskCard({ task, colors, onPress, showStatus = false, statuses = [], users = [] }: { task: Task; colors: any; onPress: () => void; showStatus?: boolean; statuses?: Status[]; users?: UserItem[] }) {
+  const { t } = useLanguage();
   const resolvedStatus = statuses.find((s) => s.id === (task.status?.id || (task as any).statusId)) || task.status;
   const statusColor = resolvedStatus?.color || task.status?.color || "#6b7280";
   const statusName = resolvedStatus?.name || task.status?.name || "";
@@ -271,7 +273,7 @@ function TaskCard({ task, colors, onPress, showStatus = false, statuses = [], us
               {showStatus && statusName ? (
                 <View style={[styles.statusBadge, { backgroundColor: hexToRgba(statusColor, 0.12), borderColor: hexToRgba(statusColor, 0.25) }]}>
                   <View style={[styles.levelDot, { backgroundColor: statusColor }]} />
-                  <Text style={[styles.levelText, { color: statusColor }]}>{statusName}</Text>
+                  <Text style={[styles.levelText, { color: statusColor }]}>{t(statusName)}</Text>
                 </View>
               ) : null}
               {task.level ? (
@@ -301,7 +303,7 @@ function TaskCard({ task, colors, onPress, showStatus = false, statuses = [], us
                 </Text>
               </View>
               {overdue ? (
-                <Text style={styles.cardOverdueText}>Quá hạn</Text>
+                <Text style={styles.cardOverdueText}>{t("Quá hạn")}</Text>
               ) : null}
             </View>
           </>
@@ -312,13 +314,13 @@ function TaskCard({ task, colors, onPress, showStatus = false, statuses = [], us
             <View style={[styles.cardSep, { backgroundColor: colors.border }]} />
             {resolvedManager ? (
               <View style={styles.cardPersonRow}>
-                <Text style={[styles.cardPersonLabel, { color: colors.mutedForeground }]}>Quản lý:</Text>
+                <Text style={[styles.cardPersonLabel, { color: colors.mutedForeground }]}>{t("Quản lý:")}</Text>
                 <PersonAvatar person={resolvedManager as Person | DetailPerson} size={22} borderColor={colors.card} />
               </View>
             ) : null}
             {detailAssignees.length > 0 ? (
               <View style={styles.cardPersonRow}>
-                <Text style={[styles.cardPersonLabel, { color: colors.mutedForeground }]}>Thực hiện:</Text>
+                <Text style={[styles.cardPersonLabel, { color: colors.mutedForeground }]}>{t("Thực hiện:")}</Text>
                 <View style={styles.avatarRow}>
                   {detailAssignees.slice(0, 4).map((a, i) => (
                     <PersonAvatar key={a.id} person={a as Person | DetailPerson} size={22} overlap={i > 0} borderColor={colors.card} />
@@ -433,6 +435,7 @@ function TaskDetailModal({
   colors: any;
   insets: { bottom: number; top: number };
 }) {
+  const { t } = useLanguage();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [taskDetail, setTaskDetail] = useState<TaskDetailResponse | null>(null);
@@ -508,7 +511,7 @@ function TaskDetailModal({
       setNewComment("");
       await loadComments(task.id);
     } catch {
-      Alert.alert("Lỗi", "Không thể gửi bình luận");
+      Alert.alert(t("Lỗi"), t("Không thể gửi bình luận"));
     } finally {
       setSubmitting(false);
     }
@@ -533,7 +536,7 @@ function TaskDetailModal({
       if (result.canceled || !result.assets?.length) return;
       setUploadingAttachment(true);
       const baseUrl = getCenterUrl();
-      if (!baseUrl) throw new Error("Chưa có URL");
+      if (!baseUrl) throw new Error(t("Chưa có URL"));
       const formData = new FormData();
       for (const asset of result.assets) {
         if (Platform.OS === "web") {
@@ -564,23 +567,23 @@ function TaskDetailModal({
       const data = await response.json() as { attachments: Attachment[] };
       setAttachments(data.attachments);
     } catch {
-      Alert.alert("Lỗi", "Không thể tải lên file");
+      Alert.alert(t("Lỗi"), t("Không thể tải lên file"));
     } finally {
       setUploadingAttachment(false);
     }
   };
 
   const handleDeleteAttachment = (att: Attachment) => {
-    Alert.alert("Xoá file", `Bạn có chắc muốn xoá "${att.name || att.url}"?`, [
-      { text: "Huỷ", style: "cancel" },
+    Alert.alert(t("Xoá file"), `${t("Bạn có chắc muốn xoá")} "${att.name || att.url}"?`, [
+      { text: t("Huỷ"), style: "cancel" },
       {
-        text: "Xoá",
+        text: t("Xoá"),
         style: "destructive",
         onPress: async () => {
           if (!task) return;
           try {
             const baseUrl = getCenterUrl();
-            if (!baseUrl) throw new Error("Chưa có URL");
+            if (!baseUrl) throw new Error(t("Chưa có URL"));
             const delHeaders: Record<string, string> = { "Content-Type": "application/json", Accept: "application/json" };
             const token = getAuthToken();
             if (token) delHeaders["Authorization"] = `Bearer ${token}`;
@@ -593,7 +596,7 @@ function TaskDetailModal({
             const data = await response.json() as { attachments: Attachment[] };
             setAttachments(data.attachments);
           } catch {
-            Alert.alert("Lỗi", "Không thể xoá file");
+            Alert.alert(t("Lỗi"), t("Không thể xoá file"));
           }
         },
       },
@@ -603,10 +606,10 @@ function TaskDetailModal({
 
   const handleDelete = () => {
     if (!task) return;
-    Alert.alert("Xóa công việc", `Bạn có chắc muốn xóa "${task.title}"?`, [
-      { text: "Hủy", style: "cancel" },
+    Alert.alert(t("Xóa công việc"), `${t("Bạn có chắc muốn xóa")} "${task.title}"?`, [
+      { text: t("Hủy"), style: "cancel" },
       {
-        text: "Xóa",
+        text: t("Xóa"),
         style: "destructive",
         onPress: async () => {
           setDeleting(true);
@@ -615,7 +618,7 @@ function TaskDetailModal({
             onDeleted(task.id);
             onClose();
           } catch {
-            Alert.alert("Lỗi", "Không thể xóa công việc");
+            Alert.alert(t("Lỗi"), t("Không thể xóa công việc"));
           } finally {
             setDeleting(false);
           }
@@ -628,7 +631,7 @@ function TaskDetailModal({
     if (!task || !editTitle.trim()) return;
     const dueDateISO = editDueDate.trim() ? parseDateInput(editDueDate.trim()) : null;
     if (editDueDate.trim() && !dueDateISO) {
-      Alert.alert("Ngày không hợp lệ", "Vui lòng nhập định dạng DD/MM/YYYY");
+      Alert.alert(t("Ngày không hợp lệ"), t("Vui lòng nhập định dạng DD/MM/YYYY"));
       return;
     }
     setSaving(true);
@@ -645,7 +648,7 @@ function TaskDetailModal({
       onEdited(updated);
       setEditMode(false);
     } catch {
-      Alert.alert("Lỗi", "Không thể lưu thay đổi");
+      Alert.alert(t("Lỗi"), t("Không thể lưu thay đổi"));
     } finally {
       setSaving(false);
     }
@@ -693,7 +696,7 @@ function TaskDetailModal({
         ))}
         {extra > 0 && (
           <TouchableOpacity onPress={onShowAll} style={[styles.showMoreBtn, { backgroundColor: colors.muted }]}>
-            <Text style={[styles.showMoreText, { color: colors.primary }]}>+{extra} người khác</Text>
+            <Text style={[styles.showMoreText, { color: colors.primary }]}>+{extra} {t("người khác")}</Text>
             <Feather name="chevron-down" size={12} color={colors.primary} />
           </TouchableOpacity>
         )}
@@ -732,7 +735,7 @@ function TaskDetailModal({
                 value={editTitle}
                 onChangeText={setEditTitle}
                 multiline
-                placeholder="Tiêu đề công việc"
+                placeholder={t("Tiêu đề công việc")}
                 placeholderTextColor={colors.mutedForeground}
               />
             ) : (
@@ -759,17 +762,17 @@ function TaskDetailModal({
 
           {editMode && (
             <View style={[styles.editSection, { borderBottomColor: colors.border, backgroundColor: colors.card }]}>
-              <Text style={[styles.editLabel, { color: colors.mutedForeground }]}>Nội dung công việc</Text>
+              <Text style={[styles.editLabel, { color: colors.mutedForeground }]}>{t("Nội dung công việc")}</Text>
               <TextInput
                 style={[styles.editDescInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
                 value={editDesc}
                 onChangeText={setEditDesc}
                 multiline
-                placeholder="Mô tả công việc..."
+                placeholder={t("Mô tả công việc...")}
                 placeholderTextColor={colors.mutedForeground}
               />
 
-              <Text style={[styles.editLabel, { color: colors.mutedForeground, marginTop: 12 }]}>Trạng thái</Text>
+              <Text style={[styles.editLabel, { color: colors.mutedForeground, marginTop: 12 }]}>{t("Trạng thái")}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }}>
                 {statuses.map((s) => (
                   <TouchableOpacity
@@ -777,12 +780,12 @@ function TaskDetailModal({
                     onPress={() => setEditStatusId(s.id)}
                     style={[styles.selectChip, { borderColor: s.color || "#6b7280", backgroundColor: editStatusId === s.id ? hexToRgba(s.color || "#6b7280", 0.15) : "transparent" }]}
                   >
-                    <Text style={[styles.selectChipText, { color: s.color || "#6b7280" }]}>{s.name}</Text>
+                    <Text style={[styles.selectChipText, { color: s.color || "#6b7280" }]}>{t(s.name)}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
 
-              <Text style={[styles.editLabel, { color: colors.mutedForeground, marginTop: 12 }]}>Mức độ</Text>
+              <Text style={[styles.editLabel, { color: colors.mutedForeground, marginTop: 12 }]}>{t("Mức độ")}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }}>
                 {levels.map((l) => (
                   <TouchableOpacity
@@ -790,12 +793,12 @@ function TaskDetailModal({
                     onPress={() => setEditLevelId(editLevelId === l.id ? "" : l.id)}
                     style={[styles.selectChip, { borderColor: l.color || "#6b7280", backgroundColor: editLevelId === l.id ? hexToRgba(l.color || "#6b7280", 0.15) : "transparent" }]}
                   >
-                    <Text style={[styles.selectChipText, { color: l.color || "#6b7280" }]}>{l.name}</Text>
+                    <Text style={[styles.selectChipText, { color: l.color || "#6b7280" }]}>{t(l.name)}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
 
-              <Text style={[styles.editLabel, { color: colors.mutedForeground, marginTop: 12 }]}>Hạn hoàn thành</Text>
+              <Text style={[styles.editLabel, { color: colors.mutedForeground, marginTop: 12 }]}>{t("Hạn hoàn thành")}</Text>
               <View style={[styles.dateInputRow, { borderColor: colors.border, backgroundColor: colors.background, marginTop: 6 }]}>
                 <Feather name="calendar" size={14} color={colors.mutedForeground} />
                 <TextInput
@@ -808,7 +811,7 @@ function TaskDetailModal({
                 />
               </View>
 
-              <Text style={[styles.editLabel, { color: colors.mutedForeground, marginTop: 12 }]}>Quản lý</Text>
+              <Text style={[styles.editLabel, { color: colors.mutedForeground, marginTop: 12 }]}>{t("Quản lý")}</Text>
               <TouchableOpacity
                 style={[styles.pickerBtn, { borderColor: colors.border, backgroundColor: colors.background, marginTop: 6 }]}
                 onPress={() => setShowManagerPicker(true)}
@@ -819,12 +822,12 @@ function TaskDetailModal({
                     <Text style={{ color: colors.foreground, fontSize: 13, fontFamily: "Inter_400Regular" }}>{editManagerUser.name || editManagerUser.username}</Text>
                   </View>
                 ) : (
-                  <Text style={{ color: colors.mutedForeground, fontSize: 13, fontFamily: "Inter_400Regular" }}>Chọn quản lý...</Text>
+                  <Text style={{ color: colors.mutedForeground, fontSize: 13, fontFamily: "Inter_400Regular" }}>{t("Chọn quản lý...")}</Text>
                 )}
                 <Feather name="chevron-down" size={14} color={colors.mutedForeground} />
               </TouchableOpacity>
 
-              <Text style={[styles.editLabel, { color: colors.mutedForeground, marginTop: 12 }]}>Thực hiện</Text>
+              <Text style={[styles.editLabel, { color: colors.mutedForeground, marginTop: 12 }]}>{t("Thực hiện")}</Text>
               <TouchableOpacity
                 style={[styles.pickerBtn, { borderColor: colors.border, backgroundColor: colors.background, marginTop: 6 }]}
                 onPress={() => setShowAssigneesPicker(true)}
@@ -834,10 +837,10 @@ function TaskDetailModal({
                     {editAssigneeUsers.slice(0, 4).map((a, i) => (
                       <PersonAvatar key={a.id} person={{ id: a.id, name: a.name ?? undefined, username: a.username }} size={24} overlap={i > 0} />
                     ))}
-                    <Text style={{ color: colors.foreground, fontSize: 12, fontFamily: "Inter_400Regular", marginLeft: 4 }}>{editAssigneeUsers.length} người</Text>
+                    <Text style={{ color: colors.foreground, fontSize: 12, fontFamily: "Inter_400Regular", marginLeft: 4 }}>{editAssigneeUsers.length} {t("người")}</Text>
                   </View>
                 ) : (
-                  <Text style={{ color: colors.mutedForeground, fontSize: 13, fontFamily: "Inter_400Regular" }}>Chọn người thực hiện...</Text>
+                  <Text style={{ color: colors.mutedForeground, fontSize: 13, fontFamily: "Inter_400Regular" }}>{t("Chọn người thực hiện...")}</Text>
                 )}
                 <Feather name="chevron-down" size={14} color={colors.mutedForeground} />
               </TouchableOpacity>
@@ -853,26 +856,26 @@ function TaskDetailModal({
           <View style={[styles.detailMeta, { borderBottomColor: colors.border, backgroundColor: colors.card }]}>
             {task.level && (
               <View style={styles.metaRow}>
-                <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>Mức độ</Text>
+                <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>{t("Mức độ")}</Text>
                 <View style={[styles.levelBadge, { backgroundColor: hexToRgba(task.level.color, 0.12), borderColor: hexToRgba(task.level.color, 0.3) }]}>
                   <View style={[styles.levelDot, { backgroundColor: task.level.color }]} />
-                  <Text style={[styles.levelText, { color: task.level.color }]}>{task.level.name}</Text>
+                  <Text style={[styles.levelText, { color: task.level.color }]}>{t(task.level.name)}</Text>
                 </View>
               </View>
             )}
 
             {task.dueDate && (
               <View style={styles.metaRow}>
-                <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>Hạn</Text>
+                <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>{t("Hạn")}</Text>
                 <Text style={[styles.metaValue, { color: isOverdue(task.dueDate) ? "#ef4444" : colors.foreground }]}>
-                  {formatDate(task.dueDate)}{isOverdue(task.dueDate) ? "  ⚠ Quá hạn" : ""}
+                  {formatDate(task.dueDate)}{isOverdue(task.dueDate) ? `  ⚠ ${t("Quá hạn")}` : ""}
                 </Text>
               </View>
             )}
 
             {(taskDetail?.creatorName || task.creator) && (
               <View style={styles.metaRow}>
-                <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>Người tạo</Text>
+                <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>{t("Người tạo")}</Text>
                 <Text style={[styles.metaValue, { color: colors.foreground }]}>
                   {taskDetail?.creatorName || task.creator?.name || task.creator?.username}
                 </Text>
@@ -881,38 +884,38 @@ function TaskDetailModal({
 
             {taskDetail?.department && (
               <View style={styles.metaRow}>
-                <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>Phòng ban</Text>
+                <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>{t("Phòng ban")}</Text>
                 <Text style={[styles.metaValue, { color: colors.foreground }]}>{taskDetail.department.name}</Text>
               </View>
             )}
 
             {managersToShow.length > 0 ? (
               <View style={[styles.metaRow, { alignItems: "flex-start" }]}>
-                <Text style={[styles.metaLabel, { color: colors.mutedForeground, paddingTop: 3 }]}>Quản lý</Text>
+                <Text style={[styles.metaLabel, { color: colors.mutedForeground, paddingTop: 3 }]}>{t("Quản lý")}</Text>
                 {renderCompactPersons(managersToShow, () => setShowManagersPopup(true))}
               </View>
             ) : task.manager ? (
               <View style={styles.metaRow}>
-                <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>Quản lý</Text>
+                <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>{t("Quản lý")}</Text>
                 <Text style={[styles.metaValue, { color: colors.foreground }]}>{task.manager.name || task.manager.username}</Text>
               </View>
             ) : null}
 
             {assigneesToShow.length > 0 ? (
               <View style={[styles.metaRow, { alignItems: "flex-start" }]}>
-                <Text style={[styles.metaLabel, { color: colors.mutedForeground, paddingTop: 3 }]}>Thực hiện</Text>
+                <Text style={[styles.metaLabel, { color: colors.mutedForeground, paddingTop: 3 }]}>{t("Thực hiện")}</Text>
                 {renderCompactPersons(assigneesToShow, () => setShowAssigneesPopup(true))}
               </View>
             ) : task.assignees && task.assignees.length > 0 ? (
               <View style={styles.metaRow}>
-                <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>Thực hiện</Text>
+                <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>{t("Thực hiện")}</Text>
                 <Text style={[styles.metaValue, { color: colors.foreground }]}>{task.assignees.map((a) => ('fullName' in a ? a.fullName : (a.name || a.username))).join(", ")}</Text>
               </View>
             ) : null}
 
             {subjectsToShow.length > 0 && (
               <View style={[styles.metaRow, { alignItems: "flex-start" }]}>
-                <Text style={[styles.metaLabel, { color: colors.mutedForeground, paddingTop: 3 }]}>Đối tượng</Text>
+                <Text style={[styles.metaLabel, { color: colors.mutedForeground, paddingTop: 3 }]}>{t("Đối tượng")}</Text>
                 <View style={{ flex: 1, gap: 4 }}>
                   {subjectsToShow.map((s) => (
                     <View key={s.id} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
@@ -934,7 +937,7 @@ function TaskDetailModal({
 
             {taskDetail?.locationDetails && taskDetail.locationDetails.length > 0 && (
               <View style={styles.metaRow}>
-                <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>Cơ sở</Text>
+                <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>{t("Cơ sở")}</Text>
                 <View style={{ flex: 1, flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
                   {taskDetail.locationDetails.map((l) => (
                     <View key={l.id} style={[styles.tagChip, { backgroundColor: colors.muted }]}>
@@ -948,14 +951,14 @@ function TaskDetailModal({
 
           {descriptionText && !editMode && (
             <View style={[styles.descSection, { borderBottomColor: colors.border, backgroundColor: colors.card }]}>
-              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Nội dung công việc</Text>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t("Nội dung công việc")}</Text>
               <Text style={[styles.descText, { color: colors.mutedForeground }]}>{descriptionText}</Text>
             </View>
           )}
 
           <View style={[styles.descSection, { borderBottomColor: colors.border, backgroundColor: colors.card }]}>
             <View style={styles.attachmentHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>File đính kèm</Text>
+              <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>{t("File đính kèm")}</Text>
               {effectivePermissions.canEdit && (
                 <TouchableOpacity
                   style={[styles.attachmentUploadBtn, { backgroundColor: colors.primary }]}
@@ -967,7 +970,7 @@ function TaskDetailModal({
                   ) : (
                     <>
                       <Feather name="upload" size={12} color="#fff" />
-                      <Text style={styles.attachmentUploadText}>Tải lên</Text>
+                      <Text style={styles.attachmentUploadText}>{t("Tải lên")}</Text>
                     </>
                   )}
                 </TouchableOpacity>
@@ -976,7 +979,7 @@ function TaskDetailModal({
             {loadingAttachments ? (
               <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 8 }} />
             ) : attachments.length === 0 ? (
-              <Text style={[styles.noComments, { color: colors.mutedForeground, marginTop: 8 }]}>Chưa có file đính kèm</Text>
+              <Text style={[styles.noComments, { color: colors.mutedForeground, marginTop: 8 }]}>{t("Chưa có file đính kèm")}</Text>
             ) : (
               attachments.map((att, i) => (
                 <View key={att.url + i} style={{ position: "relative" }}>
@@ -998,12 +1001,12 @@ function TaskDetailModal({
           </View>
 
           <View style={[styles.commentSection, { backgroundColor: colors.card }]}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Bình luận</Text>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t("Bình luận")}</Text>
 
             {loadingComments ? (
               <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 12 }} />
             ) : comments.length === 0 ? (
-              <Text style={[styles.noComments, { color: colors.mutedForeground }]}>Chưa có bình luận nào</Text>
+              <Text style={[styles.noComments, { color: colors.mutedForeground }]}>{t("Chưa có bình luận nào")}</Text>
             ) : (
               comments.map((c) => (
                 <View key={c.id} style={[styles.commentItem, { borderColor: colors.border }]}>
@@ -1013,7 +1016,7 @@ function TaskDetailModal({
                   <View style={{ flex: 1 }}>
                     <View style={styles.commentHeader}>
                       <Text style={[styles.commentAuthor, { color: colors.foreground }]}>
-                        {c.author?.name || c.author?.username || c.authorName || "Ẩn danh"}
+                        {c.author?.name || c.author?.username || c.authorName || t("Ẩn danh")}
                       </Text>
                       {c.createdAt && (
                         <Text style={[styles.commentTime, { color: colors.mutedForeground }]}>
@@ -1030,7 +1033,7 @@ function TaskDetailModal({
             <View style={[styles.commentInput, { backgroundColor: colors.background, borderColor: colors.border }]}>
               <TextInput
                 style={[styles.commentTextInput, { color: colors.foreground }]}
-                placeholder="Nhập bình luận..."
+                placeholder={t("Nhập bình luận...")}
                 placeholderTextColor={colors.mutedForeground}
                 value={newComment}
                 onChangeText={setNewComment}
@@ -1118,6 +1121,7 @@ function UserPickerModal({
   onClose: () => void;
   colors: any;
 }) {
+  const { t } = useLanguage();
   const [query, setQuery] = useState("");
   const [sel, setSel] = useState<string[]>(selectedIds);
 
@@ -1145,13 +1149,13 @@ function UserPickerModal({
           <TouchableWithoutFeedback>
             <View style={[styles.createSheet, { backgroundColor: colors.card }]}>
               <View style={styles.sheetHandle} />
-              <Text style={[styles.createTitle, { color: colors.foreground }]}>{modalTitle}</Text>
+              <Text style={[styles.createTitle, { color: colors.foreground }]}>{t(modalTitle)}</Text>
 
               <TextInput
                 style={[styles.editTitleInput, { color: colors.foreground, borderColor: colors.border, marginTop: 6 }]}
                 value={query}
                 onChangeText={setQuery}
-                placeholder="Tìm kiếm..."
+                placeholder={t("Tìm kiếm...")}
                 placeholderTextColor={colors.mutedForeground}
               />
 
@@ -1161,7 +1165,7 @@ function UserPickerModal({
                     style={[styles.userRow, { borderBottomColor: colors.border }]}
                     onPress={() => setSel([])}
                   >
-                    <Text style={[styles.userRowName, { color: colors.mutedForeground, fontStyle: "italic" }]}>— Bỏ chọn —</Text>
+                    <Text style={[styles.userRowName, { color: colors.mutedForeground, fontStyle: "italic" }]}>— {t("Bỏ chọn")} —</Text>
                   </TouchableOpacity>
                 )}
                 {filtered.map((u) => {
@@ -1185,10 +1189,10 @@ function UserPickerModal({
 
               <View style={[styles.editActions, { marginTop: 12 }]}>
                 <TouchableOpacity style={[styles.cancelBtn, { backgroundColor: colors.muted }]} onPress={onClose}>
-                  <Text style={[styles.cancelBtnText, { color: colors.mutedForeground }]}>Hủy</Text>
+                  <Text style={[styles.cancelBtnText, { color: colors.mutedForeground }]}>{t("Hủy")}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.saveBtn, { backgroundColor: colors.primary }]} onPress={() => { onConfirm(sel); onClose(); }}>
-                  <Text style={styles.saveBtnText}>Xác nhận</Text>
+                  <Text style={styles.saveBtnText}>{t("Xác nhận")}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1216,6 +1220,7 @@ function PeopleListPopup({
   colors: any;
   insets: { bottom: number; top: number };
 }) {
+  const { t } = useLanguage();
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <TouchableWithoutFeedback onPress={onClose}>
@@ -1223,7 +1228,7 @@ function PeopleListPopup({
           <TouchableWithoutFeedback>
             <View style={[styles.peoplePopup, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}>
               <View style={styles.sheetHandle} />
-              <Text style={[styles.createTitle, { color: colors.foreground }]}>{title}</Text>
+              <Text style={[styles.createTitle, { color: colors.foreground }]}>{t(title)}</Text>
               <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator={false}>
                 {people.map((p) => (
                   <View key={p.id} style={[styles.peoplePopupRow, { borderBottomColor: colors.border }]}>
@@ -1244,7 +1249,7 @@ function PeopleListPopup({
                 style={[styles.cancelBtn, { backgroundColor: colors.muted, marginTop: 12 }]}
                 onPress={onClose}
               >
-                <Text style={[styles.cancelBtnText, { color: colors.mutedForeground }]}>Đóng</Text>
+                <Text style={[styles.cancelBtnText, { color: colors.mutedForeground }]}>{t("Đóng")}</Text>
               </TouchableOpacity>
             </View>
           </TouchableWithoutFeedback>
@@ -1274,6 +1279,7 @@ function CalendarPicker({
   colors: any;
   insets: { bottom: number };
 }) {
+  const { t } = useLanguage();
   const parseInput = (s: string): Date | null => {
     const parts = s.trim().split("/");
     if (parts.length !== 3) return null;
@@ -1330,7 +1336,7 @@ function CalendarPicker({
   const handleConfirm = () => {
     if (manualMode) {
       const dt = parseInput(manualText);
-      if (!dt) { Alert.alert("Ngày không hợp lệ", "Định dạng DD/MM/YYYY"); return; }
+      if (!dt) { Alert.alert(t("Ngày không hợp lệ"), t("Định dạng DD/MM/YYYY")); return; }
       const str = `${String(dt.getDate()).padStart(2,"0")}/${String(dt.getMonth()+1).padStart(2,"0")}/${dt.getFullYear()}`;
       onSelect(str);
     } else if (selected) {
@@ -1370,13 +1376,13 @@ function CalendarPicker({
                 <TouchableOpacity onPress={onClose} style={calStyles.calCloseBtn}>
                   <Feather name="x" size={18} color={colors.mutedForeground} />
                 </TouchableOpacity>
-                <Text style={[calStyles.calTitle, { color: colors.foreground }]}>Chọn ngày</Text>
+                <Text style={[calStyles.calTitle, { color: colors.foreground }]}>{t("Chọn ngày")}</Text>
                 <TouchableOpacity
                   style={[calStyles.confirmBtn, { backgroundColor: selected || parseInput(manualText) ? colors.primary : colors.muted }]}
                   onPress={handleConfirm}
                   disabled={!selected && !parseInput(manualText)}
                 >
-                  <Text style={[calStyles.confirmText, { color: selected || parseInput(manualText) ? "#fff" : colors.mutedForeground }]}>Xong</Text>
+                  <Text style={[calStyles.confirmText, { color: selected || parseInput(manualText) ? "#fff" : colors.mutedForeground }]}>{t("Xong")}</Text>
                 </TouchableOpacity>
               </View>
 
@@ -1407,7 +1413,7 @@ function CalendarPicker({
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => { setViewMonth(today.getMonth()); setViewYear(today.getFullYear()); }}>
                   <Text style={[calStyles.monthLabel, { color: colors.foreground }]}>
-                    {MONTHS_VI[viewMonth]} {viewYear}
+                    {t(MONTHS_VI[viewMonth])} {viewYear}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={nextMonth} style={calStyles.navArrow} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -1418,7 +1424,7 @@ function CalendarPicker({
               {/* Weekday headers */}
               <View style={calStyles.weekRow}>
                 {WEEKDAYS.map((w, i) => (
-                  <Text key={w} style={[calStyles.weekday, { color: i === 0 ? "#ef4444" : colors.mutedForeground }]}>{w}</Text>
+                  <Text key={w} style={[calStyles.weekday, { color: i === 0 ? "#ef4444" : colors.mutedForeground }]}>{t(w)}</Text>
                 ))}
               </View>
 
@@ -1461,7 +1467,7 @@ function CalendarPicker({
                   onPress={() => { selectDay(today.getDate()); setViewMonth(today.getMonth()); setViewYear(today.getFullYear()); }}
                 >
                   <Feather name="calendar" size={13} color={colors.primary} />
-                  <Text style={[calStyles.todayText, { color: colors.primary }]}>Hôm nay</Text>
+                    <Text style={[calStyles.todayText, { color: colors.primary }]}>{t("Hôm nay")}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -1519,6 +1525,7 @@ function CreateTaskModal({
   onClose: () => void;
   onCreated: (task: Task) => void;
 }) {
+  const { t } = useLanguage();
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [statusId, setStatusId] = useState(defaultStatusId);
@@ -1559,7 +1566,7 @@ function CreateTaskModal({
     try {
       const dueDateISO = dueDateInput.trim() ? parseDateInput(dueDateInput.trim()) : undefined;
       if (dueDateInput.trim() && !dueDateISO) {
-        Alert.alert("Ngày không hợp lệ", "Vui lòng nhập định dạng DD/MM/YYYY");
+        Alert.alert(t("Ngày không hợp lệ"), t("Vui lòng nhập định dạng DD/MM/YYYY"));
         setSubmitting(false);
         return;
       }
@@ -1576,7 +1583,7 @@ function CreateTaskModal({
       onCreated(data);
       onClose();
     } catch {
-      Alert.alert("Lỗi", "Không thể tạo công việc");
+      Alert.alert(t("Lỗi"), t("Không thể tạo công việc"));
     } finally {
       setSubmitting(false);
     }
@@ -1595,8 +1602,8 @@ function CreateTaskModal({
               <Feather name="x" size={20} color="#1e1b4b" />
             </TouchableOpacity>
             <View style={{ flex: 1, alignItems: "center" }}>
-              <Text style={ctStyles.headerTitle}>Tạo công việc</Text>
-              <Text style={ctStyles.headerSub}>Điền thông tin bên dưới</Text>
+              <Text style={ctStyles.headerTitle}>{t("Tạo công việc")}</Text>
+              <Text style={ctStyles.headerSub}>{t("Điền thông tin bên dưới")}</Text>
             </View>
             <TouchableOpacity
               onPress={handleCreate}
@@ -1605,7 +1612,7 @@ function CreateTaskModal({
             >
               {submitting
                 ? <ActivityIndicator size="small" color="#1e1b4b" />
-                : <Text style={ctStyles.headerSaveText}>Tạo</Text>
+                : <Text style={ctStyles.headerSaveText}>{t("Tạo")}</Text>
               }
             </TouchableOpacity>
           </View>
@@ -1623,7 +1630,7 @@ function CreateTaskModal({
                 <View style={[ctStyles.sectionIcon, { backgroundColor: hexToRgba(colors.primary, 0.12) }]}>
                   <Feather name="edit-3" size={14} color={colors.primary} />
                 </View>
-                <Text style={[ctStyles.sectionLabel, { color: colors.foreground }]}>Thông tin cơ bản</Text>
+                <Text style={[ctStyles.sectionLabel, { color: colors.foreground }]}>{t("Thông tin cơ bản")}</Text>
               </View>
 
               <View style={[ctStyles.inputWrapper, { borderColor: title.trim() ? colors.primary : colors.border, backgroundColor: colors.background }]}>
@@ -1631,14 +1638,14 @@ function CreateTaskModal({
                   style={[ctStyles.titleInput, { color: colors.foreground }]}
                   value={title}
                   onChangeText={setTitle}
-                  placeholder="Tiêu đề công việc *"
+                  placeholder={t("Tiêu đề công việc *")}
                   placeholderTextColor={colors.mutedForeground}
                   autoFocus
                   returnKeyType="next"
                 />
               </View>
               {title.trim().length === 0 && (
-                <Text style={[ctStyles.fieldHint, { color: "#ef4444" }]}>* Bắt buộc</Text>
+                <Text style={[ctStyles.fieldHint, { color: "#ef4444" }]}>* {t("Bắt buộc")}</Text>
               )}
 
               <View style={[ctStyles.inputWrapper, { borderColor: colors.border, backgroundColor: colors.background, marginTop: 10 }]}>
@@ -1646,14 +1653,14 @@ function CreateTaskModal({
                   style={[ctStyles.descInput, { color: colors.foreground }]}
                   value={desc}
                   onChangeText={setDesc}
-                  placeholder="Mô tả ngắn về công việc..."
+                  placeholder={t("Mô tả ngắn về công việc...")}
                   placeholderTextColor={colors.mutedForeground}
                   multiline
                   textAlignVertical="top"
                 />
               </View>
 
-              <Text style={[ctStyles.fieldLabel, { color: colors.mutedForeground, marginTop: 12 }]}>Đối tượng</Text>
+              <Text style={[ctStyles.fieldLabel, { color: colors.mutedForeground, marginTop: 12 }]}>{t("Đối tượng")}</Text>
               <TouchableOpacity
                 style={[ctStyles.personPicker, { borderColor: subjectIds.length > 0 ? "#10b981" : colors.border, backgroundColor: colors.background, minHeight: 52 }]}
                 onPress={() => setShowSubjectsPicker(true)}
@@ -1676,14 +1683,14 @@ function CreateTaskModal({
                         </View>
                       )}
                     </View>
-                    <Text style={[ctStyles.assigneeCount, { color: "#10b981" }]}>{subjectUsers.length} học viên</Text>
+                    <Text style={[ctStyles.assigneeCount, { color: "#10b981" }]}>{subjectUsers.length} {t("học viên")}</Text>
                   </View>
                 ) : (
                   <View style={ctStyles.personPickerInner}>
                     <View style={[ctStyles.personAvatarEmpty, { borderColor: colors.border }]}>
                       <Feather name="user" size={14} color={colors.mutedForeground} />
                     </View>
-                    <Text style={[ctStyles.personPlaceholder, { color: colors.mutedForeground }]}>Chọn học viên...</Text>
+                    <Text style={[ctStyles.personPlaceholder, { color: colors.mutedForeground }]}>{t("Chọn học viên...")}</Text>
                     <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
                   </View>
                 )}
@@ -1696,11 +1703,11 @@ function CreateTaskModal({
                 <View style={[ctStyles.sectionIcon, { backgroundColor: hexToRgba("#6366f1", 0.12) }]}>
                   <Feather name="layers" size={14} color="#6366f1" />
                 </View>
-                <Text style={[ctStyles.sectionLabel, { color: colors.foreground }]}>Trạng thái</Text>
+                <Text style={[ctStyles.sectionLabel, { color: colors.foreground }]}>{t("Trạng thái")}</Text>
                 {selectedStatus && (
                   <View style={[ctStyles.selectedBadge, { backgroundColor: hexToRgba(selectedStatus.color, 0.15), borderColor: hexToRgba(selectedStatus.color, 0.3) }]}>
                     <View style={[ctStyles.selectedDot, { backgroundColor: selectedStatus.color }]} />
-                    <Text style={[ctStyles.selectedBadgeText, { color: selectedStatus.color }]}>{selectedStatus.name}</Text>
+                    <Text style={[ctStyles.selectedBadgeText, { color: selectedStatus.color }]}>{t(selectedStatus.name)}</Text>
                   </View>
                 )}
               </View>
@@ -1723,7 +1730,7 @@ function CreateTaskModal({
                     >
                       <View style={[ctStyles.chipDot, { backgroundColor: s.color }]} />
                       <Text style={[ctStyles.chipText, { color: active ? s.color : colors.foreground, fontFamily: active ? "Inter_700Bold" : "Inter_500Medium" }]}>
-                        {s.name}
+                        {t(s.name)}
                       </Text>
                       {active && <Feather name="check" size={12} color={s.color} style={{ marginLeft: 2 }} />}
                     </TouchableOpacity>
@@ -1738,11 +1745,11 @@ function CreateTaskModal({
                 <View style={[ctStyles.sectionIcon, { backgroundColor: hexToRgba("#f59e0b", 0.12) }]}>
                   <Feather name="flag" size={14} color="#f59e0b" />
                 </View>
-                <Text style={[ctStyles.sectionLabel, { color: colors.foreground }]}>Mức độ ưu tiên</Text>
+                <Text style={[ctStyles.sectionLabel, { color: colors.foreground }]}>{t("Mức độ ưu tiên")}</Text>
                 {selectedLevel && (
                   <View style={[ctStyles.selectedBadge, { backgroundColor: hexToRgba(selectedLevel.color, 0.15), borderColor: hexToRgba(selectedLevel.color, 0.3) }]}>
                     <View style={[ctStyles.selectedDot, { backgroundColor: selectedLevel.color }]} />
-                    <Text style={[ctStyles.selectedBadgeText, { color: selectedLevel.color }]}>{selectedLevel.name}</Text>
+                    <Text style={[ctStyles.selectedBadgeText, { color: selectedLevel.color }]}>{t(selectedLevel.name)}</Text>
                   </View>
                 )}
               </View>
@@ -1765,7 +1772,7 @@ function CreateTaskModal({
                     >
                       <View style={[ctStyles.chipDot, { backgroundColor: l.color }]} />
                       <Text style={[ctStyles.chipText, { color: active ? l.color : colors.foreground, fontFamily: active ? "Inter_700Bold" : "Inter_500Medium" }]}>
-                        {l.name}
+                        {t(l.name)}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -1779,7 +1786,7 @@ function CreateTaskModal({
                 <View style={[ctStyles.sectionIcon, { backgroundColor: hexToRgba("#10b981", 0.12) }]}>
                   <Feather name="calendar" size={14} color="#10b981" />
                 </View>
-                <Text style={[ctStyles.sectionLabel, { color: colors.foreground }]}>Hạn hoàn thành</Text>
+                <Text style={[ctStyles.sectionLabel, { color: colors.foreground }]}>{t("Hạn hoàn thành")}</Text>
                 {dueDateInput ? (
                   <TouchableOpacity onPress={() => setDueDateInput("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                     <Feather name="x-circle" size={16} color={colors.mutedForeground} />
@@ -1793,7 +1800,7 @@ function CreateTaskModal({
               >
                 <Feather name="calendar" size={16} color={dueDateInput ? "#10b981" : colors.mutedForeground} />
                 <Text style={[ctStyles.dateInput, { color: dueDateInput ? colors.foreground : colors.mutedForeground, paddingVertical: 12 }]}>
-                  {dueDateInput || "Chọn ngày..."}
+                  {dueDateInput || t("Chọn ngày...")}
                 </Text>
                 <Feather name="chevron-right" size={15} color={colors.mutedForeground} />
               </TouchableOpacity>
@@ -1805,11 +1812,11 @@ function CreateTaskModal({
                 <View style={[ctStyles.sectionIcon, { backgroundColor: hexToRgba("#8b5cf6", 0.12) }]}>
                   <Feather name="users" size={14} color="#8b5cf6" />
                 </View>
-                <Text style={[ctStyles.sectionLabel, { color: colors.foreground }]}>Nhân sự</Text>
+                <Text style={[ctStyles.sectionLabel, { color: colors.foreground }]}>{t("Nhân sự")}</Text>
               </View>
 
               {/* Quản lý */}
-              <Text style={[ctStyles.fieldLabel, { color: colors.mutedForeground }]}>Quản lý</Text>
+              <Text style={[ctStyles.fieldLabel, { color: colors.mutedForeground }]}>{t("Quản lý")}</Text>
               <TouchableOpacity
                 style={[ctStyles.personPicker, { borderColor: managerId ? "#8b5cf6" : colors.border, backgroundColor: colors.background }]}
                 onPress={() => setShowManagerPicker(true)}
@@ -1833,14 +1840,14 @@ function CreateTaskModal({
                     <View style={[ctStyles.personAvatarEmpty, { borderColor: colors.border }]}>
                       <Feather name="user-plus" size={14} color={colors.mutedForeground} />
                     </View>
-                    <Text style={[ctStyles.personPlaceholder, { color: colors.mutedForeground }]}>Chọn quản lý...</Text>
+                    <Text style={[ctStyles.personPlaceholder, { color: colors.mutedForeground }]}>{t("Chọn quản lý...")}</Text>
                     <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
                   </View>
                 )}
               </TouchableOpacity>
 
               {/* Người thực hiện */}
-              <Text style={[ctStyles.fieldLabel, { color: colors.mutedForeground, marginTop: 12 }]}>Người thực hiện</Text>
+              <Text style={[ctStyles.fieldLabel, { color: colors.mutedForeground, marginTop: 12 }]}>{t("Người thực hiện")}</Text>
               <TouchableOpacity
                 style={[ctStyles.personPicker, { borderColor: assigneeIds.length > 0 ? "#8b5cf6" : colors.border, backgroundColor: colors.background, minHeight: 52 }]}
                 onPress={() => setShowAssigneesPicker(true)}
@@ -1863,14 +1870,14 @@ function CreateTaskModal({
                         </View>
                       )}
                     </View>
-                    <Text style={[ctStyles.assigneeCount, { color: "#8b5cf6" }]}>{assigneeUsers.length} người được giao</Text>
+                    <Text style={[ctStyles.assigneeCount, { color: "#8b5cf6" }]}>{assigneeUsers.length} {t("người được giao")}</Text>
                   </View>
                 ) : (
                   <View style={ctStyles.personPickerInner}>
                     <View style={[ctStyles.personAvatarEmpty, { borderColor: colors.border }]}>
                       <Feather name="users" size={14} color={colors.mutedForeground} />
                     </View>
-                    <Text style={[ctStyles.personPlaceholder, { color: colors.mutedForeground }]}>Chọn người thực hiện...</Text>
+                    <Text style={[ctStyles.personPlaceholder, { color: colors.mutedForeground }]}>{t("Chọn người thực hiện...")}</Text>
                     <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
                   </View>
                 )}
@@ -1894,13 +1901,13 @@ function CreateTaskModal({
                   <>
                     <Feather name="plus-circle" size={18} color={isValid ? "#fff" : colors.mutedForeground} />
                     <Text style={[ctStyles.createButtonText, { color: isValid ? "#fff" : colors.mutedForeground }]}>
-                      Tạo công việc
+                      {t("Tạo công việc")}
                     </Text>
                   </>
                 )}
               </TouchableOpacity>
               <TouchableOpacity style={[ctStyles.cancelButton, { borderColor: colors.border }]} onPress={onClose}>
-                <Text style={[ctStyles.cancelButtonText, { color: colors.mutedForeground }]}>Hủy</Text>
+                <Text style={[ctStyles.cancelButtonText, { color: colors.mutedForeground }]}>{t("Hủy")}</Text>
               </TouchableOpacity>
             </View>
 
@@ -2204,6 +2211,7 @@ const ctStyles = StyleSheet.create({
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 
 export default function TasksScreen() {
+  const { t } = useLanguage();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const topPad = insets.top;
@@ -2253,9 +2261,9 @@ export default function TasksScreen() {
       );
     } catch (e: any) {
       if (e?.status === 403) {
-        setError("Bạn không có quyền xem công việc.");
+        setError(t("Bạn không có quyền xem công việc."));
       } else {
-        setError("Không thể tải dữ liệu. Vui lòng thử lại.");
+        setError(t("Không thể tải dữ liệu. Vui lòng thử lại."));
       }
     } finally {
       setLoading(false);
@@ -2349,12 +2357,12 @@ export default function TasksScreen() {
 
   const tabs: TabItem[] = kanban
     ? [
-        { id: "all", name: "Tất cả", color: colors.primary, count: allTasks.length },
+        { id: "all", name: t("Tất cả"), color: colors.primary, count: allTasks.length },
         ...(kanban.columns ?? [])
           .filter((col) => col.status !== null)
           .map((col) => ({
             id: col.status!.id,
-            name: col.status!.name,
+            name: t(col.status!.name),
             color: col.status!.color || "#6b7280",
             count: col.tasks.length,
           })),
@@ -2371,9 +2379,9 @@ export default function TasksScreen() {
       >
         <View style={styles.headerRow}>
           <View>
-            <Text style={styles.headerTitle}>Công việc</Text>
+            <Text style={styles.headerTitle}>{t("Công việc")}</Text>
             {kanban && (
-              <Text style={styles.headerSub}>{allTasks.length} công việc · {kanban.columns.length} trạng thái</Text>
+              <Text style={styles.headerSub}>{allTasks.length} {t("công việc")} · {kanban.columns.length} {t("trạng thái")}</Text>
             )}
           </View>
           <View style={styles.headerRight}>
@@ -2408,7 +2416,7 @@ export default function TasksScreen() {
       {loading && !refreshing ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>Đang tải...</Text>
+          <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>{t("Đang tải...")}</Text>
         </View>
       ) : error ? (
         <ScrollView
@@ -2419,7 +2427,7 @@ export default function TasksScreen() {
             <Feather name="alert-circle" size={36} color="#ef4444" style={{ marginBottom: 12 }} />
             <Text style={[styles.errorText, { color: colors.foreground }]}>{error}</Text>
             <TouchableOpacity style={[styles.retryBtn, { backgroundColor: colors.primary }]} onPress={fetchKanban}>
-              <Text style={styles.retryText}>Thử lại</Text>
+              <Text style={styles.retryText}>{t("Thử lại")}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -2446,7 +2454,7 @@ export default function TasksScreen() {
           {displayedTasks.length === 0 && (
             <View style={styles.emptyList}>
               <Feather name="inbox" size={44} color={colors.mutedForeground} />
-              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Không có công việc nào</Text>
+              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>{t("Không có công việc nào")}</Text>
             </View>
           )}
         </ScrollView>

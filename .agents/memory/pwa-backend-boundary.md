@@ -16,3 +16,15 @@ parallel user or notification system.
 VAPID key. Derive tenant and user server-side from the authenticated request;
 never accept them from push subscription payloads or store production data in
 the workspace database.
+
+The backend does not localize business responses or expose a language-switch
+API. The PWA owns translated UI labels and display-only enum labels; values sent
+back to the API and user-authored/server-authored content must remain unchanged.
+
+**Why:** The supplied backend notes describe fixed business values and no
+language-aware response behavior; translating those values in requests would
+break the existing API contract.
+
+**How to apply:** Keep language selection and UI translation in the client.
+Map status/type values only when rendering them, and leave names, descriptions,
+comments, and other authored content untouched.

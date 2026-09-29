@@ -21,6 +21,7 @@ import {
 import { useColors } from "@/hooks/useColors";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import { getCenterUrl, getAuthToken } from "@/lib/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 // ─── API Types (matching real web API) ───────────────────────────────────────
 
@@ -205,6 +206,7 @@ function scoreQuestion(sq: SectionQuestion, answer: QuestionAnswer | undefined):
 // ─── Audio Player ─────────────────────────────────────────────────────────────
 
 function SectionAudioPlayer({ audioInfo }: { audioInfo: AudioInfo }) {
+  const { t } = useLanguage();
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [positionMs, setPositionMs] = useState(0);
@@ -237,7 +239,7 @@ function SectionAudioPlayer({ audioInfo }: { audioInfo: AudioInfo }) {
         setSound(s);
         setIsPlaying(true);
       } catch {
-        Alert.alert("Lỗi", "Không thể tải file audio.");
+        Alert.alert(t("Lỗi"), t("Không thể tải file audio."));
       } finally {
         setLoading(false);
       }
@@ -291,6 +293,7 @@ function SingleChoiceQ({
   sq: SectionQuestion; answer: string | undefined;
   onChange: (v: string) => void; colors: ReturnType<typeof useColors>;
 }) {
+  const { t } = useLanguage();
   const opts = sq.question.options ?? [];
   return (
     <View style={{ gap: 10 }}>
@@ -326,6 +329,7 @@ function MultipleChoiceQ({
   sq: SectionQuestion; answer: string | undefined;
   onChange: (v: string) => void; colors: ReturnType<typeof useColors>;
 }) {
+  const { t } = useLanguage();
   const opts = sq.question.options ?? [];
   const selected = answer ? answer.split(",").filter(Boolean) : [];
   const toggle = (id: string) => {
@@ -337,7 +341,7 @@ function MultipleChoiceQ({
     <View style={{ gap: 10 }}>
       <View style={{ backgroundColor: "#eff6ff", borderRadius: 8, padding: 8, flexDirection: "row", alignItems: "center", gap: 6 }}>
         <Feather name="layers" size={12} color="#1d4ed8" />
-        <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#1d4ed8" }}>Chọn tất cả đáp án đúng</Text>
+        <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#1d4ed8" }}>{t("Chọn tất cả đáp án đúng")}</Text>
       </View>
       {opts.map((opt) => {
         const isSel = selected.includes(opt.id);
@@ -371,11 +375,12 @@ function FillBlankQ({
   sq: SectionQuestion; answer: Record<string, string> | undefined;
   onChange: (v: Record<string, string>) => void; colors: ReturnType<typeof useColors>;
 }) {
+  const { t } = useLanguage();
   const parts = sq.question.contentParts ?? [];
   const current = answer ?? {};
   const setBlank = (blankId: string, val: string) => onChange({ ...current, [blankId]: val });
   if (parts.length === 0) return (
-    <Text style={{ fontSize: 13, color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>(Không có dữ liệu chỗ trống)</Text>
+    <Text style={{ fontSize: 13, color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>{t("(Không có dữ liệu chỗ trống)")}</Text>
   );
   const blanks = parts.filter((p) => p.type === "blank");
   return (
@@ -403,7 +408,7 @@ function FillBlankQ({
         })}
       </View>
       <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
-        {blanks.filter((b) => current[b.blankId ?? ""]).length}/{blanks.length} chỗ trống đã điền
+        {blanks.filter((b) => current[b.blankId ?? ""]).length}/{blanks.length} {t("chỗ trống đã điền")}
       </Text>
     </View>
   );
@@ -412,24 +417,25 @@ function FillBlankQ({
 // ─── Essay ────────────────────────────────────────────────────────────────────
 
 function EssayQ({ answer, onChange, colors }: { answer: string | undefined; onChange: (v: string) => void; colors: ReturnType<typeof useColors> }) {
+  const { t } = useLanguage();
   const text = answer ?? "";
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
   return (
     <View>
       <View style={{ backgroundColor: "#fef9c3", borderRadius: 10, padding: 10, marginBottom: 10, flexDirection: "row", alignItems: "center", gap: 6 }}>
         <Feather name="edit-3" size={13} color="#ca8a04" />
-        <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#ca8a04" }}>Viết bài làm vào ô bên dưới</Text>
+        <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#ca8a04" }}>{t("Viết bài làm vào ô bên dưới")}</Text>
       </View>
       <TextInput
         style={[styles.essayInput, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.card }]}
         multiline scrollEnabled={false}
-        placeholder="Nhập bài làm của bạn..."
+         placeholder={t("Nhập bài làm của bạn...")}
         placeholderTextColor={colors.mutedForeground}
         value={text}
         onChangeText={onChange}
         textAlignVertical="top"
       />
-      <Text style={{ fontSize: 11, color: colors.mutedForeground, fontFamily: "Inter_400Regular", marginTop: 6 }}>Số từ: {wordCount}</Text>
+      <Text style={{ fontSize: 11, color: colors.mutedForeground, fontFamily: "Inter_400Regular", marginTop: 6 }}>{t("Số từ")}: {wordCount}</Text>
     </View>
   );
 }
@@ -442,6 +448,7 @@ function MatchingQ({
   sq: SectionQuestion; answer: Record<string, string> | undefined;
   onChange: (v: Record<string, string>) => void; colors: ReturnType<typeof useColors>;
 }) {
+  const { t } = useLanguage();
   const md = sq.question.matchingData;
   const [popupLeftId, setPopupLeftId] = useState<string | null>(null);
 
@@ -473,7 +480,7 @@ function MatchingQ({
   return (
     <View style={{ gap: 10 }}>
       <View style={{ backgroundColor: "#fdf2f8", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 2 }}>
-        <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: "#be185d", letterSpacing: 0.8 }}>CÂU HỎI NỐI</Text>
+        <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: "#be185d", letterSpacing: 0.8 }}>{t("CÂU HỎI NỐI")}</Text>
       </View>
       {leftItems.map((left) => {
         const chosenId = current[left.id];
@@ -496,7 +503,7 @@ function MatchingQ({
               backgroundColor: chosenItem ? "#fdf2f8" : colors.muted,
             }]}>
               <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: chosenItem ? "#be185d" : colors.mutedForeground, flex: 1 }}>
-                {chosenItem?.text ?? "— Chọn —"}
+                 {chosenItem?.text ?? t("— Chọn —")}
               </Text>
               <Feather name="chevron-down" size={14} color={chosenItem ? "#be185d" : colors.mutedForeground} />
             </View>
@@ -521,7 +528,7 @@ function MatchingQ({
               </TouchableOpacity>
             </View>
             <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginBottom: 10, paddingHorizontal: 16 }}>
-              Chọn đáp án phù hợp
+               {t("Chọn đáp án phù hợp")}
             </Text>
             <ScrollView style={{ maxHeight: 360 }}>
               {rightItems.map((right, idx) => {
@@ -579,6 +586,7 @@ const SECTION_TYPE_ICONS: Record<string, string> = {
 
 export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: Props) {
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<AllAnswers>({});
@@ -813,11 +821,11 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
 
   const confirmExit = () => {
     Alert.alert(
-      "Thoát bài kiểm tra",
-      "Bài làm sẽ không được lưu. Bạn có muốn thoát không?",
+      t("Thoát bài kiểm tra"),
+      t("Bài làm sẽ không được lưu. Bạn có muốn thoát không?"),
       [
-        { text: "Ở lại", style: "cancel" },
-        { text: "Thoát", style: "destructive", onPress: onClose },
+        { text: t("Ở lại"), style: "cancel" },
+        { text: t("Thoát"), style: "destructive", onPress: onClose },
       ]
     );
   };
@@ -844,7 +852,7 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
       case "matching":
         return <MatchingQ sq={currentFQ} answer={answers[questionId] as Record<string, string> | undefined} onChange={(v) => setAnswer(questionId, v)} colors={colors} />;
       default:
-        return <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>Loại câu hỏi không hỗ trợ: {q.type}</Text>;
+        return <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>{t("Loại câu hỏi không hỗ trợ:")} {q.type}</Text>;
     }
   };
 
@@ -861,19 +869,19 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
                 <View style={{ backgroundColor: "#16a34a", width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
                   <Feather name="check" size={36} color="#fff" />
                 </View>
-                <Text style={{ fontSize: 21, fontFamily: "Inter_700Bold", color: colors.foreground, textAlign: "center" }}>Nộp bài thành công! 🎉</Text>
+                <Text style={{ fontSize: 21, fontFamily: "Inter_700Bold", color: colors.foreground, textAlign: "center" }}>{t("Nộp bài thành công! 🎉")}</Text>
                 <Text style={{ fontSize: 13, color: colors.mutedForeground, fontFamily: "Inter_400Regular", textAlign: "center", marginTop: 6, lineHeight: 19 }}>
-                  Bài kiểm tra của bạn đã được ghi lại.
+                  {t("Bài kiểm tra của bạn đã được ghi lại.")}
                 </Text>
               </View>
 
               {/* Score banner */}
               <View style={{ backgroundColor: "#f0fdf4", borderRadius: 16, padding: 16, marginBottom: 14, borderWidth: 1.5, borderColor: "#bbf7d0", alignItems: "center" }}>
-                <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: "#15803d", marginBottom: 4 }}>ĐIỂM SỐ</Text>
+                <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: "#15803d", marginBottom: 4 }}>{t("ĐIỂM SỐ")}</Text>
                 <Text style={{ fontSize: 36, fontFamily: "Inter_700Bold", color: "#15803d" }}>
                   {Number.isInteger(resultData.totalScore) ? resultData.totalScore : resultData.totalScore.toFixed(1)}
                   <Text style={{ fontSize: 18, fontFamily: "Inter_500Medium", color: "#16a34a" }}>
-                    {" "}/ {Number.isInteger(resultData.maxScore) ? resultData.maxScore : resultData.maxScore.toFixed(1)} điểm
+                    {" "}/ {Number.isInteger(resultData.maxScore) ? resultData.maxScore : resultData.maxScore.toFixed(1)} {t("điểm")}
                   </Text>
                 </Text>
                 <View style={{ flexDirection: "row", gap: 20, marginTop: 10 }}>
@@ -881,18 +889,18 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
                     <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: "#16a34a", alignItems: "center", justifyContent: "center" }}>
                       <Feather name="check" size={12} color="#fff" />
                     </View>
-                    <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#15803d" }}>Đúng: {resultData.correctCount}</Text>
+                    <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#15803d" }}>{t("Đúng:")} {resultData.correctCount}</Text>
                   </View>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
                     <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: "#dc2626", alignItems: "center", justifyContent: "center" }}>
                       <Feather name="x" size={12} color="#fff" />
                     </View>
-                    <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#dc2626" }}>Sai: {resultData.incorrectCount}</Text>
+                    <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#dc2626" }}>{t("Sai:")} {resultData.incorrectCount}</Text>
                   </View>
                   {resultData.essayCount > 0 && (
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
                       <Feather name="edit-3" size={14} color="#ca8a04" />
-                      <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: "#ca8a04" }}>Tự luận: {resultData.essayCount}</Text>
+                      <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: "#ca8a04" }}>{t("Tự luận:")} {resultData.essayCount}</Text>
                     </View>
                   )}
                 </View>
@@ -905,20 +913,20 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
                   <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>
                     {Math.floor(resultData.timeTakenSeconds / 60)}:{String(resultData.timeTakenSeconds % 60).padStart(2, "0")}
                   </Text>
-                  <Text style={{ fontSize: 11, color: colors.mutedForeground, fontFamily: "Inter_400Regular", marginTop: 2 }}>Thời gian</Text>
+                  <Text style={{ fontSize: 11, color: colors.mutedForeground, fontFamily: "Inter_400Regular", marginTop: 2 }}>{t("Thời gian")}</Text>
                 </View>
                 <View style={{ flex: 1, backgroundColor: colors.card, borderRadius: 12, padding: 14, alignItems: "center", borderWidth: 1, borderColor: colors.border }}>
                   <Feather name="list" size={18} color="#2563eb" style={{ marginBottom: 4 }} />
                   <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>
                     {resultData.answeredCount}/{resultData.totalQ}
                   </Text>
-                  <Text style={{ fontSize: 11, color: colors.mutedForeground, fontFamily: "Inter_400Regular", marginTop: 2 }}>Đã trả lời</Text>
+                  <Text style={{ fontSize: 11, color: colors.mutedForeground, fontFamily: "Inter_400Regular", marginTop: 2 }}>{t("Đã trả lời")}</Text>
                 </View>
               </View>
 
               {/* Section breakdown */}
               <View style={{ backgroundColor: colors.card, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: colors.border, marginBottom: 20 }}>
-                <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 12 }}>Chi tiết theo phần</Text>
+                <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.foreground, marginBottom: 12 }}>{t("Chi tiết theo phần")}</Text>
                 {resultData.sectionStats.map((sec, i) => {
                   const nonEssayTotal = sec.total - (exam?.sections[i]?.questions.filter(sq => sq.question.type === "essay").length ?? 0);
                   const pct = nonEssayTotal > 0 ? sec.correct / nonEssayTotal : 0;
@@ -927,7 +935,7 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
                       <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 4 }}>
                         <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.foreground, flex: 1 }} numberOfLines={1}>{sec.name}</Text>
                         <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: pct === 1 ? "#16a34a" : "#be185d" }}>
-                          {sec.correct}/{nonEssayTotal} đúng
+                          {sec.correct}/{nonEssayTotal} {t("đúng")}
                         </Text>
                       </View>
                       <View style={{ height: 5, borderRadius: 3, backgroundColor: colors.border, overflow: "hidden" }}>
@@ -944,11 +952,11 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
               <TouchableOpacity onPress={() => setShowReview(true)} style={{ borderRadius: 12, overflow: "hidden" }}>
                 <View style={{ backgroundColor: "#2563eb", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 13 }}>
                   <Feather name="eye" size={15} color="#fff" />
-                  <Text style={{ color: "#fff", fontSize: 14, fontFamily: "Inter_600SemiBold" }}>Xem kết quả & đáp án</Text>
+                  <Text style={{ color: "#fff", fontSize: 14, fontFamily: "Inter_600SemiBold" }}>{t("Xem kết quả & đáp án")}</Text>
                 </View>
               </TouchableOpacity>
               <TouchableOpacity onPress={onClose} style={{ borderRadius: 12, borderWidth: 1.5, borderColor: colors.border, paddingVertical: 13, alignItems: "center" }}>
-                <Text style={{ color: colors.mutedForeground, fontSize: 14, fontFamily: "Inter_500Medium" }}>Đóng</Text>
+                <Text style={{ color: colors.mutedForeground, fontSize: 14, fontFamily: "Inter_500Medium" }}>{t("Đóng")}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -962,7 +970,7 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
               <TouchableOpacity onPress={() => setShowReview(false)} style={{ padding: 4, marginRight: 8 }}>
                 <Feather name="arrow-left" size={20} color={colors.foreground} />
               </TouchableOpacity>
-              <Text style={{ flex: 1, fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>Kết quả & Đáp án</Text>
+              <Text style={{ flex: 1, fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>{t("Kết quả & Đáp án")}</Text>
               <View style={{ flexDirection: "row", gap: 10 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                   <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: "#16a34a", alignItems: "center", justifyContent: "center" }}>
@@ -998,7 +1006,7 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: sc.isEssay ? "#ca8a04" : (sc.correct ? "#15803d" : (hasAnswer ? "#dc2626" : colors.mutedForeground)), marginBottom: 2 }}>
-                          CÂU {idx + 1} · {sc.maxScore} điểm {sc.isEssay ? "· Giáo viên chấm" : sc.correct ? "· Đúng" : hasAnswer ? "· Sai" : "· Bỏ qua"}
+                          {t("Câu").toUpperCase()} {idx + 1} · {sc.maxScore} {t("điểm")} {sc.isEssay ? t("· Giáo viên chấm") : sc.correct ? t("· Đúng") : hasAnswer ? t("· Sai") : t("· Bỏ qua")}
                         </Text>
                         <Text style={{ fontSize: 14, fontFamily: "Inter_500Medium", color: colors.foreground, lineHeight: 20 }} numberOfLines={3}>{q.content}</Text>
                       </View>
@@ -1030,7 +1038,7 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
                         })}
                         {!hasAnswer && q.correctAnswer && (
                           <View style={{ borderRadius: 8, borderWidth: 1, borderColor: "#16a34a", backgroundColor: "#f0fdf4", padding: 8 }}>
-                            <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#15803d" }}>Đáp án: {q.correctAnswer}</Text>
+                            <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#15803d" }}>{t("Đáp án:")} {q.correctAnswer}</Text>
                           </View>
                         )}
                       </View>
@@ -1060,8 +1068,8 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
                             return (
                               <View key={left.id} style={{ borderRadius: 8, borderWidth: 1, borderColor: isPairCorrect ? "#16a34a" : "#dc2626", backgroundColor: isPairCorrect ? "#f0fdf4" : "#fff1f2", padding: 8 }}>
                                 <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{left.text}</Text>
-                                {userRight && <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: isPairCorrect ? "#15803d" : "#dc2626", marginTop: 2 }}>Bạn chọn: {userRight.text}</Text>}
-                                {!isPairCorrect && correctRight && <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#15803d", marginTop: 2 }}>Đáp án: {correctRight.text}</Text>}
+                                {userRight && <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: isPairCorrect ? "#15803d" : "#dc2626", marginTop: 2 }}>{t("Bạn chọn:")} {userRight.text}</Text>}
+                                {!isPairCorrect && correctRight && <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#15803d", marginTop: 2 }}>{t("Đáp án:")} {correctRight.text}</Text>}
                               </View>
                             );
                           });
@@ -1074,13 +1082,13 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
                       <View style={{ marginTop: 4, gap: 8 }}>
                         <View style={{ borderRadius: 8, backgroundColor: colors.muted, padding: 10 }}>
                           <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.foreground, lineHeight: 18 }}>
-                            {userAnswer ? String(userAnswer) : <Text style={{ color: colors.mutedForeground, fontStyle: "italic" }}>Không có bài làm</Text>}
+                            {userAnswer ? String(userAnswer) : <Text style={{ color: colors.mutedForeground, fontStyle: "italic" }}>{t("Không có bài làm")}</Text>}
                           </Text>
                         </View>
                         <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 6, backgroundColor: "#fefce8", borderRadius: 8, borderWidth: 1, borderColor: "#fde047", padding: 10 }}>
                           <Feather name="info" size={13} color="#ca8a04" style={{ marginTop: 1 }} />
                           <Text style={{ flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", color: "#92400e", lineHeight: 18 }}>
-                            Các câu tự luận sẽ được giáo viên xem lại và trả điểm sau.
+                            {t("Các câu tự luận sẽ được giáo viên xem lại và trả điểm sau.")}
                           </Text>
                         </View>
                       </View>
@@ -1095,7 +1103,7 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
               <TouchableOpacity onPress={onClose} style={{ borderRadius: 12, overflow: "hidden" }}>
                 <View style={{ backgroundColor: "#be185d", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 13 }}>
                   <Feather name="x" size={15} color="#fff" />
-                  <Text style={{ color: "#fff", fontSize: 14, fontFamily: "Inter_600SemiBold" }}>Đóng</Text>
+                  <Text style={{ color: "#fff", fontSize: 14, fontFamily: "Inter_600SemiBold" }}>{t("Đóng")}</Text>
                 </View>
               </TouchableOpacity>
             </View>
@@ -1110,10 +1118,10 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
           </TouchableOpacity>
           <View style={{ flex: 1, alignItems: "center" }}>
             <Text style={[styles.questionCounter, { color: colors.foreground }]}>
-              Câu {currentIdx + 1} / {totalQ}
+              {t("Câu")} {currentIdx + 1} / {totalQ}
             </Text>
             <Text style={{ fontSize: 11, color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>
-              {answeredCount}/{totalQ} đã trả lời
+              {answeredCount}/{totalQ} {t("đã trả lời")}
             </Text>
           </View>
           {timeLeft !== null ? (
@@ -1176,7 +1184,7 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
               >
                 <Feather name="file-text" size={14} color="#16a34a" />
                 <Text style={{ flex: 1, fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#16a34a" }} numberOfLines={1}>
-                  {passageOpen ? `Bài đọc – ${currentSection.passageInfo!.name}` : currentSection.passageInfo!.name}
+                  {passageOpen ? `${t("Bài đọc")} – ${currentSection.passageInfo!.name}` : currentSection.passageInfo!.name}
                 </Text>
                 <TouchableOpacity
                   onPress={() => WebBrowser.openBrowserAsync(passageUrl).catch(() => {})}
@@ -1186,7 +1194,7 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
                   <Feather name="external-link" size={14} color="#16a34a" />
                 </TouchableOpacity>
                 <View style={{ backgroundColor: passageOpen ? "#6b7280" : "#16a34a", paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10 }}>
-                  <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#fff" }}>{passageOpen ? "Đóng" : "Mở"}</Text>
+                  <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#fff" }}>{passageOpen ? t("Đóng") : t("Mở")}</Text>
                 </View>
               </TouchableOpacity>
               {passageOpen && (
@@ -1197,7 +1205,7 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
                     <iframe
                       src={`https://docs.google.com/viewer?url=${encodeURIComponent(passageUrl)}&embedded=true`}
                       style={{ width: "100%", height: "100%", border: "none" }}
-                      title="Bài đọc"
+                      title={t("Bài đọc")}
                     />
                   ) : (
                     // Native: download-to-cache (auth) → react-native-pdf → Google Docs → error
@@ -1208,7 +1216,7 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
                           <ActivityIndicator size="small" color="#16a34a" />
                           {(passagePdfStage === "downloading" || passagePdfStage === "webview") && (
                             <Text style={{ fontSize: 12, color: "#6b7280", fontFamily: "Inter_400Regular", marginTop: 8 }}>
-                              {passagePdfStage === "webview" ? "Đang tải qua Google Docs…" : "Đang tải bài đọc…"}
+                              {passagePdfStage === "webview" ? t("Đang tải qua Google Docs…") : t("Đang tải bài đọc…")}
                             </Text>
                           )}
                         </View>
@@ -1254,13 +1262,13 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
                         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 24 }}>
                           <Feather name="alert-circle" size={28} color="#ef4444" />
                           <Text style={{ fontSize: 13, color: "#374151", textAlign: "center", fontFamily: "Inter_400Regular" }}>
-                            Không thể tải PDF
+                            {t("Không thể tải PDF")}
                           </Text>
                           <TouchableOpacity
                             onPress={() => WebBrowser.openBrowserAsync(passageDirectUrl).catch(() => {})}
                             style={{ backgroundColor: "#16a34a", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 }}
                           >
-                            <Text style={{ color: "#fff", fontSize: 13, fontFamily: "Inter_600SemiBold" }}>Mở trình duyệt</Text>
+                            <Text style={{ color: "#fff", fontSize: 13, fontFamily: "Inter_600SemiBold" }}>{t("Mở trình duyệt")}</Text>
                           </TouchableOpacity>
                         </View>
                       )}
@@ -1284,10 +1292,10 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
             <>
               <View style={{ flexDirection: "row", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
                 <Text style={{ fontSize: 12, fontFamily: "Inter_700Bold", color: "#be185d", letterSpacing: 0.5 }}>
-                  CÂU {currentIdx + 1}
+                  {t("Câu").toUpperCase()} {currentIdx + 1}
                 </Text>
                 <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>
-                  · {parseFloat(currentFQ.question.score).toFixed(2)} điểm
+                  · {parseFloat(currentFQ.question.score).toFixed(2)} {t("điểm")}
                 </Text>
                 {currentFQ.question.title && (
                   <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>
@@ -1313,7 +1321,7 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
             </>
           ) : (
             <View style={{ alignItems: "center", paddingVertical: 40 }}>
-              <Text style={{ color: colors.mutedForeground, fontSize: 14 }}>Không có câu hỏi</Text>
+              <Text style={{ color: colors.mutedForeground, fontSize: 14 }}>{t("Không có câu hỏi")}</Text>
             </View>
           )}
         </ScrollView>
@@ -1348,13 +1356,13 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
             style={[styles.navBtnSide, { opacity: currentIdx === 0 ? 0.3 : 1, borderColor: colors.border }]}
           >
             <Feather name="chevron-left" size={18} color={colors.foreground} />
-            <Text style={[styles.navBtnText, { color: colors.foreground }]}>Câu trước</Text>
+            <Text style={[styles.navBtnText, { color: colors.foreground }]}>{t("Câu trước")}</Text>
           </TouchableOpacity>
 
           {currentIdx < totalQ - 1 ? (
             <TouchableOpacity onPress={() => go(1)} style={styles.nextBtn}>
               <View style={[styles.nextBtnGrad, { backgroundColor: "#ec4899" }]}>
-                <Text style={styles.nextBtnText}>Câu tiếp theo</Text>
+                <Text style={styles.nextBtnText}>{t("Câu tiếp theo")}</Text>
                 <Feather name="chevron-right" size={16} color="#fff" />
               </View>
             </TouchableOpacity>
@@ -1363,7 +1371,7 @@ export default function ExamTakingScreen({ visible, exam, onClose, onSubmit }: P
               <View style={[styles.nextBtnGrad, { backgroundColor: "#16a34a" }]}>
                 {submitting
                   ? <ActivityIndicator color="#fff" size="small" />
-                  : (<><Feather name="send" size={15} color="#fff" /><Text style={styles.nextBtnText}>Nộp bài</Text></>)}
+                  : (<><Feather name="send" size={15} color="#fff" /><Text style={styles.nextBtnText}>{t("Nộp bài")}</Text></>)}
               </View>
             </TouchableOpacity>
           )}

@@ -13,6 +13,7 @@ import {
 import QRCode from "react-native-qrcode-svg";
 
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 import { apiGet } from "@/lib/api";
 import { QrScanIcon } from "@/components/QrScanIcon";
@@ -43,6 +44,7 @@ export function AttendanceQrModal({
   onClose: () => void;
 }) {
   const colors = useColors();
+  const { t } = useLanguage();
   const { user } = useAuth();
   const [data, setData] = useState<AttendanceQrResponse | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -94,9 +96,9 @@ export function AttendanceQrModal({
                 <QrScanIcon size={19} color={colors.primary} />
               </View>
               <View>
-                <Text style={[styles.title, { color: colors.foreground }]}>Mã QR điểm danh</Text>
+                <Text style={[styles.title, { color: colors.foreground }]}>{t("Mã QR điểm danh")}</Text>
                 <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-                  Đưa mã này cho giáo viên quét
+                  {t("Đưa mã này cho giáo viên quét")}
                 </Text>
               </View>
             </View>
@@ -108,7 +110,7 @@ export function AttendanceQrModal({
           {loading ? (
             <View style={styles.stateBox}>
               <ActivityIndicator color={colors.primary} />
-              <Text style={[styles.stateText, { color: colors.mutedForeground }]}>Đang tải mã QR...</Text>
+              <Text style={[styles.stateText, { color: colors.mutedForeground }]}>{t("Đang tải mã QR...")}</Text>
             </View>
           ) : error ? (
             <View style={styles.stateBox}>
@@ -119,14 +121,14 @@ export function AttendanceQrModal({
                 onPress={() => setData(null)}
                 style={[styles.retryButton, { backgroundColor: colors.primary }]}
               >
-                <Text style={styles.retryText}>Đóng và thử lại</Text>
+                <Text style={styles.retryText}>{t("Đóng và thử lại")}</Text>
               </TouchableOpacity>
             </View>
           ) : !selected || !qrPayload ? (
             <View style={styles.stateBox}>
               <Feather name="inbox" size={30} color={colors.mutedForeground} />
               <Text style={[styles.stateText, { color: colors.mutedForeground }]}>
-                Chưa có mã QR điểm danh.
+                {t("Chưa có mã QR điểm danh.")}
               </Text>
             </View>
           ) : (
@@ -137,7 +139,7 @@ export function AttendanceQrModal({
               {isParent && (data?.students.length ?? 0) > 1 ? (
                 <View style={styles.studentPicker}>
                   <Text style={[styles.pickerLabel, { color: colors.mutedForeground }]}>
-                    Chọn học viên
+                    {t("Chọn học viên")}
                   </Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.studentPills}>
                     {data?.students.map((item, index) => {
@@ -184,7 +186,7 @@ export function AttendanceQrModal({
               <View style={[styles.infoBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
                 <Feather name="shield" size={16} color={colors.success} />
                 <Text style={[styles.infoText, { color: colors.mutedForeground }]}>
-                  Mã QR cố định theo tài khoản và chỉ dùng để điểm danh tại trung tâm.
+                  {t("Mã QR cố định theo tài khoản và chỉ dùng để điểm danh tại trung tâm.")}
                 </Text>
               </View>
             </ScrollView>

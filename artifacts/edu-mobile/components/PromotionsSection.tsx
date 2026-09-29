@@ -12,6 +12,7 @@ import {
 } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
+import { useLanguage } from "@/context/LanguageContext";
 import { apiGet } from "@/lib/api";
 import { cachePost } from "@/lib/postCache";
 
@@ -29,6 +30,7 @@ interface PromoPost {
 
 export default function PromotionsSection() {
   const colors = useColors();
+  const { t } = useLanguage();
   const [promos, setPromos] = useState<PromoPost[]>([]);
   const [loaded, setLoaded] = useState(false);
 
@@ -73,7 +75,7 @@ export default function PromotionsSection() {
       <View style={styles.headerRow}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-            🎁 Khuyến mãi
+            {t("🎁 Khuyến mãi")}
           </Text>
           {promos.length > 0 && (
             <View style={[styles.countBadge, { backgroundColor: colors.primary }]}>

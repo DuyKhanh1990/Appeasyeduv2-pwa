@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import { FileList } from "@/components/FileViewer";
 import { PostHtmlContent } from "@/components/PostHtmlContent";
 import { useColors } from "@/hooks/useColors";
+import { useLanguage } from "@/context/LanguageContext";
 import { getCachedPost } from "@/lib/postCache";
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -62,14 +63,14 @@ interface Post {
   myReaction?: string | null;
 }
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, t: (source: string) => string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins} phút trước`;
+  if (mins < 60) return `${mins} ${t("phút trước")}`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} giờ trước`;
+  if (hrs < 24) return `${hrs} ${t("giờ trước")}`;
   const days = Math.floor(hrs / 24);
-  return `${days} ngày trước`;
+  return `${days} ${t("ngày trước")}`;
 }
 
 function totalReactions(r: Record<string, number>) {
@@ -86,6 +87,7 @@ function formatBytes(bytes?: number): string {
 
 export default function NewsPostDetail() {
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id: string }>();
   const post: Post | null = params.id ? (getCachedPost(params.id) ?? null) : null;
@@ -103,17 +105,17 @@ export default function NewsPostDetail() {
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background }}>
         <Feather name="alert-circle" size={40} color={colors.mutedForeground} />
         <Text style={{ color: colors.mutedForeground, marginTop: 12, fontFamily: "Inter_400Regular" }}>
-          Không tìm thấy bài viết
+          {t("Không tìm thấy bài viết")}
         </Text>
         <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20 }}>
-          <Text style={{ color: colors.primary, fontFamily: "Inter_500Medium" }}>Quay lại</Text>
+          <Text style={{ color: colors.primary, fontFamily: "Inter_500Medium" }}>{t("Quay lại")}</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
   const cat = CATEGORY_COLORS[post.category] ?? { bg: "#f3f4f6", text: "#6b7280" };
-  const catLabel = CATEGORY_LABELS[post.category] ?? post.category;
+  const catLabel = t(CATEGORY_LABELS[post.category] ?? post.category);
   const images: string[] = [
     ...(post.imageUrl ? [post.imageUrl] : []),
     ...(post.imageUrls ?? []),
@@ -151,12 +153,12 @@ export default function NewsPostDetail() {
             <Feather name="arrow-left" size={20} color="#1e1b4b" />
           </TouchableOpacity>
           <Text style={{ flex: 1, fontSize: 18, fontFamily: "Inter_700Bold", color: "#1e1b4b" }} numberOfLines={1}>
-            Bài viết
+             {t("Bài viết")}
           </Text>
           {post.isPinned && (
             <View style={styles.pinnedBadge}>
               <Feather name="bookmark" size={12} color="#f59e0b" />
-              <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#f59e0b" }}>Đã ghim</Text>
+               <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#f59e0b" }}>{t("Đã ghim")}</Text>
             </View>
           )}
         </View>
@@ -234,7 +236,7 @@ export default function NewsPostDetail() {
                 </Text>
               )}
               <Text style={[styles.timeText, { color: colors.mutedForeground }]}>
-                {timeAgo(post.createdAt)}
+                 {timeAgo(post.createdAt, t)}
               </Text>
             </View>
           </View>
@@ -249,7 +251,7 @@ export default function NewsPostDetail() {
           {attachments.length > 0 && (
             <View style={{ gap: 8 }}>
               <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>
-                File đính kèm ({attachments.length})
+                 {t("File đính kèm")} ({attachments.length})
               </Text>
               <FileList files={attachments} />
             </View>
@@ -264,7 +266,7 @@ export default function NewsPostDetail() {
             >
               <Text style={{ fontSize: 20 }}>{myReaction ?? "👍"}</Text>
               <Text style={[styles.reactCount, { color: colors.mutedForeground }]}>
-                {total > 0 ? total : "Cảm xúc"}
+                {total > 0 ? total : t("Cảm xúc")}
               </Text>
             </TouchableOpacity>
 

@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 import { apiGet } from "@/lib/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -157,6 +158,7 @@ function getInvoiceMonth(inv: StudentInvoice): string {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function CollapsibleDescription({ text, colors }: { text: string; colors: ReturnType<typeof useColors> }) {
+  const { t } = useLanguage();
   const [expanded, setExpanded] = useState(false);
   const [measured, setMeasured] = useState(false);
   const [lineCount, setLineCount] = useState(0);
@@ -185,7 +187,7 @@ function CollapsibleDescription({ text, colors }: { text: string; colors: Return
           hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
         >
           <Text style={{ color: colors.primary, fontSize: 11, fontFamily: "Inter_500Medium" }}>
-            {expanded ? "Thu gọn ▲" : "Xem thêm ▼"}
+            {expanded ? t("Thu gọn ▲") : t("Xem thêm ▼")}
           </Text>
         </TouchableOpacity>
       )}
@@ -194,10 +196,11 @@ function CollapsibleDescription({ text, colors }: { text: string; colors: Return
 }
 
 function StatusBadge({ status }: { status: string }) {
+  const { t } = useLanguage();
   const cfg = STATUS_CONFIG[status] || { label: status, bg: "#f3f4f6", text: "#6b7280" };
   return (
     <View style={{ backgroundColor: cfg.bg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, alignSelf: "flex-start" }}>
-      <Text style={{ color: cfg.text, fontSize: 11, fontFamily: "Inter_600SemiBold" }}>{cfg.label}</Text>
+      <Text style={{ color: cfg.text, fontSize: 11, fontFamily: "Inter_600SemiBold" }}>{t(cfg.label)}</Text>
     </View>
   );
 }
@@ -205,6 +208,7 @@ function StatusBadge({ status }: { status: string }) {
 // ─── Staff Invoice Card ───────────────────────────────────────────────────────
 
 function StaffInvoiceCard({ inv, colors }: { inv: StaffInvoice; colors: ReturnType<typeof useColors> }) {
+  const { t } = useLanguage();
   return (
     <View
       style={[styles.card, {
@@ -249,14 +253,14 @@ function StaffInvoiceCard({ inv, colors }: { inv: StaffInvoice; colors: ReturnTy
             </Text>
             {parseFloat(inv.paidAmount) > 0 && parseFloat(inv.paidAmount) < parseFloat(inv.amount) && (
               <Text style={[styles.amountPaid, { color: colors.success }]}>
-                Đã trả {formatCurrency(inv.paidAmount)}
+                {t("Đã trả")} {formatCurrency(inv.paidAmount)}
               </Text>
             )}
           </View>
 
           {parseFloat(inv.remainingAmount) > 0 && (
             <Text style={[styles.amountRemaining, { color: colors.destructive }]}>
-              Còn lại: {formatCurrency(inv.remainingAmount)}
+              {t("Còn lại:")} {formatCurrency(inv.remainingAmount)}
             </Text>
           )}
 
@@ -265,7 +269,7 @@ function StaffInvoiceCard({ inv, colors }: { inv: StaffInvoice; colors: ReturnTy
               <View style={styles.dateItem}>
                 <Feather name="clock" size={11} color={colors.mutedForeground} />
                 <Text style={[styles.dateText, { color: colors.mutedForeground }]}>
-                  Hạn: {formatDate(inv.dueDate)}
+                  {t("Hạn:")} {formatDate(inv.dueDate)}
                 </Text>
               </View>
             )}
@@ -281,7 +285,7 @@ function StaffInvoiceCard({ inv, colors }: { inv: StaffInvoice; colors: ReturnTy
               <View style={styles.dateItem}>
                 <Feather name="credit-card" size={11} color={colors.mutedForeground} />
                 <Text style={[styles.dateText, { color: colors.mutedForeground }]}>
-                  {PAYMENT_METHOD_LABELS[inv.paymentMethod] ?? inv.paymentMethod}
+                  {t(PAYMENT_METHOD_LABELS[inv.paymentMethod] ?? inv.paymentMethod)}
                 </Text>
               </View>
             )}
@@ -324,6 +328,7 @@ function StudentInvoiceCard({
   highlighted?: boolean;
   onLayout?: (y: number) => void;
 }) {
+  const { t } = useLanguage();
   return (
     <View
       onLayout={highlighted && onLayout ? (e) => onLayout(e.nativeEvent.layout.y) : undefined}
@@ -370,14 +375,14 @@ function StudentInvoiceCard({
             </Text>
             {parseFloat(inv.paidAmount ?? "0") > 0 && parseFloat(inv.paidAmount ?? "0") < parseFloat(inv.amount) && (
               <Text style={[styles.amountPaid, { color: colors.success }]}>
-                Đã trả {formatCurrency(inv.paidAmount ?? "0")}
+                {t("Đã trả")} {formatCurrency(inv.paidAmount ?? "0")}
               </Text>
             )}
           </View>
 
           {parseFloat(inv.remainingAmount ?? "0") > 0 && (
             <Text style={[styles.amountRemaining, { color: colors.destructive }]}>
-              Còn lại: {formatCurrency(inv.remainingAmount ?? "0")}
+              {t("Còn lại:")} {formatCurrency(inv.remainingAmount ?? "0")}
             </Text>
           )}
 
@@ -386,7 +391,7 @@ function StudentInvoiceCard({
               <View style={styles.dateItem}>
                 <Feather name="clock" size={11} color={colors.mutedForeground} />
                 <Text style={[styles.dateText, { color: colors.mutedForeground }]}>
-                  Hạn: {formatDate(inv.dueDate)}
+                  {t("Hạn:")} {formatDate(inv.dueDate)}
                 </Text>
               </View>
             )}
@@ -418,6 +423,7 @@ function StudentInvoiceCard({
 
 export default function InvoicesScreen() {
   const colors = useColors();
+  const { t } = useLanguage();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const topPad = insets.top;
@@ -475,7 +481,7 @@ export default function InvoicesScreen() {
         setStudentData(res);
       }
     } catch (e: any) {
-      setError(e?.message || "Không thể tải hoá đơn");
+      setError(e?.message || t("Không thể tải hoá đơn"));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -582,7 +588,7 @@ export default function InvoicesScreen() {
               <Feather name="arrow-left" size={20} color="#1e1b4b" />
             </TouchableOpacity>
             <View style={{ flex: 1 }}>
-              <Text style={styles.headerTitle}>Hoá đơn</Text>
+              <Text style={styles.headerTitle}>{t("Hoá đơn")}</Text>
               {staffData?.staff && (
                 <Text style={styles.headerSub}>
                   {staffData.staff.fullName} · {staffData.staff.code}
@@ -599,7 +605,7 @@ export default function InvoicesScreen() {
               <Feather name="chevron-left" size={20} color="#fff" />
             </TouchableOpacity>
             <Text style={[styles.headerTitle, { flex: 1, textAlign: "center" }]}>
-              {MONTH_NAMES[viewMonth]}, {viewYear}
+              {t(MONTH_NAMES[viewMonth])}, {viewYear}
             </Text>
             <TouchableOpacity onPress={() => goMonth(1)} style={styles.navBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Feather name="chevron-right" size={20} color="#fff" />
@@ -630,7 +636,7 @@ export default function InvoicesScreen() {
                 ]}
               >
                 <Text style={[styles.filterPillText, { color: isActive ? colors.primary : colors.foreground }]}>
-                  {tab.label}
+                  {t(tab.label)}
                 </Text>
                 <View style={[styles.filterBadge, { backgroundColor: isActive ? colors.primary : "rgba(255,255,255,0.35)" }]}>
                   <Text style={styles.filterBadgeText}>{count}</Text>
@@ -658,7 +664,7 @@ export default function InvoicesScreen() {
               }}
             >
               <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: selectedStudentId === null ? "#fff" : colors.mutedForeground }}>
-                Tất cả
+                {t("Tất cả")}
               </Text>
             </TouchableOpacity>
             {allStudents.map(student => (
@@ -683,7 +689,7 @@ export default function InvoicesScreen() {
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.centerText, { color: colors.mutedForeground }]}>Đang tải hoá đơn...</Text>
+          <Text style={[styles.centerText, { color: colors.mutedForeground }]}>{t("Đang tải hoá đơn...")}</Text>
         </View>
       ) : error ? (
         <View style={styles.center}>
@@ -693,7 +699,7 @@ export default function InvoicesScreen() {
             onPress={() => fetchInvoices()}
             style={[styles.retryBtn, { backgroundColor: colors.primary }]}
           >
-            <Text style={styles.retryText}>Thử lại</Text>
+            <Text style={styles.retryText}>{t("Thử lại")}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -728,14 +734,14 @@ export default function InvoicesScreen() {
                     <View style={[styles.summaryPaperIconWrap, { backgroundColor: "#eff6ff" }]}>
                       <Feather name="dollar-sign" size={14} color="#2563eb" />
                     </View>
-                    <Text style={[styles.summaryPaperTitle, { color: colors.foreground }]}>Phiếu thu</Text>
+                    <Text style={[styles.summaryPaperTitle, { color: colors.foreground }]}>{t("Phiếu thu")}</Text>
                   </View>
                   <View style={styles.summaryPaperRow}>
                     <View style={[styles.summaryPaperDot, { backgroundColor: "#dcfce7" }]}>
                       <Feather name="check-circle" size={13} color="#16a34a" />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.summaryPaperRowLabel, { color: colors.mutedForeground }]}>Đã thanh toán</Text>
+                      <Text style={[styles.summaryPaperRowLabel, { color: colors.mutedForeground }]}>{t("Đã thanh toán")}</Text>
                       <Text style={[styles.summaryPaperRowAmount, { color: "#16a34a" }]}>{formatCurrency(phuThuPaid)}</Text>
                     </View>
                   </View>
@@ -744,7 +750,7 @@ export default function InvoicesScreen() {
                       <Feather name="clock" size={13} color="#ea580c" />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.summaryPaperRowLabel, { color: colors.mutedForeground }]}>Chưa thanh toán</Text>
+                      <Text style={[styles.summaryPaperRowLabel, { color: colors.mutedForeground }]}>{t("Chưa thanh toán")}</Text>
                       <Text style={[styles.summaryPaperRowAmount, { color: "#ea580c" }]}>{formatCurrency(phuThuUnpaid)}</Text>
                     </View>
                   </View>
@@ -756,7 +762,7 @@ export default function InvoicesScreen() {
                     <View style={[styles.summaryPaperIconWrap, { backgroundColor: "#fdf4ff" }]}>
                       <Feather name="trending-down" size={14} color="#9333ea" />
                     </View>
-                    <Text style={[styles.summaryPaperTitle, { color: colors.foreground }]}>Phiếu chi</Text>
+                    <Text style={[styles.summaryPaperTitle, { color: colors.foreground }]}>{t("Phiếu chi")}</Text>
                   </View>
                   <View style={styles.summaryPaperRow}>
                     <View style={[styles.summaryPaperDot, { backgroundColor: "#eff6ff" }]}>
@@ -785,7 +791,7 @@ export default function InvoicesScreen() {
             filteredStaff.length === 0 ? (
               <View style={[styles.emptyBox, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
                 <Feather name="file-text" size={36} color={colors.mutedForeground} />
-                <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Không có hoá đơn</Text>
+                <Text style={[styles.emptyTitle, { color: colors.foreground }]}>{t("Không có hoá đơn")}</Text>
                 <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
                   {activeStatus === "all" ? "Chưa có hoá đơn nào" : `Không có hoá đơn "${STATUS_TABS.find(t => t.key === activeStatus)?.label}"`}
                 </Text>
@@ -807,7 +813,7 @@ export default function InvoicesScreen() {
                 )}
                 {staffData && (
                   <Text style={[styles.paginationInfo, { color: colors.mutedForeground }]}>
-                    Hiển thị {staffInvoices.length}/{staffData.pagination.total} hoá đơn
+                    {t("Hiển thị")} {staffInvoices.length}/{staffData.pagination.total} {t("hoá đơn")}
                   </Text>
                 )}
               </>
@@ -843,7 +849,7 @@ export default function InvoicesScreen() {
                   );
                 })}
                 <Text style={[styles.paginationInfo, { color: colors.mutedForeground }]}>
-                  Hiển thị {filteredStudent.length} hoá đơn
+                  {t("Hiển thị")} {filteredStudent.length} {t("hoá đơn")}
                 </Text>
               </>
             )

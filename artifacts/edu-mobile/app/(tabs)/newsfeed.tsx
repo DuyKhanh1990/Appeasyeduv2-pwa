@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useColors } from "@/hooks/useColors";
+import { useLanguage } from "@/context/LanguageContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { apiGet, apiPost } from "@/lib/api";
 import { cachePost } from "@/lib/postCache";
@@ -64,23 +65,23 @@ interface Post {
   myReaction?: string | null;
 }
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, t: (source: string) => string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins} phút trước`;
+  if (mins < 60) return `${mins} ${t("phút trước")}`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} giờ trước`;
+  if (hrs < 24) return `${hrs} ${t("giờ trước")}`;
   const days = Math.floor(hrs / 24);
-  return `${days} ngày trước`;
+  return `${days} ${t("ngày trước")}`;
 }
 
 function totalReactions(reactions: Record<string, number>): number {
   return Object.values(reactions).reduce((s, v) => s + v, 0);
 }
 
-function PostCard({ post, colors, onReact }: { post: Post; colors: ReturnType<typeof useColors>; onReact: (id: string, reaction: string) => void }) {
+function PostCard({ post, colors, onReact, t }: { post: Post; colors: ReturnType<typeof useColors>; onReact: (id: string, reaction: string) => void; t: (source: string) => string }) {
   const catStyle = CATEGORY_COLORS[post.category] ?? { bg: "#f3f4f6", text: "#6b7280" };
-  const catLabel = CATEGORY_LABELS[post.category] ?? post.category;
+  const catLabel = t(CATEGORY_LABELS[post.category] ?? post.category);
   const [showReactions, setShowReactions] = useState(false);
   const total = totalReactions(post.reactions);
 
@@ -105,7 +106,7 @@ function PostCard({ post, colors, onReact }: { post: Post; colors: ReturnType<ty
           {post.isPinned && (
             <View style={styles.pinnedRow}>
               <Feather name="bookmark" size={11} color="#f59e0b" />
-              <Text style={styles.pinnedText}>Đã ghim</Text>
+              <Text style={styles.pinnedText}>{t("Đã ghim")}</Text>
             </View>
           )}
 
@@ -118,7 +119,7 @@ function PostCard({ post, colors, onReact }: { post: Post; colors: ReturnType<ty
           </Text>
 
           <Text style={[styles.timeText, { color: colors.mutedForeground, marginTop: 4 }]}>
-            {post.authorName} · {timeAgo(post.createdAt)}
+             {post.authorName} · {timeAgo(post.createdAt, t)}
           </Text>
         </View>
       </TouchableOpacity>
@@ -132,7 +133,7 @@ function PostCard({ post, colors, onReact }: { post: Post; colors: ReturnType<ty
         >
           <Text style={styles.reactIcon}>{post.myReaction ?? "👍"}</Text>
           <Text style={[styles.reactCount, { color: colors.mutedForeground }]}>
-            {total > 0 ? total : "Cảm xúc"}
+            {total > 0 ? total : t("Cảm xúc")}
           </Text>
         </TouchableOpacity>
 
@@ -159,6 +160,7 @@ function PostCard({ post, colors, onReact }: { post: Post; colors: ReturnType<ty
 
 export default function NewsFeedScreen() {
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const topPad = insets.top;
 
@@ -227,10 +229,10 @@ export default function NewsFeedScreen() {
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <View>
             <Text style={{ fontSize: 22, fontFamily: "Inter_700Bold", color: "#1e1b4b" }}>
-              Bảng tin
+              {t("Bảng tin")}
             </Text>
             <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: "rgba(30,27,75,0.65)", marginTop: 2 }}>
-              Tin tức & thông báo nội bộ
+              {t("Tin tức & thông báo nội bộ")}
             </Text>
           </View>
           {canCreate && (
@@ -273,7 +275,7 @@ export default function NewsFeedScreen() {
                   { color: selectedCategory === cat.key ? "#fff" : colors.mutedForeground },
                 ]}
               >
-                {cat.label}
+                {t(cat.label)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -287,11 +289,11 @@ export default function NewsFeedScreen() {
               <View style={{ marginBottom: 4 }}>
                 <View style={styles.sectionHeader}>
                   <Feather name="bookmark" size={14} color="#f59e0b" />
-                  <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Bài đã ghim</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t("Bài đã ghim")}</Text>
                 </View>
                 <View style={styles.grid}>
                   {pinnedPosts.map((item) => (
-                    <PostCard key={item.id} post={item} colors={colors} onReact={handleReact} />
+                    <PostCard key={item.id} post={item} colors={colors} onReact={handleReact} t={t} />
                   ))}
                 </View>
               </View>
@@ -299,12 +301,12 @@ export default function NewsFeedScreen() {
 
             <View style={styles.sectionHeader}>
               <Feather name="rss" size={14} color={colors.primary} />
-              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Bài viết mới nhất</Text>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t("Bài viết mới nhất")}</Text>
             </View>
 
             <View style={styles.grid}>
               {regularPosts.map((item) => (
-                <PostCard key={item.id} post={item} colors={colors} onReact={handleReact} />
+                <PostCard key={item.id} post={item} colors={colors} onReact={handleReact} t={t} />
               ))}
             </View>
 
@@ -312,7 +314,7 @@ export default function NewsFeedScreen() {
               <View style={styles.emptyState}>
                 <Feather name="inbox" size={40} color={colors.mutedForeground} />
                 <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                  Không có bài viết nào
+                  {t("Không có bài viết nào")}
                 </Text>
               </View>
             )}

@@ -21,6 +21,7 @@ import PromotionsSection from "@/components/PromotionsSection";
 import { AttendanceQrModal } from "@/components/AttendanceQrModal";
 import { QrScanIcon } from "@/components/QrScanIcon";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 import { usePermissions } from "@/hooks/usePermissions";
 import { apiGet } from "@/lib/api";
@@ -216,16 +217,16 @@ const ATTENDANCE_MAP: Record<string, { bg: string; text: string; label: string }
   late:                  { bg: "#fef3c7", text: "#92400e", label: "Đi trễ" },
 };
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, t: (sourceText: string) => string): string {
   const now = new Date();
   const d = new Date(dateStr);
   const diffMs = now.getTime() - d.getTime();
   const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 60) return `${diffMins} phút trước`;
+  if (diffMins < 60) return `${diffMins} ${t("phút trước")}`;
   const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours} giờ trước`;
+  if (diffHours < 24) return `${diffHours} ${t("giờ trước")}`;
   const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays} ngày trước`;
+  return `${diffDays} ${t("ngày trước")}`;
 }
 
 function formatLearningFormat(f: string) {
@@ -234,11 +235,11 @@ function formatLearningFormat(f: string) {
   return f;
 }
 
-function AttendanceBadge({ status }: { status: string }) {
+function AttendanceBadge({ status, t }: { status: string; t: (sourceText: string) => string }) {
   const s = ATTENDANCE_MAP[status] || ATTENDANCE_MAP.pending;
   return (
     <View style={{ backgroundColor: s.bg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 }}>
-      <Text style={{ color: s.text, fontSize: 11, fontFamily: "Inter_500Medium" }}>{s.label}</Text>
+      <Text style={{ color: s.text, fontSize: 11, fontFamily: "Inter_500Medium" }}>{t(s.label)}</Text>
     </View>
   );
 }
@@ -247,10 +248,12 @@ function NotificationCarouselCard({
   n,
   colors,
   cardWidth,
+  t,
 }: {
   n: Notification;
   colors: ReturnType<typeof useColors>;
   cardWidth: number;
+  t: (sourceText: string) => string;
 }) {
   const dotColor = CATEGORY_COLORS[n.category] || colors.primary;
   const studentName = n.student?.fullName;
@@ -275,16 +278,16 @@ function NotificationCarouselCard({
           <View style={[styles.notifCategoryDot, { backgroundColor: dotColor }]} />
           <Text style={[styles.notifCategoryText, { color: dotColor }]}>
             {n.category === "schedule"
-              ? "Lịch học"
+              ? t("Lịch học")
               : n.category === "finance"
-              ? "Hoá đơn"
+              ? t("Hoá đơn")
               : n.category === "attendance"
-              ? "Điểm danh"
+              ? t("Điểm danh")
               : n.category === "homework"
-              ? "Bài tập"
+              ? t("Bài tập")
               : n.category === "exam"
-              ? "Kiểm tra"
-              : "Thông báo"}
+              ? t("Kiểm tra")
+              : t("Thông báo")}
           </Text>
         </View>
         {!n.isRead && (
@@ -318,7 +321,7 @@ function NotificationCarouselCard({
       <View style={styles.notifCardFooter}>
         <Feather name="clock" size={11} color={colors.mutedForeground} />
         <Text style={[styles.notifCardTime, { color: colors.mutedForeground }]}>
-          {timeAgo(n.createdAt)}
+          {timeAgo(n.createdAt, t)}
         </Text>
       </View>
     </TouchableOpacity>
@@ -480,6 +483,7 @@ function TodayScheduleSection({
   isStaff: boolean;
   colors: ReturnType<typeof useColors>;
 }) {
+  const { t } = useLanguage();
   const sessions = schedule?.sessions ?? [];
   const tabsRef = useRef<ScrollView>(null);
   const [activeIndex, setActiveIndex] = useState(() => getAutoScheduleIndex(sessions));
@@ -515,11 +519,11 @@ function TodayScheduleSection({
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <View style={styles.sectionAccentBar} />
           <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>
-            Lịch học hôm nay{sessions.length > 0 ? ` (${sessions.length})` : ""}
+            {t("Lịch học hôm nay")}{sessions.length > 0 ? ` (${sessions.length})` : ""}
           </Text>
         </View>
         <TouchableOpacity onPress={() => router.push("/(tabs)/schedule" as any)} activeOpacity={0.7}>
-          <Text style={[styles.scheduleSeeAll, { color: colors.primary }]}>Xem tất cả</Text>
+          <Text style={[styles.scheduleSeeAll, { color: colors.primary }]}>{t("Xem tất cả")}</Text>
         </TouchableOpacity>
       </View>
 
@@ -530,7 +534,7 @@ function TodayScheduleSection({
       ) : sessions.length === 0 || !selectedSession ? (
         <View style={[styles.emptyBox, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
           <Feather name="calendar" size={20} color={colors.mutedForeground} />
-          <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Không có lịch học hôm nay</Text>
+          <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>{t("Không có lịch học hôm nay")}</Text>
         </View>
       ) : (
         <>
@@ -571,7 +575,7 @@ function TodayScheduleSection({
             <View style={[styles.scheduleFocusAccent, { backgroundColor: colors.primary }]} />
             <View style={styles.scheduleFocusBody}>
               {isStaff ? (
-                <Text style={[styles.schedulePerson, { color: colors.mutedForeground }]}>Lớp học</Text>
+                <Text style={[styles.schedulePerson, { color: colors.mutedForeground }]}>{t("Lớp học")}</Text>
               ) : (selectedSession as StudentSession).student?.name ? (
                 <Text style={[styles.schedulePerson, { color: colors.mutedForeground }]}>
                   {(selectedSession as StudentSession).student?.name}
@@ -600,7 +604,7 @@ function TodayScheduleSection({
               <View style={styles.scheduleInfoRow}>
                 <Feather name="map-pin" size={15} color={colors.foreground} />
                 <Text style={[styles.scheduleInfoText, { color: colors.foreground }]} numberOfLines={1}>
-                  {selectedSession.locationName || "Chưa cập nhật địa điểm"}
+                  {selectedSession.locationName || t("Chưa cập nhật địa điểm")}
                 </Text>
               </View>
 
@@ -610,7 +614,7 @@ function TodayScheduleSection({
                   <Text style={[styles.scheduleInfoText, { color: colors.foreground }]} numberOfLines={1}>
                     {(selectedSession as StaffSession).enrolledCount} học viên
                     {(selectedSession as StaffSession).pendingCount > 0
-                      ? ` · ${(selectedSession as StaffSession).pendingCount} chờ điểm danh`
+                      ? ` · ${(selectedSession as StaffSession).pendingCount} ${t("chờ điểm danh")}`
                       : ""}
                   </Text>
                 </View>
@@ -618,16 +622,16 @@ function TodayScheduleSection({
                 <View style={styles.scheduleInfoRow}>
                   <Feather name="user" size={15} color={colors.foreground} />
                   <Text style={[styles.scheduleInfoText, { color: colors.foreground }]} numberOfLines={1}>
-                    {(selectedSession as StudentSession).teacherNames?.join(", ") || "Chưa cập nhật giáo viên"}
+                    {(selectedSession as StudentSession).teacherNames?.join(", ") || t("Chưa cập nhật giáo viên")}
                   </Text>
                 </View>
               )}
 
               <View style={styles.scheduleStatusRow}>
-                {!isStaff && <AttendanceBadge status={(selectedSession as StudentSession).attendanceStatus} />}
+                {!isStaff && <AttendanceBadge status={(selectedSession as StudentSession).attendanceStatus} t={t} />}
                 {isStaff && (selectedSession as StaffSession).pendingCount > 0 && (
                   <View style={[styles.scheduleStatusPill, { backgroundColor: colors.warning + "20" }]}>
-                    <Text style={[styles.scheduleStatusText, { color: colors.warning }]}>Cần điểm danh</Text>
+                    <Text style={[styles.scheduleStatusText, { color: colors.warning }]}>{t("Cần điểm danh")}</Text>
                   </View>
                 )}
                 <View style={[styles.scheduleModePill, { backgroundColor: colors.muted }]}>
@@ -647,6 +651,7 @@ function TodayScheduleSection({
 
 export default function HomeScreen() {
   const colors = useColors();
+  const { t } = useLanguage();
   const { user, permissions } = useAuth();
   const perms = usePermissions();
   const insets = useSafeAreaInsets();
@@ -893,25 +898,25 @@ export default function HomeScreen() {
       ? "/(tabs)/schedule"
       : "/(tabs)/homework";
   const nextActionTitle = isStaffRole
-    ? "Hoàn thành công việc"
+    ? t("Hoàn thành công việc")
     : user?.role === "parent"
-      ? "Theo dõi lịch học"
+      ? t("Theo dõi lịch học")
       : hasCompletedAllAssignments
-        ? "Tuyệt vời!"
-        : "Hoàn thành BTVN";
+        ? t("Tuyệt vời!")
+        : t("Hoàn thành BTVN");
   const nextActionCopy = isStaffRole
     ? nextActionTotal > 0
-      ? `Còn ${nextActionPending} việc, bạn đã hoàn thành ${nextActionDone} việc rồi.`
-      : "Mở danh sách công việc để xem việc cần làm."
+      ? `${t("Còn")} ${nextActionPending} ${t("việc, bạn đã hoàn thành")} ${nextActionDone} ${t("việc rồi.")}`
+      : t("Mở danh sách công việc để xem việc cần làm.")
     : user?.role === "parent"
       ? nextSession
         ? `${nextSession.className} · ${nextSession.startTime}`
-        : "Mở lịch để xem hoạt động hôm nay."
+        : t("Mở lịch để xem hoạt động hôm nay.")
         : hasCompletedAllAssignments
-          ? `Bạn đã hoàn thành tất cả ${studentStats?.total ?? 0} bài trong tháng này.`
+          ? `${t("Bạn đã hoàn thành tất cả")} ${studentStats?.total ?? 0} ${t("bài trong tháng này.")}`
       : studentStats
-        ? `Còn ${pendingAssignments} bài, bạn đã hoàn thành ${studentStats.done} bài rồi.`
-        : "Đang cập nhật tiến độ bài tập của bạn.";
+        ? `${t("Còn")} ${pendingAssignments} ${t("bài, bạn đã hoàn thành")} ${studentStats.done} ${t("bài rồi.")}`
+        : t("Đang cập nhật tiến độ bài tập của bạn.");
   const todayProgress = isStaffRole
     ? staffStats ? `${staffStats.tasks.done}/${staffStats.tasks.total}` : "—"
     : studentStats ? `${studentStats.done}/${studentStats.total}` : "—";
@@ -937,7 +942,7 @@ export default function HomeScreen() {
           <View>
             <Text style={styles.dateText}>{dateStr}</Text>
             <Text style={styles.userName}>
-              Chào, {user?.name || user?.username || "bạn"}!
+              {t("Chào")}, {user?.name || user?.username || t("bạn")}!
             </Text>
           </View>
         </View>
@@ -947,7 +952,7 @@ export default function HomeScreen() {
             style={styles.qrHeaderBtn}
             onPress={() => setAttendanceQrVisible(true)}
             activeOpacity={0.8}
-            accessibilityLabel="Mở mã QR điểm danh"
+            accessibilityLabel={t("Mở mã QR điểm danh")}
           >
             <QrScanIcon size={22} />
           </TouchableOpacity>
@@ -963,18 +968,18 @@ export default function HomeScreen() {
       </View>
       <View style={styles.todayStrip}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.todayStripTitle}>Hôm nay có gì mới?</Text>
+            <Text style={styles.todayStripTitle}>{t("Hôm nay có gì mới?")}</Text>
           <Text style={styles.todayStripSubtitle}>
             {loadingSchedule
-              ? "Đang cập nhật lịch học..."
+                ? t("Đang cập nhật lịch học...")
               : nextSession
                 ? `${schedule?.sessions.length ?? 0} buổi học trong ngày`
-                : "Bạn không có lịch học hôm nay"}
+                : t("Bạn không có lịch học hôm nay")}
           </Text>
         </View>
         <View style={styles.todayProgress}>
           <Text style={styles.todayProgressValue}>{todayProgress}</Text>
-          <Text style={styles.todayProgressLabel}>{isStaffRole ? "công việc" : "BT xong"}</Text>
+          <Text style={styles.todayProgressLabel}>{isStaffRole ? t("công việc") : t("BT xong")}</Text>
         </View>
       </View>
     </View>
@@ -985,19 +990,19 @@ export default function HomeScreen() {
           <>
             <StatCard
               icon={<Feather name="users" size={20} color={colors.primary} />}
-              label="Học viên"
+              label={t("Học viên")}
               value={parentProfile ? String(parentProfile.linkedStudents.length) : "—"}
               color={colors.primary}
             />
             <StatCard
               icon={<BookOpenIcon color={colors.success} />}
-              label="Lớp học"
+              label={t("Lớp học")}
               value={parentProfile ? String(parentProfile.linkedStudents.reduce((sum, s) => sum + s.enrolledClasses.length, 0)) : "—"}
               color={colors.success}
             />
             <StatCard
               icon={<Feather name="check-circle" size={20} color={colors.warning} />}
-              label="Buổi đã học"
+              label={t("Buổi đã học")}
               value={parentProfile ? String(parentProfile.linkedStudents.reduce((sum, s) => sum + s.enrolledClasses.reduce((a, c) => a + c.attendedSessions, 0), 0)) : "—"}
               color={colors.warning}
             />
@@ -1006,19 +1011,19 @@ export default function HomeScreen() {
           <>
             <StatCard
               icon={<BookOpenIcon color={colors.primary} />}
-              label="Lớp học"
+              label={t("Lớp học")}
               value={staffStats ? String(staffStats.classCount) : "—"}
               color={colors.primary}
             />
             <StatCard
               icon={<Feather name="check-circle" size={20} color={colors.success} />}
-              label="Công việc"
+              label={t("Công việc")}
               value={staffStats ? `${staffStats.tasks.done}/${staffStats.tasks.total}` : "—"}
               color={colors.success}
             />
             <StatCard
               icon={<Feather name="star" size={20} color={colors.warning} />}
-              label="Đã dạy"
+              label={t("Đã dạy")}
               value={staffStats ? `${staffStats.sessions.taught}/${staffStats.sessions.total}` : "—"}
               color={colors.warning}
             />
@@ -1027,7 +1032,7 @@ export default function HomeScreen() {
           <>
             <StatCard
               icon={<BookOpenIcon color={colors.primary} />}
-              label="Lớp học"
+              label={t("Lớp học")}
               value={studentStats ? String(studentStats.classes) : "—"}
               color={colors.primary}
             />
@@ -1039,7 +1044,7 @@ export default function HomeScreen() {
             />
             <StatCard
               icon={<Feather name="star" size={20} color={colors.warning} />}
-              label="Điểm sao"
+              label={t("Điểm sao")}
               value={studentStars !== null ? String(studentStars) : "—"}
               color={colors.warning}
             />
@@ -1069,8 +1074,8 @@ export default function HomeScreen() {
                 <Feather name="users" size={22} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.parentBannerTitle, { color: colors.foreground }]}>Thông tin Học viên liên kết</Text>
-                <Text style={[styles.parentBannerSub, { color: colors.mutedForeground }]}>Xem thông tin & học viên liên kết</Text>
+                <Text style={[styles.parentBannerTitle, { color: colors.foreground }]}>{t("Thông tin Học viên liên kết")}</Text>
+                <Text style={[styles.parentBannerSub, { color: colors.mutedForeground }]}>{t("Xem thông tin & học viên liên kết")}</Text>
               </View>
               <Feather name="chevron-right" size={18} color={colors.primary} />
             </TouchableOpacity>
@@ -1080,7 +1085,7 @@ export default function HomeScreen() {
         {(user?.role === "student" || user?.role === "parent") && (
           <View style={{ marginTop: 24 }}>
             <View style={{ paddingHorizontal: 20, marginBottom: 10 }}>
-              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Lối tắt</Text>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t("Lối tắt")}</Text>
             </View>
             <ScrollView
               horizontal
@@ -1139,7 +1144,7 @@ export default function HomeScreen() {
               {!hasCompletedAllAssignments && (
                 <View style={[styles.nextActionButton, { backgroundColor: colors.gradientStart }]}>
                   <Text style={[styles.nextActionButtonText, { color: colors.foreground }]}>
-                    {user?.role === "parent" ? "Xem lịch" : "Làm ngay"}
+                    {user?.role === "parent" ? t("Xem lịch") : t("Làm ngay")}
                   </Text>
                   <Feather name="arrow-right" size={14} color={colors.foreground} />
                 </View>
@@ -1169,7 +1174,7 @@ export default function HomeScreen() {
             <View style={[styles.quickAccessHeader, { paddingHorizontal: 0, marginBottom: 10 }]}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                 <View style={styles.sectionAccentBar} />
-                <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>Học vụ - Hành chính</Text>
+                <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>{t("Học vụ - Hành chính")}</Text>
               </View>
             </View>
             <View style={[styles.quickGrid, { backgroundColor: colors.card }]}>

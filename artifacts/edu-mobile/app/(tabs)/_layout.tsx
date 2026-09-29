@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useAuth } from "@/context/AuthContext";
 import { ChatUnreadProvider, useChatUnread } from "@/context/ChatUnreadContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 import { usePermissions } from "@/hooks/usePermissions";
 import { QrScanIcon } from "@/components/QrScanIcon";
@@ -30,6 +31,7 @@ function disabledTabButton(props: any) {
 
 function TabLayoutInner() {
   const { user, isLoading } = useAuth();
+  const { t } = useLanguage();
   const colors = useColors();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -91,7 +93,7 @@ function TabLayoutInner() {
         <Tabs.Screen
           name="index"
           options={{
-            title: "Trang chủ",
+            title: t("Trang chủ"),
             tabBarIcon: ({ color }) => <Feather name="home" size={22} color={color} />,
           }}
         />
@@ -100,7 +102,7 @@ function TabLayoutInner() {
       <Tabs.Screen
         name="schedule"
         options={{
-          title: "Lịch",
+          title: t("Lịch"),
           tabBarIcon: ({ color }) => <Feather name="calendar" size={22} color={color} />,
           ...(!isStudent && !perms.canViewSchedule
             ? { tabBarButton: disabledTabButton }
@@ -111,7 +113,7 @@ function TabLayoutInner() {
       <Tabs.Screen
         name="homework"
         options={{
-          title: "BTVN",
+          title: t("BTVN"),
           href: isStudent ? undefined : null,
           tabBarIcon: ({ color }) => <Feather name="book" size={22} color={color} />,
         }}
@@ -119,7 +121,7 @@ function TabLayoutInner() {
       <Tabs.Screen
         name="grades"
         options={{
-          title: "Bảng điểm",
+          title: t("Bảng điểm"),
           href: isStudent ? undefined : null,
           tabBarIcon: ({ color }) => <Feather name="bar-chart-2" size={22} color={color} />,
         }}
@@ -128,7 +130,7 @@ function TabLayoutInner() {
       <Tabs.Screen
         name="academic"
         options={{
-          title: "Học vụ - HC",
+          title: t("Học vụ - HC"),
           href: isStudent ? null : undefined,
           tabBarIcon: ({ color }) => <Feather name="book-open" size={22} color={color} />,
         }}
@@ -137,7 +139,7 @@ function TabLayoutInner() {
       <Tabs.Screen
         name="newsfeed"
         options={{
-          title: "Bảng tin",
+          title: t("Bảng tin"),
           href: null,
           tabBarIcon: ({ color }) => <Feather name="rss" size={22} color={color} />,
         }}
@@ -147,7 +149,7 @@ function TabLayoutInner() {
       <Tabs.Screen
         name="tasks"
         options={{
-          title: "Công việc",
+          title: t("Công việc"),
           href: isStudent ? null : undefined,
           tabBarIcon: ({ color }) => <Feather name="briefcase" size={22} color={color} />,
           ...(!isStudent && !perms.canViewTasks
@@ -159,7 +161,7 @@ function TabLayoutInner() {
       <Tabs.Screen
         name="chat"
         options={{
-          title: "Chat",
+            title: t("Chat"),
           tabBarIcon: ({ color }) => <Feather name="message-circle" size={22} color={color} />,
           tabBarBadge: totalUnread > 0 ? (totalUnread > 99 ? "99+" : totalUnread) : undefined,
           tabBarBadgeStyle: { fontSize: 10, minWidth: 18, height: 18, lineHeight: 18 },
@@ -175,7 +177,7 @@ function TabLayoutInner() {
         <Tabs.Screen
           name="menu"
           options={{
-            title: "Menu",
+            title: t("Menu"),
             tabBarIcon: ({ color }) => <Feather name="menu" size={22} color={color} />,
           }}
         />
@@ -184,7 +186,7 @@ function TabLayoutInner() {
       {showStaffQrButton && (
         <TouchableOpacity
           activeOpacity={0.86}
-          accessibilityLabel="Mở quét QR điểm danh"
+          accessibilityLabel={t("Mở quét QR điểm danh")}
           onPress={() => router.push("/(tabs)/qr-scan" as any)}
           style={[
             styles.staffQrFab,

@@ -14,6 +14,7 @@ import Image from "@tiptap/extension-image";
 import React, { useCallback, useRef } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Platform,
   Text,
   TouchableOpacity,
@@ -23,6 +24,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
 import { apiUpload } from "@/lib/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface Props {
   student?: { fullName: string; code: string };
@@ -114,6 +116,7 @@ function ToolbarBtn({ active, onPress, children, title, colors }: ToolbarButtonP
 
 export function CommentRichEditor({ student, initialHtml, onSave, onDelete, onClose }: Props) {
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = React.useState(false);
@@ -161,15 +164,16 @@ export function CommentRichEditor({ student, initialHtml, onSave, onDelete, onCl
         if (uploaded[0]?.url) {
           editor?.chain().focus().setImage({ src: uploaded[0].url }).run();
         }
-      } catch {
-        // silently ignore on web preview
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        Alert.alert(t("Lỗi"), `${t("Không thể tải ảnh lên. Vui lòng thử lại.")}${detail ? `: ${detail}` : ""}`);
       } finally {
         setUploading(false);
         // Reset so same file can be picked again
         if (fileInputRef.current) fileInputRef.current.value = "";
       }
     },
-    [editor]
+    [editor, t]
   );
 
   if (!editor) return null;
@@ -196,7 +200,7 @@ export function CommentRichEditor({ student, initialHtml, onSave, onDelete, onCl
       >
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>
-            Nhận xét
+            {t("Nhận xét")}
           </Text>
           {student ? (
             <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginTop: 2 }}>
@@ -314,7 +318,7 @@ export function CommentRichEditor({ student, initialHtml, onSave, onDelete, onCl
               ? <ActivityIndicator size="small" color={colors.primary} />
               : <Feather name="image" size={13} color={colors.primary} />}
             <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: colors.primary }}>
-              {uploading ? "Đang tải..." : "Chèn ảnh"}
+              {uploading ? t("Đang tải...") : t("Chèn ảnh")}
             </Text>
           </TouchableOpacity>
 
@@ -350,7 +354,7 @@ export function CommentRichEditor({ student, initialHtml, onSave, onDelete, onCl
             }}
           >
             <Text style={{ fontSize: 14, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>
-              Xoá nhận xét
+              {t("Xoá nhận xét")}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -364,7 +368,7 @@ export function CommentRichEditor({ student, initialHtml, onSave, onDelete, onCl
             }}
           >
             <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>
-              Lưu
+              {t("Lưu")}
             </Text>
           </TouchableOpacity>
         </View>

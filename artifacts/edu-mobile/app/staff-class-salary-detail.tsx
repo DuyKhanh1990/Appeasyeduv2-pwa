@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import { useColors } from "@/hooks/useColors";
 import { apiGet, initApi } from "@/lib/api";
 import { type SalaryBreakdown, type SalaryClass, type SalarySummary, type SessionDetail } from "@/lib/salaryStore";
+import { useLanguage } from "@/context/LanguageContext";
 
 // Shape of the old published-rows endpoint (fallback)
 interface LegacyPublishedRow {
@@ -69,6 +70,7 @@ function SessionGrid({
   startDate: string;
   endDate: string;
 }) {
+  const { t } = useLanguage();
   const sessionMap: Record<string, SessionDetail> = {};
   sessions.forEach((s) => { sessionMap[s.sessionDate] = s; });
 
@@ -171,7 +173,7 @@ function SessionGrid({
                 </Text>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                   <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: textColor }}>
-                    Buổi {s.sessionIndex}
+                    {t("Buổi")} {s.sessionIndex}
                   </Text>
                   {s.coefficient !== 1 && (
                     <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: textColor }}>
@@ -194,15 +196,15 @@ function SessionGrid({
       <View style={{ flexDirection: "row", gap: 12, marginTop: 10, flexWrap: "wrap" }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
           <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: "#22c55e" }} />
-          <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: "#6b7280" }}>Hợp lệ + gói</Text>
+                  <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: "#6b7280" }}>{t("Hợp lệ + gói")}</Text>
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
           <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: "#a855f7" }} />
-          <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: "#6b7280" }}>Hợp lệ, chưa gắn gói</Text>
+          <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: "#6b7280" }}>{t("Hợp lệ, chưa gắn gói")}</Text>
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
           <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: "#f97316" }} />
-          <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: "#6b7280" }}>Chưa điểm danh</Text>
+          <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: "#6b7280" }}>{t("Chưa điểm danh")}</Text>
         </View>
       </View>
     </View>
@@ -223,6 +225,7 @@ function ClassRow({
   endDate: string;
   colors: ReturnType<typeof useColors>;
 }) {
+  const { t } = useLanguage();
   const [expanded, setExpanded] = useState(false);
   const hasPackage = !!cls.packageId;
   const salary = Number(cls.totalSalary);
@@ -249,7 +252,7 @@ function ClassRow({
             </Text>
             {!hasPackage ? (
               <View style={{ backgroundColor: "#fdf4ff", borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: "#e9d5ff" }}>
-                <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#7c3aed" }}>Chưa gắn gói</Text>
+                <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#7c3aed" }}>{t("Chưa gắn gói")}</Text>
               </View>
             ) : (
               <View style={{ backgroundColor: "#f0fdf4", borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: "#bbf7d0" }}>
@@ -264,7 +267,7 @@ function ClassRow({
             </Text>
             {hasSessions && (
               <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginLeft: 2 }}>
-                · nhấn để xem lịch
+                · {t("nhấn để xem lịch")}
               </Text>
             )}
           </View>
@@ -273,7 +276,7 @@ function ClassRow({
         <View style={{ alignItems: "flex-end", gap: 4 }}>
           {!hasPackage ? (
             <View style={{ backgroundColor: "#fdf4ff", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
-              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#7c3aed" }}>Chưa tính</Text>
+              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#7c3aed" }}>{t("Chưa tính")}</Text>
             </View>
           ) : (
             <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: "#16a34a" }}>
@@ -301,6 +304,7 @@ function ClassRow({
 // ─── Detail Screen ────────────────────────────────────────────────────────────
 export default function StaffClassSalaryDetailScreen() {
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const topPad = insets.top;
 
@@ -354,10 +358,10 @@ export default function StaffClassSalaryDetailScreen() {
       .then(setTable)
       .catch((err: any) => {
         console.error("[salary detail] error status:", err?.status, "msg:", err?.message);
-        if (err?.status === 401) setErrorMsg("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
-        else if (err?.status === 403) setErrorMsg("Bạn không có quyền xem bảng lương này.");
-        else if (err?.status === 404) setErrorMsg("Bảng lương không tồn tại.");
-        else setErrorMsg("Không thể tải chi tiết. Vui lòng thử lại.");
+        if (err?.status === 401) setErrorMsg(t("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."));
+        else if (err?.status === 403) setErrorMsg(t("Bạn không có quyền xem bảng lương này."));
+        else if (err?.status === 404) setErrorMsg(t("Bảng lương không tồn tại."));
+        else setErrorMsg(t("Không thể tải chi tiết. Vui lòng thử lại."));
       })
       .finally(() => setLoading(false));
   }, [id]);
@@ -374,10 +378,10 @@ export default function StaffClassSalaryDetailScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center", paddingHorizontal: 32, gap: 12 }}>
         <Text style={{ fontSize: 14, fontFamily: "Inter_500Medium", color: colors.mutedForeground, textAlign: "center" }}>
-          {errorMsg ?? "Không tìm thấy dữ liệu"}
+          {errorMsg ?? t("Không tìm thấy dữ liệu")}
         </Text>
         <TouchableOpacity onPress={() => router.back()} style={{ paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10, backgroundColor: colors.primary }}>
-          <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Quay lại</Text>
+          <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>{t("Quay lại")}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -406,7 +410,7 @@ export default function StaffClassSalaryDetailScreen() {
             </Text>
           </View>
           <View style={{ backgroundColor: "rgba(30,27,75,0.1)", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6, alignItems: "flex-end" }}>
-            <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: "rgba(30,27,75,0.65)" }}>Tổng nhận</Text>
+            <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: "rgba(30,27,75,0.65)" }}>{t("Tổng nhận")}</Text>
             <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: "#1e1b4b" }}>{fmtCurrency(grandTotal)}</Text>
           </View>
         </View>
@@ -417,13 +421,13 @@ export default function StaffClassSalaryDetailScreen() {
         <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
           <Feather name="layers" size={13} color="#2563eb" />
           <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#2563eb" }}>
-            {table.classes.length} lớp
+            {table.classes.length} {t("lớp")}
           </Text>
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
           <Feather name="check-circle" size={13} color="#15803d" />
           <Text style={{ fontSize: 12, fontFamily: "Inter_500Medium", color: "#15803d" }}>
-            {totalEligible} buổi hợp lệ
+            {totalEligible} {t("buổi hợp lệ")}
           </Text>
         </View>
       </View>
@@ -449,7 +453,7 @@ export default function StaffClassSalaryDetailScreen() {
           {/* Footer total */}
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 13, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: "#f9fafb" }}>
             <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground }}>
-              Tổng bảng lương này
+              {t("Tổng bảng lương này")}
             </Text>
             <Text style={{ fontSize: 17, fontFamily: "Inter_700Bold", color: "#16a34a" }}>
               {fmtCurrency(grandTotal)}

@@ -13,9 +13,10 @@ import StarterKit from "@tiptap/starter-kit";
 import TipTapImage from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
 import React, { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
-import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Text, TouchableOpacity, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
 import { apiUpload } from "@/lib/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 export interface HomeworkRichEditorHandle {
   getContent: () => string;
@@ -107,6 +108,7 @@ function TBtn({ active, onPress, children, title, colors }: TBtnProps) {
 export const HomeworkRichEditor = forwardRef<HomeworkRichEditorHandle, Props>(
   ({ initialHtml, expandable = false }, ref) => {
     const colors = useColors();
+    const { t } = useLanguage();
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [uploading, setUploading] = React.useState(false);
 
@@ -116,7 +118,7 @@ export const HomeworkRichEditor = forwardRef<HomeworkRichEditorHandle, Props>(
       extensions: [
         StarterKit,
         TipTapImage.configure({ inline: false, allowBase64: false }),
-        Placeholder.configure({ placeholder: "Nhập nội dung bài làm..." }),
+        Placeholder.configure({ placeholder: t("Nhập nội dung bài làm...") }),
       ],
       content: initialHtml || "",
       autofocus: false,
@@ -146,14 +148,16 @@ export const HomeworkRichEditor = forwardRef<HomeworkRichEditorHandle, Props>(
           if (uploaded[0]?.url) {
             editor?.chain().focus().setImage({ src: uploaded[0].url }).run();
           }
-        } catch {
-          // silently ignore on web preview
+        } catch (error) {
+          // Keep the backend error detail visible to the user.
+          const detail = error instanceof Error ? error.message : String(error);
+          Alert.alert(t("Lỗi"), `${t("Không thể tải ảnh lên. Vui lòng thử lại.")}${detail ? `: ${detail}` : ""}`);
         } finally {
           setUploading(false);
           if (fileInputRef.current) fileInputRef.current.value = "";
         }
       },
-      [editor]
+      [editor, t]
     );
 
     if (!editor) return null;
@@ -245,7 +249,7 @@ export const HomeworkRichEditor = forwardRef<HomeworkRichEditorHandle, Props>(
               ? <ActivityIndicator size="small" color={colors.primary} />
               : <Feather name="image" size={12} color={colors.primary} />}
             <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.primary }}>
-              {uploading ? "Đang tải..." : "Chèn ảnh"}
+              {uploading ? t("Đang tải...") : t("Chèn ảnh")}
             </Text>
           </TouchableOpacity>
 

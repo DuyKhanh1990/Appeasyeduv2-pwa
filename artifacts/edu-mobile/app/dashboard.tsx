@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import { useColors } from "@/hooks/useColors";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useLanguage } from "@/context/LanguageContext";
 import { apiGet } from "@/lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -128,7 +129,7 @@ function Card({ title, icon, iconColor, children }: { title: string; icon: strin
         <View style={[s.cardIcon, { backgroundColor: iconColor + "18" }]}>
           <Feather name={icon as any} size={15} color={iconColor} />
         </View>
-        <Text style={[s.cardTitle, { color: colors.foreground }]}>{title}</Text>
+        <Text style={[s.cardTitle, { color: colors.foreground }]}>{useLanguage().t(title)}</Text>
       </View>
       {children}
     </View>
@@ -136,19 +137,21 @@ function Card({ title, icon, iconColor, children }: { title: string; icon: strin
 }
 
 function StatPill({ label, value, color, bg }: { label: string; value: string | number; color: string; bg: string }) {
+  const { t } = useLanguage();
   return (
     <View style={[s.pill, { backgroundColor: bg }]}>
       <Text style={[s.pillNum, { color }]}>{value}</Text>
-      <Text style={s.pillLabel}>{label}</Text>
+      <Text style={s.pillLabel}>{t(label)}</Text>
     </View>
   );
 }
 
 function BarRow({ label, value, pct, color, suffix }: { label: string; value: string | number; pct: number; color: string; suffix?: string }) {
+  const { t } = useLanguage();
   return (
     <View style={{ marginBottom: 9 }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 4 }}>
-        <Text style={s.rowLabel}>{label}</Text>
+        <Text style={s.rowLabel}>{t(label)}</Text>
         <Text style={[s.rowValue, { color }]}>{value}{suffix}</Text>
       </View>
       <Bar pct={pct} color={color} />
@@ -161,12 +164,13 @@ function Divider() {
 }
 
 function ErrorState({ onRetry }: { onRetry: () => void }) {
+  const { t } = useLanguage();
   return (
     <View style={s.center}>
       <Feather name="alert-circle" size={36} color="#ef4444" />
-      <Text style={{ color: "#ef4444", marginTop: 10, fontFamily: "Inter_500Medium", fontSize: 14 }}>Không tải được dữ liệu</Text>
+      <Text style={{ color: "#ef4444", marginTop: 10, fontFamily: "Inter_500Medium", fontSize: 14 }}>{t("Không tải được dữ liệu")}</Text>
       <TouchableOpacity onPress={onRetry} style={s.retryBtn}>
-        <Text style={{ color: "#fff", fontFamily: "Inter_600SemiBold", fontSize: 13 }}>Thử lại</Text>
+        <Text style={{ color: "#fff", fontFamily: "Inter_600SemiBold", fontSize: 13 }}>{t("Thử lại")}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -175,6 +179,7 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
 // ─── Tab: KHÁCH HÀNG — 9 widget ──────────────────────────────────────────────
 
 function CustomerTab({ filter }: { filter: FilterKey }) {
+  const { t } = useLanguage();
   const [data, setData] = useState<CustomerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState(false);
@@ -223,7 +228,7 @@ function CustomerTab({ filter }: { filter: FilterKey }) {
         </View>
         <View style={{ marginTop: 10 }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 4 }}>
-            <Text style={s.rowLabel}>Tỷ lệ hoạt động</Text>
+            <Text style={s.rowLabel}>{t("Tỷ lệ hoạt động")}</Text>
             <Text style={[s.rowValue, { color: "#16a34a" }]}>{ac.activePct}%</Text>
           </View>
           <Bar pct={ac.activePct} color="#16a34a" height={10} />
@@ -310,6 +315,7 @@ function CustomerTab({ filter }: { filter: FilterKey }) {
 // ─── Tab: ĐÀO TẠO — 7 widget ─────────────────────────────────────────────────
 
 function TrainingTab({ filter }: { filter: FilterKey }) {
+  const { t } = useLanguage();
   const [data, setData] = useState<TrainingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState(false);
@@ -376,12 +382,12 @@ function TrainingTab({ filter }: { filter: FilterKey }) {
               <View key={i} style={{ marginBottom: 10 }}>
                 <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 4 }}>
                   <Text style={s.rowLabel}>{loc.locationName}</Text>
-                  <Text style={[s.rowValue, { color: "#e11d48" }]}>Tổng: {loc.total}</Text>
+                  <Text style={[s.rowValue, { color: "#e11d48" }]}>{t("Tổng")}: {loc.total}</Text>
                 </View>
                 <Bar pct={(loc.total / maxLoc) * 100} color="#e11d48" height={8} />
                 <View style={{ flexDirection: "row", gap: 16, marginTop: 4 }}>
-                  <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: "#16a34a" }}>Đang HĐ: {loc.active}</Text>
-                  <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: "#9ca3af" }}>Đã đóng: {loc.closed}</Text>
+                   <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: "#16a34a" }}>{t("Đang HĐ")}: {loc.active}</Text>
+                   <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: "#9ca3af" }}>{t("Đã đóng")}: {loc.closed}</Text>
                 </View>
               </View>
             );
@@ -424,12 +430,12 @@ function TrainingTab({ filter }: { filter: FilterKey }) {
       {/* W7 — Tổng số ca dạy giáo viên */}
       {data.byTeacherSessions.length > 0 && (
         <Card title="Số ca dạy theo Giáo viên" icon="clock" iconColor="#f97316">
-          {data.byTeacherSessions.map((t, i) => (
+          {data.byTeacherSessions.map((teacher, i) => (
             <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <Text style={{ flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", color: "#374151" }} numberOfLines={1}>{t.name}</Text>
-              <Bar pct={(t.count / maxSessions) * 100} color="#f97316" height={8} />
+              <Text style={{ flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", color: "#374151" }} numberOfLines={1}>{teacher.name}</Text>
+              <Bar pct={(teacher.count / maxSessions) * 100} color="#f97316" height={8} />
               <Text style={{ width: 36, textAlign: "right", fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#f97316" }}>
-                {t.count} ca
+                 {teacher.count} {t("ca")}
               </Text>
             </View>
           ))}
@@ -442,6 +448,7 @@ function TrainingTab({ filter }: { filter: FilterKey }) {
 // ─── Tab: TÀI CHÍNH — 5 widget ───────────────────────────────────────────────
 
 function FinanceTab({ filter }: { filter: FilterKey }) {
+  const { t } = useLanguage();
   const [data, setData] = useState<FinanceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState(false);
@@ -487,7 +494,7 @@ function FinanceTab({ filter }: { filter: FilterKey }) {
         </View>
         <Divider />
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <Text style={s.rowLabel}>Công nợ</Text>
+          <Text style={s.rowLabel}>{t("Công nợ")}</Text>
           <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: "#ef4444" }}>{fmtMoneyFull(inv.debtAmount)}</Text>
         </View>
       </Card>
@@ -512,20 +519,20 @@ function FinanceTab({ filter }: { filter: FilterKey }) {
       {/* W3 — Thu/Chi kế hoạch vs thực tế */}
       <Card title="Thu / Chi: Kế hoạch vs Thực tế" icon="bar-chart-2" iconColor="#6c63ff">
         {/* Thu nhập */}
-        <Text style={s.subHeading}>Thu nhập</Text>
+        <Text style={s.subHeading}>{t("Thu nhập")}</Text>
         <View style={[s.compareRow, { borderColor: "#dcfce7" }]}>
           <View style={s.compareCell}>
-            <Text style={s.compareLabel}>Kế hoạch</Text>
+             <Text style={s.compareLabel}>{t("Kế hoạch")}</Text>
             <Text style={[s.compareValue, { color: "#16a34a" }]}>{fmtMoney(inv.expectedIncome)}</Text>
           </View>
           <View style={[s.compareDivider, { backgroundColor: "#dcfce7" }]} />
           <View style={s.compareCell}>
-            <Text style={s.compareLabel}>Thực tế</Text>
+             <Text style={s.compareLabel}>{t("Thực tế")}</Text>
             <Text style={[s.compareValue, { color: "#059669" }]}>{fmtMoney(inv.actualIncome)}</Text>
           </View>
           <View style={[s.compareDivider, { backgroundColor: "#dcfce7" }]} />
           <View style={s.compareCell}>
-            <Text style={s.compareLabel}>Nợ phải thu</Text>
+             <Text style={s.compareLabel}>{t("Nợ phải thu")}</Text>
             <Text style={[s.compareValue, { color: "#dc2626" }]}>{fmtMoney(inv.debtIncome)}</Text>
           </View>
         </View>
@@ -533,20 +540,20 @@ function FinanceTab({ filter }: { filter: FilterKey }) {
         <View style={{ height: 10 }} />
 
         {/* Chi phí */}
-        <Text style={s.subHeading}>Chi phí</Text>
+        <Text style={s.subHeading}>{t("Chi phí")}</Text>
         <View style={[s.compareRow, { borderColor: "#fee2e2" }]}>
           <View style={s.compareCell}>
-            <Text style={s.compareLabel}>Kế hoạch</Text>
+             <Text style={s.compareLabel}>{t("Kế hoạch")}</Text>
             <Text style={[s.compareValue, { color: "#ea580c" }]}>{fmtMoney(inv.expectedExpense)}</Text>
           </View>
           <View style={[s.compareDivider, { backgroundColor: "#fee2e2" }]} />
           <View style={s.compareCell}>
-            <Text style={s.compareLabel}>Thực tế</Text>
+             <Text style={s.compareLabel}>{t("Thực tế")}</Text>
             <Text style={[s.compareValue, { color: "#dc2626" }]}>{fmtMoney(inv.actualExpense)}</Text>
           </View>
           <View style={[s.compareDivider, { backgroundColor: "#fee2e2" }]} />
           <View style={s.compareCell}>
-            <Text style={s.compareLabel}>Nợ phải trả</Text>
+             <Text style={s.compareLabel}>{t("Nợ phải trả")}</Text>
             <Text style={[s.compareValue, { color: "#9ca3af" }]}>{fmtMoney(inv.debtExpense)}</Text>
           </View>
         </View>
@@ -579,15 +586,15 @@ function FinanceTab({ filter }: { filter: FilterKey }) {
               <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#374151", marginBottom: 6 }}>{r.locationName}</Text>
               <View style={{ flexDirection: "row", gap: 8 }}>
                 <View style={[s.pill, { backgroundColor: "#f0fdf4", flex: 1 }]}>
-                  <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: "#9ca3af" }}>Thu</Text>
+            <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: "#9ca3af" }}>{t("Thu")}</Text>
                   <Text style={[s.pillNum, { color: "#16a34a", fontSize: 13 }]}>{fmtMoney(r.totalIncome)}</Text>
                 </View>
                 <View style={[s.pill, { backgroundColor: "#fef2f2", flex: 1 }]}>
-                  <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: "#9ca3af" }}>Chi</Text>
+            <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: "#9ca3af" }}>{t("Chi")}</Text>
                   <Text style={[s.pillNum, { color: "#ef4444", fontSize: 13 }]}>{fmtMoney(r.totalExpense)}</Text>
                 </View>
                 <View style={[s.pill, { backgroundColor: "#f5f3ff", flex: 1 }]}>
-                  <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: "#9ca3af" }}>Lợi nhuận</Text>
+            <Text style={{ fontSize: 10, fontFamily: "Inter_400Regular", color: "#9ca3af" }}>{t("Lợi nhuận")}</Text>
                   <Text style={[s.pillNum, { color: "#7c3aed", fontSize: 13 }]}>{fmtMoney(r.profit)}</Text>
                 </View>
               </View>
@@ -595,18 +602,18 @@ function FinanceTab({ filter }: { filter: FilterKey }) {
           ))}
           {/* Tổng toàn trung tâm */}
           <View style={{ backgroundColor: "#f5f3ff", borderRadius: 10, padding: 10 }}>
-            <Text style={{ fontSize: 12, fontFamily: "Inter_700Bold", color: "#6c63ff", marginBottom: 6 }}>Tổng toàn trung tâm</Text>
+            <Text style={{ fontSize: 12, fontFamily: "Inter_700Bold", color: "#6c63ff", marginBottom: 6 }}>{t("Tổng toàn trung tâm")}</Text>
             <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
               <View>
-                <Text style={{ fontSize: 10, color: "#9ca3af" }}>Thu nhập</Text>
+                <Text style={{ fontSize: 10, color: "#9ca3af" }}>{t("Thu nhập")}</Text>
                 <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: "#16a34a" }}>{fmtMoney(rev.totals.totalIncome)}</Text>
               </View>
               <View>
-                <Text style={{ fontSize: 10, color: "#9ca3af" }}>Chi phí</Text>
+                <Text style={{ fontSize: 10, color: "#9ca3af" }}>{t("Chi phí")}</Text>
                 <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: "#ef4444" }}>{fmtMoney(rev.totals.totalExpense)}</Text>
               </View>
               <View>
-                <Text style={{ fontSize: 10, color: "#9ca3af" }}>Lợi nhuận</Text>
+                <Text style={{ fontSize: 10, color: "#9ca3af" }}>{t("Lợi nhuận")}</Text>
                 <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: "#7c3aed" }}>{fmtMoney(rev.totals.profit)}</Text>
               </View>
             </View>
@@ -639,6 +646,7 @@ const ALL_TABS = [
 
 export default function DashboardScreen() {
   const colors  = useColors();
+  const { t } = useLanguage();
   const insets  = useSafeAreaInsets();
   const topPad = insets.top;
   const perms   = usePermissions();
@@ -668,16 +676,16 @@ export default function DashboardScreen() {
             <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
               <Feather name="arrow-left" size={20} color="#fff" />
             </TouchableOpacity>
-            <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: "#fff" }}>Dashboard</Text>
+            <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: "#fff" }}>{t("Dashboard")}</Text>
           </View>
         </View>
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 14, padding: 32 }}>
           <Feather name="lock" size={48} color={colors.mutedForeground} />
           <Text style={{ fontSize: 16, fontFamily: "Inter_600SemiBold", color: colors.foreground, textAlign: "center" }}>
-            Bạn không có quyền xem Dashboard
+            {t("Bạn không có quyền xem Dashboard")}
           </Text>
           <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>
-            Liên hệ quản trị viên để được cấp quyền truy cập.
+            {t("Liên hệ quản trị viên để được cấp quyền truy cập.")}
           </Text>
         </View>
       </View>
@@ -694,16 +702,16 @@ export default function DashboardScreen() {
             <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
               <Feather name="arrow-left" size={20} color="#fff" />
             </TouchableOpacity>
-            <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: "#fff" }}>Dashboard</Text>
+            <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: "#fff" }}>{t("Dashboard")}</Text>
           </View>
         </View>
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 14, padding: 32 }}>
           <Feather name="bar-chart-2" size={48} color={colors.mutedForeground} />
           <Text style={{ fontSize: 16, fontFamily: "Inter_600SemiBold", color: colors.foreground, textAlign: "center" }}>
-            Chưa có dữ liệu Dashboard
+            {t("Chưa có dữ liệu Dashboard")}
           </Text>
           <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>
-            Bạn chưa được cấp quyền xem tab nào.
+            {t("Bạn chưa được cấp quyền xem tab nào.")}
           </Text>
         </View>
       </View>
@@ -722,8 +730,8 @@ export default function DashboardScreen() {
             <Feather name="arrow-left" size={20} color="#fff" />
           </TouchableOpacity>
           <View>
-            <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: "#fff" }}>Dashboard</Text>
-            <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.7)" }}>Tổng quan hệ thống</Text>
+            <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: "#fff" }}>{t("Dashboard")}</Text>
+            <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.7)" }}>{t("Tổng quan hệ thống")}</Text>
           </View>
         </View>
       </View>
@@ -743,7 +751,7 @@ export default function DashboardScreen() {
             style={[s.chip, filter === f.key ? s.chipActive : s.chipInactive]}
           >
             <Text style={{ fontSize: 12, fontFamily: filter === f.key ? "Inter_600SemiBold" : "Inter_400Regular", color: filter === f.key ? "#fff" : "rgba(255,255,255,0.75)" }}>
-              {f.label}
+              {t(f.label)}
             </Text>
           </TouchableOpacity>
         ))}
@@ -762,7 +770,7 @@ export default function DashboardScreen() {
             >
               <Feather name={tab.icon as any} size={14} color={active ? "#6c63ff" : colors.mutedForeground} />
               <Text style={{ fontSize: 12, fontFamily: active ? "Inter_700Bold" : "Inter_400Regular", color: active ? "#6c63ff" : colors.mutedForeground, marginLeft: 4 }}>
-                {tab.label}
+                {t(tab.label)}
               </Text>
             </TouchableOpacity>
           );

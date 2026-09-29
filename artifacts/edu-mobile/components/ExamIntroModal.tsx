@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { useColors } from "@/hooks/useColors";
+import { useLanguage } from "@/context/LanguageContext";
 
 export interface ExamMeta {
   examId: string;
@@ -61,6 +62,7 @@ export default function ExamIntroModal({
   onStart,
 }: ExamIntroModalProps) {
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
 
   const remaining = meta
@@ -110,7 +112,7 @@ export default function ExamIntroModal({
                   <View style={styles.loadingCenter}>
                     <ActivityIndicator size="large" color="#be185d" />
                     <Text style={{ color: colors.mutedForeground, marginTop: 12, fontSize: 13 }}>
-                      Đang tải thông tin...
+                      {t("Đang tải thông tin...")}
                     </Text>
                   </View>
                 ) : (
@@ -139,22 +141,22 @@ export default function ExamIntroModal({
                       <InfoCard
                         icon="clock"
                         iconColor="#be185d"
-                        value={meta?.timeLimitMinutes ? `${meta.timeLimitMinutes} phút` : "—"}
-                        label="Thời gian"
+                        value={meta?.timeLimitMinutes ? `${meta.timeLimitMinutes} ${t("phút")}` : "—"}
+                        label={t("Thời gian")}
                         colors={colors}
                       />
                       <InfoCard
                         icon="book"
                         iconColor="#be185d"
                         value={meta?.questionCount ? String(meta.questionCount) : "—"}
-                        label="Số câu hỏi"
+                        label={t("Số câu hỏi")}
                         colors={colors}
                       />
                       <InfoCard
                         icon="refresh-cw"
                         iconColor="#be185d"
-                        value={`${meta?.attemptCount ?? 0} lần`}
-                        label="Đã làm"
+                         value={`${meta?.attemptCount ?? 0} ${t("lần")}`}
+                         label={t("Đã làm")}
                         colors={colors}
                       />
                       <InfoCard
@@ -164,10 +166,10 @@ export default function ExamIntroModal({
                           remaining === null
                             ? "∞"
                             : isLocked
-                            ? "0 lần"
-                            : `${remaining} lần`
+                             ? `0 ${t("lần")}`
+                             : `${remaining} ${t("lần")}`
                         }
-                        label="Còn lại"
+                         label={t("Còn lại")}
                         colors={colors}
                       />
                     </View>
@@ -176,7 +178,7 @@ export default function ExamIntroModal({
                       <View style={styles.lockedBanner}>
                         <Feather name="lock" size={14} color="#991b1b" />
                         <Text style={styles.lockedText}>
-                          Bạn đã dùng hết {meta?.maxAttempts} lượt làm bài
+                           {t("Bạn đã dùng hết {maxAttempts} lượt làm bài").replace("{maxAttempts}", String(meta?.maxAttempts))}
                         </Text>
                       </View>
                     )}
@@ -200,7 +202,7 @@ export default function ExamIntroModal({
                   >
                     <Feather name="book-open" size={16} color="#fff" />
                     <Text style={styles.startText}>
-                      {isLocked ? "Hết lượt làm bài" : "Bắt đầu làm bài"}
+                       {isLocked ? t("Hết lượt làm bài") : t("Bắt đầu làm bài")}
                     </Text>
                   </View>
                 </TouchableOpacity>

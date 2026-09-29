@@ -3,6 +3,7 @@ import { Text, View } from "react-native";
 
 import { HtmlText } from "@/components/HtmlText";
 import { useColors } from "@/hooks/useColors";
+import { useLanguage } from "@/context/LanguageContext";
 
 export interface TeacherReviewItem {
   groupName?: string | null;
@@ -64,6 +65,7 @@ function ReviewItems({
 }: {
   items: TeacherReviewItem[];
 }) {
+  const { t } = useLanguage();
   const groups: Array<{ name: string; items: TeacherReviewItem[] }> = [];
 
   for (const item of items.filter(hasRenderableItem)) {
@@ -97,7 +99,7 @@ function ReviewItems({
                 {isCheckbox ? (
                   <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
                     <Text style={{ flex: 1, fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#374151", lineHeight: 18 }}>
-                      {item.subCriteriaName || "Tiêu chí"}
+                      {item.subCriteriaName || t("Tiêu chí")}
                     </Text>
                     {hasCheckedValue ? (
                       <View style={{
@@ -107,7 +109,7 @@ function ReviewItems({
                         paddingVertical: 4,
                       }}>
                         <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: item.checked ? "#166534" : "#991b1b" }}>
-                          {item.checked ? "Đạt" : "Chưa đạt"}
+                          {item.checked ? t("Đạt") : t("Chưa đạt")}
                         </Text>
                       </View>
                     ) : null}
@@ -138,6 +140,7 @@ export function TeacherReviewContent({
   colors: ReturnType<typeof useColors>;
   emptyText?: string;
 }) {
+  const { t } = useLanguage();
   const blocks = (reviewData ?? []).filter((block) =>
     (block.criteria ?? []).some(hasRenderableCriteria),
   );
@@ -145,7 +148,7 @@ export function TeacherReviewContent({
   if (blocks.length === 0) {
     return (
       <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center", paddingVertical: 40 }}>
-        {emptyText}
+        {t(emptyText)}
       </Text>
     );
   }

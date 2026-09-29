@@ -30,6 +30,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import { useColors } from "@/hooks/useColors";
 import { DocViewerModal, FileItem } from "@/components/FileViewer";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useChatUnread } from "@/context/ChatUnreadContext";
 import { apiDelete, apiGet, apiPost, apiPut, getCenterUrl, getAuthToken } from "@/lib/api";
 import { popChatDeeplink } from "@/lib/deeplinkStore";
@@ -171,11 +172,11 @@ function formatTime(ts: string): string {
   catch { return ""; }
 }
 
-function roleLabel(role: string): string {
-  if (role === "staff") return "Nhân viên";
-  if (role === "teacher") return "Giáo viên";
+function roleLabel(role: string, t: (source: string) => string): string {
+  if (role === "staff") return t("Nhân viên");
+  if (role === "teacher") return t("Giáo viên");
   if (role === "admin") return "Admin";
-  return "Học viên";
+  return t("Học viên");
 }
 
 function ReplyQuote({ replySeq, msgs, colors }: { replySeq: number; msgs: ChatMsg[]; colors: ReturnType<typeof useColors> }) {
@@ -319,10 +320,11 @@ function AudioPlayer({ url, name, size, isMe, colors, fileCardWidth }: {
   );
 }
 
-function AttachmentView({ att, isMe, tinodeHttpUrl, tinodeApiKey, colors, onOpenDoc, onLongPress }: {
+function AttachmentView({ att, isMe, tinodeHttpUrl, tinodeApiKey, colors, onOpenDoc, onLongPress, t }: {
   att: Attachment; isMe: boolean; tinodeHttpUrl: string; tinodeApiKey: string;
   colors: ReturnType<typeof useColors>; onOpenDoc: (file: FileItem) => void;
   onLongPress: () => void;
+  t: (source: string) => string;
 }) {
   const [imgFailed, setImgFailed] = React.useState(false);
   const [lightboxOpen, setLightboxOpen] = React.useState(false);
@@ -423,7 +425,7 @@ function AttachmentView({ att, isMe, tinodeHttpUrl, tinodeApiKey, colors, onOpen
               {displayName}
             </Text>
             <Text style={[styles.attachFileSize, { color: labelColor }]}>
-              {isPdf ? "Xem PDF" : "Xem tài liệu"}{att.size != null ? ` · ${formatBytes(att.size)}` : ""}
+              {isPdf ? t("Xem PDF") : t("Xem tài liệu")}{att.size != null ? ` · ${formatBytes(att.size)}` : ""}
             </Text>
           </View>
           <Feather name="maximize-2" size={14} color={labelColor} style={{ flexShrink: 0 }} />
@@ -468,10 +470,10 @@ function AttachmentView({ att, isMe, tinodeHttpUrl, tinodeApiKey, colors, onOpen
   );
 }
 
-function MessageBubble({ msg, msgs, reactions, colors, onLongPress, tinodeHttpUrl, tinodeApiKey, onOpenDoc }: {
+function MessageBubble({ msg, msgs, reactions, colors, onLongPress, tinodeHttpUrl, tinodeApiKey, onOpenDoc, t }: {
   msg: ChatMsg; msgs: ChatMsg[]; reactions: ReactionsMap;
   colors: ReturnType<typeof useColors>; onLongPress: (m: ChatMsg) => void;
-  tinodeHttpUrl: string; tinodeApiKey: string; onOpenDoc: (file: FileItem) => void;
+  tinodeHttpUrl: string; tinodeApiKey: string; onOpenDoc: (file: FileItem) => void; t: (source: string) => string;
 }) {
   return (
     <View style={[styles.bubbleWrap, msg.isMe ? styles.bubbleWrapMe : styles.bubbleWrapOther]}>
@@ -481,7 +483,7 @@ function MessageBubble({ msg, msgs, reactions, colors, onLongPress, tinodeHttpUr
         {msg.replySeq != null && <ReplyQuote replySeq={msg.replySeq} msgs={msgs} colors={colors} />}
         {msg.attachment && (
           // AttachmentView handles its own tap (open viewer) and long-press (context menu)
-          <AttachmentView att={msg.attachment} isMe={msg.isMe} tinodeHttpUrl={tinodeHttpUrl} tinodeApiKey={tinodeApiKey} colors={colors} onOpenDoc={onOpenDoc} onLongPress={() => onLongPress(msg)} />
+           <AttachmentView att={msg.attachment} isMe={msg.isMe} tinodeHttpUrl={tinodeHttpUrl} tinodeApiKey={tinodeApiKey} colors={colors} onOpenDoc={onOpenDoc} onLongPress={() => onLongPress(msg)} t={t} />
         )}
         {(msg.content || msg.edited) ? (
           // Text content is wrapped in Pressable for long-press context menu
@@ -501,6 +503,7 @@ function MessageBubble({ msg, msgs, reactions, colors, onLongPress, tinodeHttpUr
 
 export default function ChatScreen() {
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const topPad = insets.top + 16;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
@@ -701,7 +704,7 @@ export default function ChatScreen() {
       // vẫn mở kênh ngay bằng topicId, tiêu đề sẽ tự cập nhật khi Tinode trả về info kênh.
       setSelectedConv({
         topicId: pending.topicId,
-        title: "Đang tải...",
+        title: t("Đang tải..."),
         type: dmTopicIdsRef.current.has(pending.topicId) ? "dm" : "group",
       });
     }
@@ -756,7 +759,7 @@ export default function ChatScreen() {
         return [{ id: groupId, name: displayTitle, topicId, isCreator: false, memberCount: 2, createdAt: new Date().toISOString() }, ...filtered];
       });
       closeNewChat();
-      setSelectedConv({ topicId, title: displayTitle, subtitle: roleLabel(user.role), type: "dm", groupId });
+      setSelectedConv({ topicId, title: displayTitle, subtitle: roleLabel(user.role, t), type: "dm", groupId });
       fetchGroups(true);
     } catch { }
   }, [fetchGroups, rememberDmTopic, closeNewChat]);
@@ -820,9 +823,9 @@ export default function ChatScreen() {
       setShowGroupDetail(true);
     } catch (err) {
       const status = (err as { status?: number }).status;
-      if (status === 403) Alert.alert("Không có quyền", "Chỉ người tạo nhóm mới có thể thêm thành viên.");
-      else if (status === 404) Alert.alert("Lỗi", "Nhóm không tồn tại.");
-      else Alert.alert("Lỗi", "Không thể thêm thành viên.");
+      if (status === 403) Alert.alert(t("Không có quyền"), t("Chỉ người tạo nhóm mới có thể thêm thành viên."));
+      else if (status === 404) Alert.alert(t("Lỗi"), t("Nhóm không tồn tại."));
+      else Alert.alert(t("Lỗi"), t("Không thể thêm thành viên."));
     } finally { setAddingMember(false); }
   }, [selectedConv, addingMember, fetchGroupDetail]);
 
@@ -839,9 +842,9 @@ export default function ChatScreen() {
       setRenameGroupName("");
     } catch (err) {
       const status = (err as { status?: number }).status;
-      if (status === 400) Alert.alert("Lỗi", "Tên nhóm không được để trống.");
-      else if (status === 403) Alert.alert("Không có quyền", "Chỉ người tạo nhóm mới có thể đổi tên.");
-      else Alert.alert("Lỗi", "Không thể đổi tên nhóm.");
+      if (status === 400) Alert.alert(t("Lỗi"), t("Tên nhóm không được để trống."));
+      else if (status === 403) Alert.alert(t("Không có quyền"), t("Chỉ người tạo nhóm mới có thể đổi tên."));
+      else Alert.alert(t("Lỗi"), t("Không thể đổi tên nhóm."));
     } finally { setRenamingGroup(false); }
   }, [selectedConv, renameGroupName, renamingGroup]);
 
@@ -852,15 +855,15 @@ export default function ChatScreen() {
       setGroups(prev => prev.map(g => g.topicId === topicId ? { ...g, memberCount: g.memberCount - 1 } : g));
     } catch (err) {
       const status = (err as { status?: number }).status;
-      if (status === 403) Alert.alert("Không có quyền", "Bạn không có quyền xóa thành viên khỏi nhóm này.");
-      else Alert.alert("Lỗi", "Không thể xóa thành viên.");
+      if (status === 403) Alert.alert(t("Không có quyền"), t("Bạn không có quyền xóa thành viên khỏi nhóm này."));
+      else Alert.alert(t("Lỗi"), t("Không thể xóa thành viên."));
     }
   }, []);
 
   const leaveGroup = useCallback(async (topicId: string) => {
-    Alert.alert("Rời nhóm", "Bạn có chắc muốn rời nhóm này không?", [
-      { text: "Hủy", style: "cancel" },
-      { text: "Rời nhóm", style: "destructive", onPress: async () => {
+    Alert.alert(t("Rời nhóm"), t("Bạn có chắc muốn rời nhóm này không?"), [
+      { text: t("Hủy"), style: "cancel" },
+      { text: t("Rời nhóm"), style: "destructive", onPress: async () => {
         try {
           await apiDelete(`/api/mobile/chat/topics/${topicId}/members/me`);
           setGroups(prev => prev.filter(g => g.topicId !== topicId));
@@ -869,8 +872,8 @@ export default function ChatScreen() {
           setSelectedConv(null);
         } catch (err) {
           const status = (err as { status?: number }).status;
-          if (status === 400) Alert.alert("Lỗi", "Người tạo nhóm không thể tự rời. Hãy xóa nhóm nếu muốn giải tán.");
-          else Alert.alert("Lỗi", "Không thể rời nhóm.");
+          if (status === 400) Alert.alert(t("Lỗi"), t("Người tạo nhóm không thể tự rời. Hãy xóa nhóm nếu muốn giải tán."));
+          else Alert.alert(t("Lỗi"), t("Không thể rời nhóm."));
         }
       }},
     ]);
@@ -1272,7 +1275,7 @@ export default function ChatScreen() {
             <Text style={styles.chatRoomName} numberOfLines={1}>{selectedConv.title}</Text>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
               <View style={[styles.statusDot, { backgroundColor: wsStatus === "connected" ? "#4ade80" : wsStatus === "connecting" ? "#fbbf24" : "#f87171" }]} />
-              <Text style={styles.chatStatus}>{wsStatus === "connected" ? "Đã kết nối" : wsStatus === "connecting" ? "Đang kết nối..." : "Mất kết nối"}</Text>
+              <Text style={styles.chatStatus}>{wsStatus === "connected" ? t("Đã kết nối") : wsStatus === "connecting" ? t("Đang kết nối...") : t("Mất kết nối")}</Text>
             </View>
           </View>
           {selectedConv.type === "group" && (
@@ -1293,13 +1296,13 @@ export default function ChatScreen() {
         </View>
 
         {isInitialLoad ? (
-          <View style={styles.center}><ActivityIndicator size="large" color={colors.primary} /><Text style={[styles.statusText, { color: colors.mutedForeground }]}>Đang kết nối chat...</Text></View>
+          <View style={styles.center}><ActivityIndicator size="large" color={colors.primary} /><Text style={[styles.statusText, { color: colors.mutedForeground }]}>{t("Đang kết nối chat...")}</Text></View>
         ) : isHardError ? (
           <View style={styles.center}>
             <Feather name="wifi-off" size={40} color={colors.destructive} />
-            <Text style={[styles.statusText, { color: colors.destructive }]}>{wsError || "Không thể kết nối"}</Text>
+            <Text style={[styles.statusText, { color: colors.destructive }]}>{wsError || t("Không thể kết nối")}</Text>
             <TouchableOpacity onPress={() => setSelectedConv({ ...selectedConv })} style={[styles.retryBtn, { backgroundColor: colors.primary }]}>
-              <Text style={{ color: "#fff", fontSize: 14, fontFamily: "Inter_600SemiBold" }}>Thử lại</Text>
+              <Text style={{ color: "#fff", fontSize: 14, fontFamily: "Inter_600SemiBold" }}>{t("Thử lại")}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -1311,13 +1314,13 @@ export default function ChatScreen() {
             {wsStatus === "connecting" && messages.length > 0 && (
               <View style={[styles.reconnectBanner, { backgroundColor: colors.muted }]}>
                 <ActivityIndicator size="small" color={colors.primary} style={{ marginRight: 8 }} />
-                <Text style={{ color: colors.mutedForeground, fontSize: 12, fontFamily: "Inter_400Regular" }}>Đang kết nối lại...</Text>
+                <Text style={{ color: colors.mutedForeground, fontSize: 12, fontFamily: "Inter_400Regular" }}>{t("Đang kết nối lại...")}</Text>
               </View>
             )}
             {wsStatus === "error" && messages.length > 0 && (
               <TouchableOpacity onPress={() => setSelectedConv({ ...selectedConv })} style={[styles.reconnectBanner, { backgroundColor: "#fef2f2" }]}>
                 <Feather name="wifi-off" size={14} color={colors.destructive} style={{ marginRight: 6 }} />
-                <Text style={{ color: colors.destructive, fontSize: 12, fontFamily: "Inter_500Medium" }}>Mất kết nối — Nhấn để thử lại</Text>
+                <Text style={{ color: colors.destructive, fontSize: 12, fontFamily: "Inter_500Medium" }}>{t("Mất kết nối — Nhấn để thử lại")}</Text>
               </TouchableOpacity>
             )}
             <FlatList
@@ -1325,7 +1328,7 @@ export default function ChatScreen() {
               style={{ flex: 1, minHeight: 0 }}
               data={messages}
               keyExtractor={m => String(m.seq)}
-              renderItem={({ item }) => <MessageBubble msg={item} msgs={messages} reactions={reactions} colors={colors} onLongPress={handleLongPress} tinodeHttpUrl={tinodeHttpUrlRef.current} tinodeApiKey={tinodeApiKeyRef.current} onOpenDoc={setActiveDocFile} />}
+              renderItem={({ item }) => <MessageBubble msg={item} msgs={messages} reactions={reactions} colors={colors} onLongPress={handleLongPress} tinodeHttpUrl={tinodeHttpUrlRef.current} tinodeApiKey={tinodeApiKeyRef.current} onOpenDoc={setActiveDocFile} t={t} />}
               contentContainerStyle={[styles.messagesList, { paddingBottom: 12 }]}
               showsVerticalScrollIndicator={false}
               keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
@@ -1333,7 +1336,7 @@ export default function ChatScreen() {
               ListEmptyComponent={
                 <View style={{ alignItems: "center", paddingTop: 60, gap: 8 }}>
                   <Feather name="message-circle" size={36} color={colors.mutedForeground} />
-                  <Text style={{ color: colors.mutedForeground, fontSize: 14, fontFamily: "Inter_400Regular" }}>Chưa có tin nhắn nào</Text>
+                  <Text style={{ color: colors.mutedForeground, fontSize: 14, fontFamily: "Inter_400Regular" }}>{t("Chưa có tin nhắn nào")}</Text>
                 </View>
               }
             />
@@ -1341,7 +1344,7 @@ export default function ChatScreen() {
               <View style={[styles.replyBar, { backgroundColor: colors.muted, borderTopColor: colors.border }]}>
                 <View style={[styles.replyBarAccent, { backgroundColor: colors.primary }]} />
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.replyBarLabel, { color: colors.primary }]}>{editMsg ? "Chỉnh sửa tin nhắn" : `Trả lời ${replyTo?.displayName || replyTo?.from || ""}`}</Text>
+                  <Text style={[styles.replyBarLabel, { color: colors.primary }]}>{editMsg ? t("Chỉnh sửa tin nhắn") : `${t("Trả lời")} ${replyTo?.displayName || replyTo?.from || ""}`}</Text>
                   <Text style={[styles.replyBarText, { color: colors.mutedForeground }]} numberOfLines={1}>{editMsg ? editMsg.content : replyTo?.content}</Text>
                 </View>
                 <TouchableOpacity onPress={() => { setReplyTo(null); setEditMsg(null); setInputText(""); }}>
@@ -1378,7 +1381,7 @@ export default function ChatScreen() {
               <TextInput
                 ref={inputRef}
                 style={[styles.msgInput, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground, borderRadius: colors.radius }]}
-                placeholder={editMsg ? "Chỉnh sửa..." : pendingAttachment ? "Thêm chú thích (tuỳ chọn)..." : "Nhập tin nhắn..."}
+                placeholder={editMsg ? t("Chỉnh sửa...") : pendingAttachment ? t("Thêm chú thích (tuỳ chọn)...") : t("Nhập tin nhắn...")}
                 placeholderTextColor={colors.mutedForeground}
                 value={inputText}
                 onChangeText={setInputText}
@@ -1398,14 +1401,14 @@ export default function ChatScreen() {
               <Text style={[styles.menuMsgPreview, { color: colors.mutedForeground }]} numberOfLines={2}>{menuMsg?.content}</Text>
               <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
               <TouchableOpacity style={styles.menuItem} onPress={() => { setReplyTo(menuMsg!); setEditMsg(null); closeMenu(); setTimeout(() => inputRef.current?.focus(), 100); }}>
-                <Feather name="corner-up-left" size={18} color={colors.primary} /><Text style={[styles.menuItemText, { color: colors.foreground }]}>Trả lời</Text>
+                <Feather name="corner-up-left" size={18} color={colors.primary} /><Text style={[styles.menuItemText, { color: colors.foreground }]}>{t("Trả lời")}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.menuItem} onPress={() => { setEmojiForMsg(menuMsg); setMenuMsg(null); }}>
-                <Text style={{ fontSize: 18 }}>😊</Text><Text style={[styles.menuItemText, { color: colors.foreground }]}>Biểu cảm</Text>
+                <Text style={{ fontSize: 18 }}>😊</Text><Text style={[styles.menuItemText, { color: colors.foreground }]}>{t("Biểu cảm")}</Text>
               </TouchableOpacity>
               {menuMsg?.isMe && (
                 <TouchableOpacity style={styles.menuItem} onPress={() => { setEditMsg(menuMsg!); setReplyTo(null); setInputText(menuMsg!.content); closeMenu(); setTimeout(() => inputRef.current?.focus(), 100); }}>
-                  <Feather name="edit-2" size={18} color={colors.primary} /><Text style={[styles.menuItemText, { color: colors.foreground }]}>Chỉnh sửa</Text>
+                  <Feather name="edit-2" size={18} color={colors.primary} /><Text style={[styles.menuItemText, { color: colors.foreground }]}>{t("Chỉnh sửa")}</Text>
                 </TouchableOpacity>
               )}
             </Pressable>
@@ -1429,7 +1432,7 @@ export default function ChatScreen() {
             <View style={[styles.modalSheet, { backgroundColor: colors.background }]}>
               <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.modalTitle, { color: colors.foreground }]} numberOfLines={1}>{groupDetail?.name ?? "Chi tiết nhóm"}</Text>
+                  <Text style={[styles.modalTitle, { color: colors.foreground }]} numberOfLines={1}>{groupDetail?.name ?? t("Chi tiết nhóm")}</Text>
                   {groupDetail && <Text style={{ fontSize: 12, color: colors.mutedForeground, fontFamily: "Inter_400Regular", marginTop: 2 }}>{groupDetail.memberCount} thành viên</Text>}
                 </View>
                 <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
@@ -1491,7 +1494,7 @@ export default function ChatScreen() {
               <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>TÊN NHÓM MỚI *</Text>
               <TextInput
                 style={[styles.fieldInput, { backgroundColor: colors.muted, borderColor: colors.border, color: colors.foreground }]}
-                placeholder="Nhập tên nhóm..."
+                placeholder={t("Nhập tên nhóm...")}
                 placeholderTextColor={colors.mutedForeground}
                 value={renameGroupName}
                 onChangeText={setRenameGroupName}
@@ -1550,7 +1553,7 @@ export default function ChatScreen() {
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.roomName, { color: colors.foreground }]}>{u.displayName}</Text>
-                      <Text style={[styles.roomSub, { color: colors.mutedForeground }]}>{roleLabel(u.role)}</Text>
+                      <Text style={[styles.roomSub, { color: colors.mutedForeground }]}>{roleLabel(u.role, t)}</Text>
                     </View>
                     {addingMember ? <ActivityIndicator size="small" color={colors.primary} /> : <Feather name="user-plus" size={18} color={colors.primary} />}
                   </TouchableOpacity>
@@ -1573,7 +1576,7 @@ export default function ChatScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={[styles.header, { paddingTop: topPad, backgroundColor: colors.gradientStart }]}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <Text style={[styles.headerTitle, { marginBottom: 0 }]}>Tin nhắn</Text>
+          <Text style={[styles.headerTitle, { marginBottom: 0 }]}>{t("Tin nhắn")}</Text>
           {canCreateGroup && (
             <TouchableOpacity
               onPress={() => setShowNewChat(true)}
@@ -1599,7 +1602,7 @@ export default function ChatScreen() {
           // Không hiển thị thêm topic từ Tinode subscription (knownTopics) vì những
           // topic không có trong /groups là kênh cũ đã bị deprecated (kênh lớp tự động).
           const merged = [...groups.map(g => {
-            const displayName = g.name || "Tin nhắn riêng";
+            const displayName = g.name || t("Tin nhắn riêng");
             return { topicId: g.topicId, name: displayName, sub: g.memberCount != null ? `${g.memberCount} thành viên` : "", groupId: g.id ?? g.topicId, isCreator: g.isCreator };
           })]
             .filter(g => !q || g.name.toLowerCase().includes(q))
@@ -1623,14 +1626,14 @@ export default function ChatScreen() {
                   {canCreateGroup && (
                     <TouchableOpacity onPress={() => setShowCreateGroup(true)} style={[styles.createBtn, { backgroundColor: colors.primary }]}>
                       <Feather name="plus" size={16} color="#fff" />
-                      <Text style={styles.createBtnText}>Tạo nhóm mới</Text>
+                      <Text style={styles.createBtnText}>{t("Tạo nhóm mới")}</Text>
                     </TouchableOpacity>
                   )}
                   <View style={[styles.listSearchBar, { backgroundColor: colors.muted, borderColor: colors.border, marginHorizontal: 16, marginTop: canCreateGroup ? 4 : 12, marginBottom: 4 }]}>
                     <Feather name="search" size={15} color={colors.mutedForeground} />
                     <TextInput
                       style={[styles.listSearchInput, { color: colors.foreground }]}
-                      placeholder="Tìm cuộc trò chuyện..."
+                      placeholder={t("Tìm cuộc trò chuyện...")}
                       placeholderTextColor={colors.mutedForeground}
                       value={groupSearch}
                       onChangeText={setGroupSearch}
@@ -1649,9 +1652,9 @@ export default function ChatScreen() {
                 <View style={[styles.center, { marginTop: 40 }]}>
                   <Feather name="message-circle" size={44} color={colors.mutedForeground} />
                   <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>
-                    {q ? "Không tìm thấy cuộc trò chuyện nào" : "Bạn chưa có cuộc trò chuyện nào"}
+                    {q ? t("Không tìm thấy cuộc trò chuyện nào") : t("Bạn chưa có cuộc trò chuyện nào")}
                   </Text>
-                  {!q && <Text style={[styles.emptySubtitle, { color: colors.mutedForeground }]}>Nhấn biểu tượng bút ở trên để bắt đầu chat với ai đó</Text>}
+                  {!q && <Text style={[styles.emptySubtitle, { color: colors.mutedForeground }]}>{t("Nhấn biểu tượng bút ở trên để bắt đầu chat với ai đó")}</Text>}
                 </View>
               }
               renderItem={({ item }) => {
@@ -1695,7 +1698,7 @@ export default function ChatScreen() {
             <TouchableOpacity onPress={closeNewChat} style={[styles.backBtn, { backgroundColor: "rgba(30,27,75,0.1)" }]}>
               <Feather name="arrow-left" size={22} color="#1e1b4b" />
             </TouchableOpacity>
-            <Text style={[styles.headerTitle, { marginBottom: 0 }]}>Tin nhắn mới</Text>
+            <Text style={[styles.headerTitle, { marginBottom: 0 }]}>{t("Tin nhắn mới")}</Text>
           </View>
           <View style={[styles.searchBar, { backgroundColor: colors.muted, borderColor: colors.border }]}>
             <Feather name="search" size={16} color={colors.mutedForeground} />
@@ -1725,9 +1728,9 @@ export default function ChatScreen() {
                 <View style={[styles.center, { marginTop: 40 }]}>
                   <Feather name={dmQuery ? "user-x" : "search"} size={36} color={colors.mutedForeground} />
                   <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>
-                    {dmQuery ? "Không tìm thấy" : "Nhập tên để tìm người dùng"}
+                    {dmQuery ? t("Không tìm thấy") : t("Nhập tên để tìm người dùng")}
                   </Text>
-                  {dmQuery && <Text style={[styles.emptySubtitle, { color: colors.mutedForeground }]}>Thử tìm với từ khóa khác</Text>}
+                  {dmQuery && <Text style={[styles.emptySubtitle, { color: colors.mutedForeground }]}>{t("Thử tìm với từ khóa khác")}</Text>}
                 </View>
               }
               renderItem={({ item }) => (
@@ -1737,7 +1740,7 @@ export default function ChatScreen() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.roomName, { color: colors.foreground }]}>{item.displayName}</Text>
-                    <Text style={[styles.roomSub, { color: colors.mutedForeground }]}>{roleLabel(item.role)}</Text>
+                    <Text style={[styles.roomSub, { color: colors.mutedForeground }]}>{roleLabel(item.role, t)}</Text>
                   </View>
                   <Feather name="message-circle" size={18} color={colors.primary} />
                 </TouchableOpacity>
@@ -1757,7 +1760,7 @@ export default function ChatScreen() {
             <TouchableOpacity onPress={resetCreateGroupDialog} style={styles.backBtn}>
               <Feather name="arrow-left" size={20} color="#fff" />
             </TouchableOpacity>
-            <Text style={styles.cgPageTitle}>Tạo nhóm mới</Text>
+            <Text style={styles.cgPageTitle}>{t("Tạo nhóm mới")}</Text>
             <TouchableOpacity
               onPress={createGroup}
               disabled={!newGroupName.trim() || creatingGroup}
@@ -1765,7 +1768,7 @@ export default function ChatScreen() {
             >
               {creatingGroup
                 ? <ActivityIndicator size="small" color="#fff" />
-                : <Text style={styles.cgPageActionText}>Tạo</Text>}
+                : <Text style={styles.cgPageActionText}>{t("Tạo")}</Text>}
             </TouchableOpacity>
           </View>
 
@@ -1987,7 +1990,7 @@ export default function ChatScreen() {
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.roomName, { color: colors.foreground, fontSize: 14 }]}>{u.displayName}</Text>
-                        <Text style={[styles.roomSub, { color: colors.mutedForeground }]}>{roleLabel(u.role)}</Text>
+                        <Text style={[styles.roomSub, { color: colors.mutedForeground }]}>{roleLabel(u.role, t)}</Text>
                       </View>
                       {sel && <Feather name="check-circle" size={18} color={colors.primary} />}
                     </TouchableOpacity>

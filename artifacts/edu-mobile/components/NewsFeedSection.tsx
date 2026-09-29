@@ -13,6 +13,7 @@ import {
 } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
+import { useLanguage } from "@/context/LanguageContext";
 import { apiGet } from "@/lib/api";
 import { cachePost } from "@/lib/postCache";
 
@@ -47,22 +48,22 @@ interface Post {
   myReaction?: string | null;
 }
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, t: (text: string) => string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins} phút trước`;
+  if (mins < 60) return `${mins} ${t("phút trước")}`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} giờ trước`;
-  return `${Math.floor(hrs / 24)} ngày trước`;
+  if (hrs < 24) return `${hrs} ${t("giờ trước")}`;
+  return `${Math.floor(hrs / 24)} ${t("ngày trước")}`;
 }
 
 function totalReactions(r: Record<string, number>) {
   return Object.values(r).reduce((s, v) => s + v, 0);
 }
 
-function PostCard({ post, colors, cardWidth }: { post: Post; colors: ReturnType<typeof useColors>; cardWidth: number }) {
+function PostCard({ post, colors, cardWidth, t }: { post: Post; colors: ReturnType<typeof useColors>; cardWidth: number; t: (text: string) => string }) {
   const cat = CATEGORY_COLORS[post.category] ?? { bg: "#f3f4f6", text: "#6b7280" };
-  const catLabel = CATEGORY_LABELS[post.category] ?? post.category;
+  const catLabel = t(CATEGORY_LABELS[post.category] ?? post.category);
   const total = totalReactions(post.reactions);
   const image = post.imageUrl ?? post.imageUrls?.[0] ?? null;
 
@@ -84,7 +85,7 @@ function PostCard({ post, colors, cardWidth }: { post: Post; colors: ReturnType<
         {post.isPinned && (
           <View style={styles.pinnedRow}>
             <Feather name="bookmark" size={10} color="#f59e0b" />
-            <Text style={styles.pinnedText}>Đã ghim</Text>
+            <Text style={styles.pinnedText}>{t("Đã ghim")}</Text>
           </View>
         )}
 
@@ -109,7 +110,7 @@ function PostCard({ post, colors, cardWidth }: { post: Post; colors: ReturnType<
 
         <View style={styles.metaRow}>
           <Text style={[styles.metaText, { color: colors.mutedForeground }]}>
-            {timeAgo(post.createdAt)}
+            {timeAgo(post.createdAt, t)}
           </Text>
           {total > 0 && (
             <View style={styles.reactionRow}>
@@ -125,6 +126,7 @@ function PostCard({ post, colors, cardWidth }: { post: Post; colors: ReturnType<
 
 export default function NewsFeedSection() {
   const colors = useColors();
+  const { t } = useLanguage();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -156,7 +158,7 @@ export default function NewsFeedSection() {
     return (
       <View style={{ marginTop: 24, paddingHorizontal: 20 }}>
         <View style={styles.headerRow}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Bảng tin</Text>
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t("Bảng tin")}</Text>
         </View>
         <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 12 }} />
       </View>
@@ -173,10 +175,10 @@ export default function NewsFeedSection() {
   return (
     <View style={{ marginTop: 24 }}>
       <View style={styles.headerRow}>
-        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Bảng tin</Text>
+        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t("Bảng tin")}</Text>
         <TouchableOpacity onPress={() => router.push("/(tabs)/newsfeed" as any)} activeOpacity={0.7}>
           <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.primary }}>
-            Xem tất cả
+            {t("Xem tất cả")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -189,7 +191,7 @@ export default function NewsFeedSection() {
         contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
         snapToInterval={CARD_WIDTH + 12}
         decelerationRate="fast"
-         renderItem={({ item }) => <PostCard post={item} colors={colors} cardWidth={cardWidth} />}
+          renderItem={({ item }) => <PostCard post={item} colors={colors} cardWidth={cardWidth} t={t} />}
       />
     </View>
   );

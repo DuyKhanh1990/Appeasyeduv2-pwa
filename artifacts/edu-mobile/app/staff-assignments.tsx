@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useColors } from "@/hooks/useColors";
+import { useLanguage } from "@/context/LanguageContext";
 import { apiGet } from "@/lib/api";
 import { useFocusEffect } from "expo-router";
 import { setCurrentAssignment, getCurrentAssignment } from "@/lib/assignmentStore";
@@ -30,9 +31,9 @@ interface AssignmentResponse {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatDate(dateStr: string) {
+function formatDate(dateStr: string, locale: "vi-VN" | "en-US" = "vi-VN") {
   const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString("vi-VN", { day: "numeric", month: "numeric", year: "numeric" });
+  return d.toLocaleDateString(locale, { day: "numeric", month: "numeric", year: "numeric" });
 }
 
 const MONTH_NAMES = [
@@ -51,6 +52,7 @@ function AssignmentCard({
   onPress: (row: AssignmentRow) => void;
   colors: ReturnType<typeof useColors>;
 }) {
+  const { t, locale } = useLanguage();
   const isBTVN = row.itemType === "BTVN";
   const isSubmitted = row.submissionStatus === "submitted";
   const hasScore = row.score !== null && row.score !== undefined && row.score !== "";
@@ -83,7 +85,7 @@ function AssignmentCard({
             {row.homeworkTitle}
           </Text>
           <Text style={[styles.classInfo, { color: colors.mutedForeground }]}>
-            {row.className} • {row.weekday} {formatDate(row.sessionDate)} • {row.startTime}–{row.endTime}
+             {row.className} • {row.weekday} {formatDate(row.sessionDate, locale)} • {row.startTime}–{row.endTime}
           </Text>
         </View>
         <Feather name="chevron-right" size={18} color={colors.mutedForeground} style={{ marginLeft: 8, alignSelf: "center" }} />
@@ -93,13 +95,13 @@ function AssignmentCard({
         <View style={[styles.statusChip, { backgroundColor: isSubmitted ? "#dcfce7" : "#fef3c7" }]}>
           <Feather name={isSubmitted ? "check-circle" : "clock"} size={11} color={isSubmitted ? "#166534" : "#92400e"} />
           <Text style={[styles.statusText, { color: isSubmitted ? "#166534" : "#92400e" }]}>
-            {isSubmitted ? "Đã nộp" : "Chưa nộp"}
+            {t(isSubmitted ? "Đã nộp" : "Chưa nộp")}
           </Text>
         </View>
         <View style={[styles.gradeChip, { backgroundColor: hasScore ? "#f0fdf4" : colors.muted }]}>
           <Feather name={hasScore ? "check" : "edit-2"} size={11} color={hasScore ? "#16a34a" : colors.mutedForeground} />
           <Text style={[styles.gradeChipText, { color: hasScore ? "#16a34a" : colors.mutedForeground }]}>
-            {hasScore ? `Điểm: ${row.score}` : "Chưa chấm"}
+            {hasScore ? `${t("Điểm")}: ${row.score}` : t("Chưa chấm")}
           </Text>
         </View>
       </View>
@@ -111,6 +113,7 @@ function AssignmentCard({
 
 export default function StaffAssignmentsScreen() {
   const colors = useColors();
+  const { t, locale } = useLanguage();
   const insets = useSafeAreaInsets();
   const topPad = insets.top;
 
@@ -335,7 +338,7 @@ export default function StaffAssignmentsScreen() {
             <Feather name="arrow-left" size={22} color="#1e1b4b" />
           </TouchableOpacity>
           <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: "#1e1b4b", flex: 1 }}>
-            Bài tập - Bài kiểm tra
+            {t("Bài tập - Bài kiểm tra")}
           </Text>
           <TouchableOpacity onPress={openFilterPanel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={{ position: "relative" }}>
             <View style={{
@@ -364,7 +367,7 @@ export default function StaffAssignmentsScreen() {
           <Text style={styles.monthLabel}>
             {(dateFromFilter && dateToFilter)
               ? `${formatDateDisplay(dateFromFilter)} — ${formatDateDisplay(dateToFilter)}`
-              : `${MONTH_NAMES[viewMonth]}, ${viewYear}`}
+              : `${t(MONTH_NAMES[viewMonth])}, ${viewYear}`}
           </Text>
           <TouchableOpacity onPress={() => goMonth(1)} style={styles.navBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Feather name="chevron-right" size={20} color="rgba(255,255,255,0.9)" />
@@ -379,7 +382,7 @@ export default function StaffAssignmentsScreen() {
               style={[styles.filterBtn, statusFilter === f.key && styles.filterBtnActive]}
             >
               <Text style={[styles.filterBtnText, statusFilter === f.key && styles.filterBtnTextActive]}>
-                {f.label}
+                {t(f.label)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -401,7 +404,7 @@ export default function StaffAssignmentsScreen() {
             <View style={[styles.empty, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Feather name="inbox" size={32} color={colors.mutedForeground} />
               <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                Không có dữ liệu trong tháng này
+                {t("Không có dữ liệu trong tháng này")}
               </Text>
             </View>
           ) : (
@@ -451,9 +454,9 @@ export default function StaffAssignmentsScreen() {
           {/* Header */}
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}>
             <TouchableOpacity onPress={resetFilters}>
-              <Text style={{ fontSize: 13, fontFamily: "Inter_700Bold", color: "#f97316" }}>Đặt lại</Text>
+              <Text style={{ fontSize: 13, fontFamily: "Inter_700Bold", color: "#f97316" }}>{t("Đặt lại")}</Text>
             </TouchableOpacity>
-            <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>Bộ lọc</Text>
+            <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>{t("Bộ lọc")}</Text>
             <TouchableOpacity onPress={() => setFilterPanelVisible(false)}>
               <Feather name="x" size={18} color={colors.mutedForeground} />
             </TouchableOpacity>
@@ -466,9 +469,9 @@ export default function StaffAssignmentsScreen() {
           >
             <Feather name="calendar" size={16} color={colors.mutedForeground} style={{ marginRight: 12 }} />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.mutedForeground, marginBottom: 2 }}>Từ ngày</Text>
+              <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.mutedForeground, marginBottom: 2 }}>{t("Từ ngày")}</Text>
               <Text style={{ fontSize: 14, fontFamily: draftDateFrom ? "Inter_600SemiBold" : "Inter_400Regular", color: draftDateFrom ? colors.primary : colors.foreground }}>
-                {draftDateFrom ? formatDateDisplay(draftDateFrom) : "Chọn ngày bắt đầu"}
+                {draftDateFrom ? formatDateDisplay(draftDateFrom) : t("Chọn ngày bắt đầu")}
               </Text>
             </View>
             {draftDateFrom && (
@@ -484,9 +487,9 @@ export default function StaffAssignmentsScreen() {
           >
             <Feather name="calendar" size={16} color={colors.mutedForeground} style={{ marginRight: 12 }} />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.mutedForeground, marginBottom: 2 }}>Đến ngày</Text>
+              <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.mutedForeground, marginBottom: 2 }}>{t("Đến ngày")}</Text>
               <Text style={{ fontSize: 14, fontFamily: draftDateTo ? "Inter_600SemiBold" : "Inter_400Regular", color: draftDateTo ? colors.primary : colors.foreground }}>
-                {draftDateTo ? formatDateDisplay(draftDateTo) : "Chọn ngày kết thúc"}
+                {draftDateTo ? formatDateDisplay(draftDateTo) : t("Chọn ngày kết thúc")}
               </Text>
             </View>
             {draftDateTo && (
@@ -504,9 +507,9 @@ export default function StaffAssignmentsScreen() {
           >
             <Feather name="layers" size={16} color={colors.mutedForeground} style={{ marginRight: 12 }} />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.mutedForeground, marginBottom: 2 }}>Lớp học</Text>
+              <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.mutedForeground, marginBottom: 2 }}>{t("Lớp học")}</Text>
               <Text style={{ fontSize: 14, fontFamily: draftClassNames.length > 0 ? "Inter_600SemiBold" : "Inter_400Regular", color: draftClassNames.length > 0 ? colors.primary : colors.foreground }}>
-                {draftClassNames.length === 0 ? "Tất cả lớp" : draftClassNames.length === 1 ? draftClassNames[0] : `${draftClassNames.length} lớp`}
+                {draftClassNames.length === 0 ? t("Tất cả lớp") : draftClassNames.length === 1 ? draftClassNames[0] : `${draftClassNames.length} ${t("lớp")}`}
               </Text>
             </View>
             {draftClassNames.length > 0 && (
@@ -524,13 +527,13 @@ export default function StaffAssignmentsScreen() {
           >
             <Feather name="user" size={16} color={colors.mutedForeground} style={{ marginRight: 12 }} />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.mutedForeground, marginBottom: 2 }}>Học viên</Text>
+              <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.mutedForeground, marginBottom: 2 }}>{t("Học viên")}</Text>
               <Text style={{ fontSize: 14, fontFamily: draftStudentIds.length > 0 ? "Inter_600SemiBold" : "Inter_400Regular", color: draftStudentIds.length > 0 ? colors.primary : colors.foreground }}>
                 {draftStudentIds.length === 0
-                  ? "Tất cả học viên"
+                  ? t("Tất cả học viên")
                   : draftStudentIds.length === 1
-                    ? (availableStudents.find((s) => s.id === draftStudentIds[0])?.name ?? "Học viên")
-                    : `${draftStudentIds.length} học viên`}
+                    ? (availableStudents.find((s) => s.id === draftStudentIds[0])?.name ?? t("Học viên"))
+                    : `${draftStudentIds.length} ${t("học viên")}`}
               </Text>
             </View>
             {draftStudentIds.length > 0 && (
@@ -547,7 +550,7 @@ export default function StaffAssignmentsScreen() {
               onPress={applyFilters}
               style={{ backgroundColor: colors.primary, borderRadius: 12, paddingVertical: 14, alignItems: "center" }}
             >
-              <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Áp dụng</Text>
+              <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#fff" }}>{t("Áp dụng")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -559,10 +562,10 @@ export default function StaffAssignmentsScreen() {
         <View style={{ backgroundColor: colors.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: "65%", position: "absolute", bottom: 0, left: 0, right: 0, borderWidth: 1, borderColor: colors.border }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
             <TouchableOpacity onPress={() => setDraftClassNames([])}>
-              <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>Bỏ chọn tất cả</Text>
+              <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>{t("Bỏ chọn tất cả")}</Text>
             </TouchableOpacity>
             <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: colors.foreground }}>
-              Chọn lớp {draftClassNames.length > 0 ? `(${draftClassNames.length})` : ""}
+              {t("Chọn lớp")} {draftClassNames.length > 0 ? `(${draftClassNames.length})` : ""}
             </Text>
             <TouchableOpacity onPress={() => setClassSubPickerVisible(false)}><Feather name="x" size={18} color={colors.mutedForeground} /></TouchableOpacity>
           </View>
@@ -586,7 +589,7 @@ export default function StaffAssignmentsScreen() {
               );
             })}
             {availableClasses.length === 0 && (
-              <Text style={{ fontSize: 13, color: colors.mutedForeground, fontFamily: "Inter_400Regular", textAlign: "center", paddingVertical: 24 }}>Không có dữ liệu</Text>
+              <Text style={{ fontSize: 13, color: colors.mutedForeground, fontFamily: "Inter_400Regular", textAlign: "center", paddingVertical: 24 }}>{t("Không có dữ liệu")}</Text>
             )}
             <View style={{ height: insets.bottom + 12 }} />
           </ScrollView>
@@ -599,10 +602,10 @@ export default function StaffAssignmentsScreen() {
         <View style={{ backgroundColor: colors.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: "65%", position: "absolute", bottom: 0, left: 0, right: 0, borderWidth: 1, borderColor: colors.border }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
             <TouchableOpacity onPress={() => setDraftStudentIds([])}>
-              <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>Bỏ chọn tất cả</Text>
+              <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>{t("Bỏ chọn tất cả")}</Text>
             </TouchableOpacity>
             <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: colors.foreground }}>
-              Chọn học viên {draftStudentIds.length > 0 ? `(${draftStudentIds.length})` : ""}
+              {t("Chọn học viên")} {draftStudentIds.length > 0 ? `(${draftStudentIds.length})` : ""}
             </Text>
             <TouchableOpacity onPress={() => setStudentSubPickerVisible(false)}><Feather name="x" size={18} color={colors.mutedForeground} /></TouchableOpacity>
           </View>
@@ -646,7 +649,7 @@ export default function StaffAssignmentsScreen() {
               else setDraftDateTo(null);
               setDatePickerTarget(null);
             }}>
-              <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>Xoá</Text>
+              <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>{t("Xoá")}</Text>
             </TouchableOpacity>
             <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>
               {datePickerTarget === "from" ? "Từ ngày" : "Đến ngày"}
@@ -662,7 +665,7 @@ export default function StaffAssignmentsScreen() {
               <Feather name="chevron-left" size={20} color={colors.foreground} />
             </TouchableOpacity>
             <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: colors.foreground }}>
-              {MONTH_NAMES[pickerMonth]}, {pickerYear}
+              {t(MONTH_NAMES[pickerMonth])}, {pickerYear}
             </Text>
             <TouchableOpacity onPress={() => goPickerMonth(1)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Feather name="chevron-right" size={20} color={colors.foreground} />

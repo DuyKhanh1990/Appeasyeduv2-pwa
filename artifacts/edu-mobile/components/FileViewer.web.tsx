@@ -11,6 +11,7 @@ import {
 
 import { useColors } from "@/hooks/useColors";
 import { apiGet } from "@/lib/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 // ─── Types (shared) ───────────────────────────────────────────────────────────
 export interface FileItem {
@@ -75,6 +76,7 @@ const DOCX_HTML_WRAPPER = (body: string) => `<!DOCTYPE html>
 //   3. If (2) fails → error view with "Open in new tab"
 //
 function DocOrPdfViewerModal({ file, onClose }: { file: FileItem; onClose: () => void }) {
+  const { t } = useLanguage();
   const kind = detectKind(file);
   const wordDoc = isWordDoc(file);
 
@@ -128,7 +130,7 @@ function DocOrPdfViewerModal({ file, onClose }: { file: FileItem; onClose: () =>
           {loading && stage !== "error" && (
             <View style={dv.loadingOverlay}>
               <Text style={dv.loadingText}>
-                {stage === "convert" ? "Đang chuyển đổi…" : "Đang tải…"}
+                {stage === "convert" ? t("Đang chuyển đổi…") : t("Đang tải…")}
               </Text>
             </View>
           )}
@@ -151,9 +153,9 @@ function DocOrPdfViewerModal({ file, onClose }: { file: FileItem; onClose: () =>
           {stage === "error" && (
             <View style={dv.errorBox}>
               <Feather name="alert-circle" size={36} color="#ef4444" />
-              <Text style={dv.errorText}>Không thể tải xem trước</Text>
+              <Text style={dv.errorText}>{t("Không thể tải xem trước")}</Text>
               <TouchableOpacity style={dv.openBtn} onPress={() => window.open(file.url, "_blank")}>
-                <Text style={dv.openBtnText}>Mở tab mới</Text>
+                <Text style={dv.openBtnText}>{t("Mở tab mới")}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -298,6 +300,7 @@ interface FileViewerProps {
 
 export function FileViewer({ file, imageSize = 88 }: FileViewerProps) {
   const colors = useColors();
+  const { t } = useLanguage();
   const [fsOpen, setFsOpen] = useState(false);
   const [docOpen, setDocOpen] = useState(false);
   const kind = detectKind(file);
@@ -369,7 +372,7 @@ export function FileViewer({ file, imageSize = 88 }: FileViewerProps) {
           <View style={{ flex: 1 }}>
             <Text style={[s.pillName, { color: colors.foreground }]} numberOfLines={1}>{file.name}</Text>
             <Text style={[s.pillSub, { color: colors.mutedForeground }]}>
-              {kind === "pdf" ? "Xem PDF" : "Xem file"}
+              {kind === "pdf" ? t("Xem PDF") : t("Xem file")}
             </Text>
           </View>
           <Feather name="maximize-2" size={14} color={colors.mutedForeground} />
@@ -390,7 +393,7 @@ export function FileViewer({ file, imageSize = 88 }: FileViewerProps) {
       </View>
       <View style={{ flex: 1 }}>
         <Text style={[s.pillName, { color: colors.foreground }]} numberOfLines={1}>{file.name}</Text>
-        <Text style={[s.pillSub, { color: colors.mutedForeground }]}>Mở file</Text>
+        <Text style={[s.pillSub, { color: colors.mutedForeground }]}>{t("Mở file")}</Text>
       </View>
       <Feather name="external-link" size={14} color={colors.mutedForeground} />
     </TouchableOpacity>

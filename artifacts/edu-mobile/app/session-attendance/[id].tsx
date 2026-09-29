@@ -19,6 +19,7 @@ import {
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { apiGet, apiPost, apiPatch } from "@/lib/api";
 import {
   HomeworkRichEditor,
@@ -96,6 +97,7 @@ function AttendancePickerModal({ student, onClose, onSave, colors }: {
   onSave: (studentSessionId: string, status: AttendanceStatus) => void;
   colors: any;
 }) {
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const [selectedStatus, setSelectedStatus] = useState<AttendanceStatus>(student.attendanceStatus);
   const statuses: AttendanceStatus[] = ["present", "absent", "makeup_wait", "makeup_done", "paused", "pending"];
@@ -110,7 +112,7 @@ function AttendancePickerModal({ student, onClose, onSave, colors }: {
                 <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
               </View>
               <View style={{ paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-                <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>Điểm danh học viên</Text>
+                <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>{t("Điểm danh học viên")}</Text>
                 <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginTop: 2 }}>
                   {student.studentName} · {student.studentCode}
                 </Text>
@@ -134,7 +136,7 @@ function AttendancePickerModal({ student, onClose, onSave, colors }: {
                         <Feather name={cfg.icon as any} size={16} color={cfg.color} />
                       </View>
                       <Text style={{ flex: 1, fontSize: 14, fontFamily: isSelected ? "Inter_600SemiBold" : "Inter_400Regular", color: isSelected ? cfg.color : colors.foreground }}>
-                        {cfg.label}
+                         {t(cfg.label)}
                       </Text>
                       {isSelected && <Feather name="check" size={16} color={cfg.color} />}
                     </TouchableOpacity>
@@ -147,7 +149,7 @@ function AttendancePickerModal({ student, onClose, onSave, colors }: {
                   onPress={() => { onSave(student.studentSessionId, selectedStatus); onClose(); }}
                   style={{ backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 14, alignItems: "center" }}
                 >
-                  <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Lưu điểm danh</Text>
+                  <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#fff" }}>{t("Lưu điểm danh")}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -164,6 +166,7 @@ function NoteModal({ student, onClose, onSave, colors }: {
   onSave: (studentSessionId: string, note: string) => void;
   colors: any;
 }) {
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const [note, setNote] = useState(student.attendanceNote);
 
@@ -181,7 +184,7 @@ function NoteModal({ student, onClose, onSave, colors }: {
                   <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: "#fff" }}>{getInitials(student.studentName)}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: colors.foreground }}>Ghi chú</Text>
+                  <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: colors.foreground }}>{t("Ghi chú")}</Text>
                   <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>{student.studentName} · {student.studentCode}</Text>
                 </View>
               </View>
@@ -189,7 +192,7 @@ function NoteModal({ student, onClose, onSave, colors }: {
                 <TextInput
                   value={note}
                   onChangeText={setNote}
-                  placeholder="Nhập ghi chú cho học viên này..."
+                  placeholder={t("Nhập ghi chú cho học viên này...")}
                   placeholderTextColor={colors.mutedForeground}
                   multiline
                   numberOfLines={4}
@@ -208,7 +211,7 @@ function NoteModal({ student, onClose, onSave, colors }: {
                   onPress={() => { onSave(student.studentSessionId, note); onClose(); }}
                   style={{ backgroundColor: colors.primary, borderRadius: 14, paddingVertical: 14, alignItems: "center" }}
                 >
-                  <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Lưu ghi chú</Text>
+                  <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#fff" }}>{t("Lưu ghi chú")}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -225,6 +228,7 @@ function BulkAttendanceModal({ count, onClose, onSave, colors }: {
   onSave: (status: AttendanceStatus) => void;
   colors: any;
 }) {
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const statuses: AttendanceStatus[] = ["present", "absent", "makeup_wait", "makeup_done", "paused", "pending"];
   return (
@@ -237,8 +241,8 @@ function BulkAttendanceModal({ count, onClose, onSave, colors }: {
                 <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: colors.border }} />
               </View>
               <View style={{ paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-                <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>Điểm danh {count} học viên</Text>
-                <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginTop: 2 }}>Chọn trạng thái áp dụng cho tất cả</Text>
+                <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground }}>{t("Điểm danh")} {count} {t("học viên")}</Text>
+                <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, marginTop: 2 }}>{t("Chọn trạng thái áp dụng cho tất cả")}</Text>
               </View>
               <View style={{ paddingHorizontal: 16, paddingTop: 14, gap: 8 }}>
                 {statuses.map((s) => {
@@ -256,7 +260,7 @@ function BulkAttendanceModal({ count, onClose, onSave, colors }: {
                       <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: cfg.color + "20", alignItems: "center", justifyContent: "center" }}>
                         <Feather name={cfg.icon as any} size={16} color={cfg.color} />
                       </View>
-                      <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: cfg.color }}>{cfg.label}</Text>
+                      <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: cfg.color }}>{t(cfg.label)}</Text>
                     </TouchableOpacity>
                   );
                 })}
@@ -331,6 +335,7 @@ function ReviewModal({ student, sessionId, onClose, onSave, colors, cachedReview
   cachedReviewData?: { reviewData: Record<string, unknown>; published: boolean } | null;
   colors: any;
 }) {
+  const { t } = useLanguage();
   const { height: screenH } = useWindowDimensions();
   const bodyMaxH = screenH * 0.9 - 318;
   const { user } = useAuth();
@@ -569,7 +574,7 @@ function ReviewModal({ student, sessionId, onClose, onSave, colors, cachedReview
             }}
           >
             <Feather name="check" size={14} color="#8b5cf6" />
-            <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#8b5cf6" }}>Xong</Text>
+            <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#8b5cf6" }}>{t("Xong")}</Text>
           </TouchableOpacity>
         </View>
       );
@@ -603,7 +608,7 @@ function ReviewModal({ student, sessionId, onClose, onSave, colors, cachedReview
             />
           ) : (
             <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, fontStyle: "italic" }}>
-              {`Nhận xét ${label.toLowerCase()}...`}
+              {`${t("Nhận xét")} ${label.toLowerCase()}...`}
             </Text>
           )}
         </View>
@@ -636,7 +641,7 @@ function ReviewModal({ student, sessionId, onClose, onSave, colors, cachedReview
             {label}
           </Text>
           <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: checked ? "#15803d" : colors.mutedForeground }}>
-            {checked ? "Đạt" : "Chưa đạt"}
+            {checked ? t("Đạt") : t("Chưa đạt")}
           </Text>
         </View>
         <Switch
@@ -669,7 +674,7 @@ function ReviewModal({ student, sessionId, onClose, onSave, colors, cachedReview
           </View>
           {student.hasReview && (
             <View style={{ backgroundColor: "#8b5cf618", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 }}>
-              <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: "#8b5cf6" }}>{student.reviewPublished ? "Đã đăng" : "Nháp"}</Text>
+              <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: "#8b5cf6" }}>{student.reviewPublished ? t("Đã đăng") : t("Nháp")}</Text>
             </View>
           )}
         </View>
@@ -677,7 +682,7 @@ function ReviewModal({ student, sessionId, onClose, onSave, colors, cachedReview
         {loadingMeta ? (
           <View style={{ alignItems: "center", justifyContent: "center", paddingVertical: 40 }}>
             <ActivityIndicator size="small" color="#8b5cf6" />
-            <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 10 }}>Đang tải tiêu chí...</Text>
+            <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 10 }}>{t("Đang tải tiêu chí...")}</Text>
           </View>
         ) : (
           <View style={{ flex: 1 }}>
@@ -771,7 +776,7 @@ function ReviewModal({ student, sessionId, onClose, onSave, colors, cachedReview
             {criteria.length > 0 ? (
               <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 12, gap: 10, borderTopWidth: 1, borderTopColor: colors.border }}>
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                  <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.foreground }}>Công bố</Text>
+                  <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.foreground }}>{t("Công bố")}</Text>
                   <Switch value={publish} onValueChange={(v) => { setPublish(v); Haptics.selectionAsync(); }} trackColor={{ false: colors.border, true: "#8b5cf660" }} thumbColor={publish ? "#8b5cf6" : "#9ca3af"} />
                 </View>
                 <TouchableOpacity
@@ -787,7 +792,7 @@ function ReviewModal({ student, sessionId, onClose, onSave, colors, cachedReview
                   }}
                   style={{ backgroundColor: "#8b5cf6", borderRadius: 14, paddingVertical: 14, alignItems: "center" }}
                 >
-                  <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#fff" }}>{publish ? "Đăng nhận xét" : "Lưu nháp"}</Text>
+                  <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#fff" }}>{publish ? t("Đăng nhận xét") : t("Lưu nháp")}</Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -797,7 +802,7 @@ function ReviewModal({ student, sessionId, onClose, onSave, colors, cachedReview
                   onPress={onClose}
                   style={{ backgroundColor: colors.muted, borderRadius: 14, paddingVertical: 14, alignItems: "center" }}
                 >
-                  <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>Huỷ</Text>
+                  <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{t("Huỷ")}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -810,6 +815,7 @@ function ReviewModal({ student, sessionId, onClose, onSave, colors, cachedReview
 }
 
 export default function SessionAttendanceScreen() {
+  const { t } = useLanguage();
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -1063,18 +1069,18 @@ export default function SessionAttendanceScreen() {
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 17, fontFamily: "Inter_700Bold", color: colors.foreground }}>
-              Điểm danh & Nhận xét
+              {t("Điểm danh & Nhận xét")}
             </Text>
             {!loading && (
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2, flexWrap: "wrap" }}>
                 <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>
-                  {presentCount}/{students.length} học viên có học
+                  {presentCount}/{students.length} {t("học viên có học")}
                 </Text>
                 {reviewCount > 0 && (
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#8b5cf615", paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8 }}>
                     <Feather name="message-circle" size={11} color="#8b5cf6" />
                     <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#8b5cf6" }}>
-                      Đã nhận xét ({reviewCount}/{students.length})
+                      {t("Đã nhận xét")} ({reviewCount}/{students.length})
                     </Text>
                   </View>
                 )}
@@ -1088,7 +1094,7 @@ export default function SessionAttendanceScreen() {
               onPress={() => { Haptics.selectionAsync(); setShowBulkAll(true); }}
               style={{ backgroundColor: "#10b98118", borderRadius: 18, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: "#10b98140" }}
             >
-              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#10b981" }}>Điểm danh tất cả</Text>
+              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#10b981" }}>{t("Điểm danh tất cả")}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -1098,14 +1104,14 @@ export default function SessionAttendanceScreen() {
       {loading ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 14 }}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13 }}>Đang tải danh sách...</Text>
+          <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13 }}>{t("Đang tải danh sách...")}</Text>
         </View>
       ) : error ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 32 }}>
           <Feather name="alert-circle" size={32} color="#ef4444" />
-          <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground, textAlign: "center" }}>Không tải được danh sách</Text>
+          <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground, textAlign: "center" }}>{t("Không tải được danh sách")}</Text>
           <TouchableOpacity onPress={() => router.back()} style={{ backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20 }}>
-            <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Quay lại</Text>
+            <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>{t("Quay lại")}</Text>
           </TouchableOpacity>
         </View>
       ) : students.length === 0 ? (
@@ -1113,8 +1119,8 @@ export default function SessionAttendanceScreen() {
           <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.muted, alignItems: "center", justifyContent: "center" }}>
             <Feather name="users" size={24} color={colors.mutedForeground} />
           </View>
-          <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>Chưa có học viên</Text>
-          <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>Lớp này chưa có học viên nào được đăng ký</Text>
+          <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{t("Chưa có học viên")}</Text>
+          <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>{t("Lớp này chưa có học viên nào được đăng ký")}</Text>
         </View>
       ) : (
         <>
@@ -1168,13 +1174,13 @@ export default function SessionAttendanceScreen() {
                           backgroundColor: cfg.color + "15", paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8,
                         }}>
                           <Feather name={cfg.icon as any} size={11} color={cfg.color} />
-                          <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: cfg.color }}>{cfg.label}</Text>
+                          <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: cfg.color }}>{t(cfg.label)}</Text>
                         </View>
                         {student.hasReview && (
                           <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#8b5cf615", paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8 }}>
                             <Feather name="message-circle" size={11} color="#8b5cf6" />
                             <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#8b5cf6" }}>
-                              {student.reviewPublished ? "Đã nhận xét" : "Nháp"}
+                              {student.reviewPublished ? t("Đã nhận xét") : t("Nháp")}
                             </Text>
                           </View>
                         )}
@@ -1229,7 +1235,7 @@ export default function SessionAttendanceScreen() {
                         color={student.attendanceStatus !== "pending" ? "#8b5cf6" : colors.mutedForeground}
                       />
                       <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: student.attendanceStatus !== "pending" ? "#8b5cf6" : colors.mutedForeground }}>
-                        Điểm danh
+                        {t("Điểm danh")}
                       </Text>
                     </TouchableOpacity>
 
@@ -1260,7 +1266,7 @@ export default function SessionAttendanceScreen() {
                         color={student.hasReview ? "#8b5cf6" : colors.mutedForeground}
                       />
                       <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: student.hasReview ? "#8b5cf6" : colors.mutedForeground }}>
-                        Nhận xét
+                        {t("Nhận xét")}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -1289,7 +1295,7 @@ export default function SessionAttendanceScreen() {
                 <Feather name="x" size={16} color={colors.mutedForeground} />
               </TouchableOpacity>
               <Text style={{ flex: 1, fontSize: 13, fontFamily: "Inter_500Medium", color: colors.foreground }}>
-                Đã chọn {selCount} học viên
+                {t("Đã chọn")} {selCount} {t("học viên")}
               </Text>
               <TouchableOpacity
                 activeOpacity={0.85}
@@ -1297,7 +1303,7 @@ export default function SessionAttendanceScreen() {
                 style={{ backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 6 }}
               >
                 <Feather name="check-circle" size={15} color="#fff" />
-                <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Điểm danh</Text>
+                <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#fff" }}>{t("Điểm danh")}</Text>
               </TouchableOpacity>
             </View>
           )}

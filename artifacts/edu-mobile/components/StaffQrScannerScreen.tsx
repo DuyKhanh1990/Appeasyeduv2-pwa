@@ -17,6 +17,7 @@ import {
 } from "react-native";
 
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 import { apiGet, apiPost } from "@/lib/api";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
@@ -112,6 +113,7 @@ function formatTime(value?: string): string {
 
 export function StaffQrScannerScreen() {
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [permission, requestPermission] = useCameraPermissions();
@@ -125,8 +127,8 @@ export function StaffQrScannerScreen() {
 
   const isStaff = user?.role === "staff" || user?.role === "teacher" || user?.role === "admin";
   const permissionLabel = useMemo(() => {
-    if (!permission?.granted) return "Cho phép camera để quét mã QR";
-    return "Đưa mã QR vào khung quét";
+     if (!permission?.granted) return t("Cho phép camera để quét mã QR");
+     return t("Đưa mã QR vào khung quét");
   }, [permission?.granted]);
 
   useEffect(() => {
@@ -209,8 +211,8 @@ export function StaffQrScannerScreen() {
     return (
       <View style={[styles.centerState, { backgroundColor: colors.background }]}>
         <Feather name="lock" size={38} color={colors.mutedForeground} />
-        <Text style={[styles.centerTitle, { color: colors.foreground }]}>Tính năng dành cho Staff</Text>
-        <Text style={[styles.centerText, { color: colors.mutedForeground }]}>Tài khoản này không có quyền quét QR.</Text>
+        <Text style={[styles.centerTitle, { color: colors.foreground }]}>{t("Tính năng dành cho Staff")}</Text>
+        <Text style={[styles.centerText, { color: colors.mutedForeground }]}>{t("Tài khoản này không có quyền quét QR.")}</Text>
       </View>
     );
   }
@@ -225,8 +227,8 @@ export function StaffQrScannerScreen() {
           <Feather name="arrow-left" size={21} color="#fff" />
         </Pressable>
         <View style={styles.topBarCopy}>
-          <Text style={styles.topBarTitle}>Quét QR điểm danh</Text>
-          <Text style={styles.topBarSubtitle}>Quét mã học viên để điểm danh nhanh</Text>
+          <Text style={styles.topBarTitle}>{t("Quét QR điểm danh")}</Text>
+          <Text style={styles.topBarSubtitle}>{t("Quét mã học viên để điểm danh nhanh")}</Text>
         </View>
         <View style={styles.topBarIcon}>
           <QrScanIcon size={24} />
@@ -241,13 +243,13 @@ export function StaffQrScannerScreen() {
         <View style={[styles.cameraCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.cameraHeader}>
             <View>
-              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Camera quét mã</Text>
+               <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t("Camera quét mã")}</Text>
               <Text style={[styles.sectionSubtitle, { color: colors.mutedForeground }]}>{permissionLabel}</Text>
             </View>
             <View style={[styles.livePill, { backgroundColor: scannerActive ? colors.success + "16" : colors.muted }]}>
               <View style={[styles.liveDot, { backgroundColor: scannerActive ? colors.success : colors.mutedForeground }]} />
               <Text style={[styles.liveText, { color: scannerActive ? colors.success : colors.mutedForeground }]}>
-                {scannerActive ? "Sẵn sàng" : "Đã dừng"}
+                 {scannerActive ? t("Sẵn sàng") : t("Đã dừng")}
               </Text>
             </View>
           </View>
@@ -267,10 +269,10 @@ export function StaffQrScannerScreen() {
                   <Feather name={permission?.granted ? "pause-circle" : "camera"} size={34} color="#fff" />
                 </View>
                 <Text style={styles.cameraPlaceholderTitle}>
-                  {permission?.granted ? "Camera đang tạm dừng" : "Camera chưa được cấp quyền"}
+                   {permission?.granted ? t("Camera đang tạm dừng") : t("Camera chưa được cấp quyền")}
                 </Text>
                 <Text style={styles.cameraPlaceholderText}>
-                  {permission?.granted ? "Bấm quét lại để tiếp tục" : "Cấp quyền camera để bắt đầu quét"}
+                   {permission?.granted ? t("Bấm quét lại để tiếp tục") : t("Cấp quyền camera để bắt đầu quét")}
                 </Text>
               </View>
             )}
@@ -289,7 +291,7 @@ export function StaffQrScannerScreen() {
               style={[styles.primaryButton, { backgroundColor: colors.primary }]}
             >
               <Feather name="camera" size={18} color="#fff" />
-              <Text style={styles.primaryButtonText}>Cho phép camera</Text>
+               <Text style={styles.primaryButtonText}>{t("Cho phép camera")}</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
@@ -299,7 +301,7 @@ export function StaffQrScannerScreen() {
             >
               <Feather name={scannerActive ? "pause" : "camera"} size={17} color={colors.primary} />
               <Text style={[styles.secondaryButtonText, { color: colors.primary }]}>
-                {scannerActive ? "Tạm dừng camera" : "Quét lại"}
+                 {scannerActive ? t("Tạm dừng camera") : t("Quét lại")}
               </Text>
             </TouchableOpacity>
           )}
@@ -308,14 +310,14 @@ export function StaffQrScannerScreen() {
         <View style={styles.manualSection}>
           <View style={styles.dividerRow}>
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
-            <Text style={[styles.dividerText, { color: colors.mutedForeground }]}>hoặc nhập token</Text>
+             <Text style={[styles.dividerText, { color: colors.mutedForeground }]}>{t("hoặc nhập token")}</Text>
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
           </View>
           <View style={styles.manualRow}>
             <TextInput
               value={manualToken}
               onChangeText={setManualToken}
-              placeholder="Dán token QR tại đây"
+               placeholder={t("Dán token QR tại đây")}
               placeholderTextColor={colors.mutedForeground}
               autoCapitalize="none"
               autoCorrect={false}
@@ -359,13 +361,13 @@ export function StaffQrScannerScreen() {
           <View style={[styles.resultCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.resultHeader}>
               <View>
-                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Thông tin học viên</Text>
-                <Text style={[styles.sectionSubtitle, { color: colors.mutedForeground }]}>Kết quả từ mã QR vừa quét</Text>
+                 <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t("Thông tin học viên")}</Text>
+                 <Text style={[styles.sectionSubtitle, { color: colors.mutedForeground }]}>{t("Kết quả từ mã QR vừa quét")}</Text>
               </View>
               {attended ? (
                 <View style={[styles.statusPill, { backgroundColor: colors.success + "16" }]}>
                   <Feather name="check" size={13} color={colors.success} />
-                  <Text style={[styles.statusPillText, { color: colors.success }]}>Đã điểm danh</Text>
+                   <Text style={[styles.statusPillText, { color: colors.success }]}>{t("Đã điểm danh")}</Text>
                 </View>
               ) : null}
             </View>
@@ -382,13 +384,13 @@ export function StaffQrScannerScreen() {
 
             <View style={styles.detailGrid}>
               <View style={styles.detailCell}>
-                <Text style={[styles.detailLabel, { color: colors.mutedForeground }]}>Lớp học</Text>
+                 <Text style={[styles.detailLabel, { color: colors.mutedForeground }]}>{t("Lớp học")}</Text>
                 <Text style={[styles.detailValue, { color: colors.foreground }]} numberOfLines={2}>
                   {scanResult.session.classCode || scanResult.session.className}
                 </Text>
               </View>
               <View style={styles.detailCell}>
-                <Text style={[styles.detailLabel, { color: colors.mutedForeground }]}>Khung giờ</Text>
+                 <Text style={[styles.detailLabel, { color: colors.mutedForeground }]}>{t("Khung giờ")}</Text>
                 <Text style={[styles.detailValue, { color: colors.foreground }]}>
                   {scanResult.session.startTime} – {scanResult.session.endTime}
                 </Text>
@@ -418,12 +420,12 @@ export function StaffQrScannerScreen() {
                  ]}
                >
                  {attended
-                  ? "Đã ghi nhận điểm danh thành công."
+                   ? t("Đã ghi nhận điểm danh thành công.")
                    : isAlreadyAttended
-                     ? "Học viên đã được điểm danh trước đó."
+                     ? t("Học viên đã được điểm danh trước đó.")
                   : scanResult.attendance.canAttend
-                    ? "Đang trong thời gian được phép điểm danh."
-                    : `Điểm danh mở lúc ${formatTime(scanResult.attendance.openAt)}.`}
+                     ? t("Đang trong thời gian được phép điểm danh.")
+                     : `${t("Điểm danh mở lúc")} ${formatTime(scanResult.attendance.openAt)}.`}
               </Text>
             </View>
 
@@ -436,14 +438,14 @@ export function StaffQrScannerScreen() {
               >
                 {busy ? <ActivityIndicator color="#fff" /> : <Feather name="check-circle" size={18} color="#fff" />}
                 <Text style={styles.primaryButtonText}>
-                  {scanResult.attendance.canAttend ? "Điểm danh học viên" : "Chưa đến giờ điểm danh"}
+                   {scanResult.attendance.canAttend ? t("Điểm danh học viên") : t("Chưa đến giờ điểm danh")}
                 </Text>
               </TouchableOpacity>
             ) : null}
 
             <TouchableOpacity activeOpacity={0.82} onPress={reset} style={styles.scanAnotherButton}>
               <Feather name="refresh-cw" size={16} color={colors.primary} />
-              <Text style={[styles.scanAnotherText, { color: colors.primary }]}>Quét học viên khác</Text>
+               <Text style={[styles.scanAnotherText, { color: colors.primary }]}>{t("Quét học viên khác")}</Text>
             </TouchableOpacity>
           </View>
                 </ScrollView>

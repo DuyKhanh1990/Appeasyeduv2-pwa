@@ -19,6 +19,7 @@ import {
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 import { apiGet, apiPost } from "@/lib/api";
 import { FileList } from "@/components/FileViewer";
@@ -145,6 +146,7 @@ function ContentModal({ item, onClose, colors }: {
   onClose: () => void;
   colors: ReturnType<typeof useColors>;
 }) {
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
 
   return (
@@ -189,13 +191,13 @@ function ContentModal({ item, onClose, colors }: {
             </View>
           ) : (
             <View style={{ padding: 20, paddingBottom: item.attachments?.length ? 8 : 20, alignItems: "center" }}>
-              <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>Không có mô tả chi tiết</Text>
+              <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>{t("Không có mô tả chi tiết")}</Text>
             </View>
           )}
           {item.attachments && item.attachments.length > 0 && (
             <View style={{ paddingHorizontal: 20, paddingBottom: 24, gap: 8 }}>
               <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 2 }}>
-                File đính kèm
+                {t("File đính kèm")}
               </Text>
               <FileList files={item.attachments} />
             </View>
@@ -212,6 +214,7 @@ function ReviewModal({ visible, reviewData, onClose, colors }: {
   onClose: () => void;
   colors: ReturnType<typeof useColors>;
 }) {
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
 
   return (
@@ -237,7 +240,7 @@ function ReviewModal({ visible, reviewData, onClose, colors }: {
             <Feather name="eye" size={15} color="#f59e0b" />
           </View>
           <Text style={{ fontSize: 16, fontFamily: "Inter_700Bold", color: colors.foreground, flex: 1 }}>
-            Nhận xét từ giáo viên
+            {t("Nhận xét từ giáo viên")}
           </Text>
         </View>
 
@@ -261,6 +264,7 @@ function StudentTeachersSheet({ names, visible, onClose, colors, insets }: {
   colors: ReturnType<typeof useColors>;
   insets: { bottom: number; top: number };
 }) {
+  const { t } = useLanguage();
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <TouchableWithoutFeedback onPress={onClose}>
@@ -273,7 +277,7 @@ function StudentTeachersSheet({ names, visible, onClose, colors, insets }: {
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                   <Feather name="user" size={15} color={colors.primary} />
-                  <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: colors.foreground }}>Giáo viên</Text>
+                  <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: colors.foreground }}>{t("Giáo viên")}</Text>
                   <View style={{ backgroundColor: colors.primary + "15", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 }}>
                     <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.primary }}>{names.length}</Text>
                   </View>
@@ -311,6 +315,7 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
   insets: { top: number; bottom: number };
   colors: ReturnType<typeof useColors>;
 }) {
+  const { t } = useLanguage();
   const [session, setSession] = useState<StudentSession>(initialSession);
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
   const [reviewVisible, setReviewVisible] = useState(false);
@@ -327,7 +332,7 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
     ? sessionDate.split("-").reverse().join("/")
     : (session.sessionDate ? session.sessionDate.split("T")[0].split("-").reverse().join("/") : "");
   const weekdayLabel = session.weekday != null
-    ? ["Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"][session.weekday % 7]
+    ? t(["Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"][session.weekday % 7])
     : null;
   const primaryTeacher = session.teacherNames?.[0] || "";
   const teacherInitials = primaryTeacher
@@ -411,8 +416,8 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
     } catch (error) {
       const serverMessage = (error as { serverMessage?: string })?.serverMessage;
       Alert.alert(
-        "Không thể vào học online",
-        serverMessage || "Chưa ghi nhận được lượt vào học. Vui lòng thử lại.",
+        t("Không thể vào học online"),
+        serverMessage || t("Chưa ghi nhận được lượt vào học. Vui lòng thử lại."),
       );
       return;
     } finally {
@@ -467,7 +472,7 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
             <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: "#488287", marginBottom: 4, textTransform: "uppercase", letterSpacing: 1.6 }}>
-                  {session.sessionIndex != null ? `Buổi học ${session.sessionIndex}` : "Buổi học"}
+                  {session.sessionIndex != null ? `${t("Buổi học ")}${session.sessionIndex}` : t("Buổi học")}
                 </Text>
                 <Text style={{ fontSize: 25, lineHeight: 31, fontFamily: "Inter_700Bold", color: aquaDark }} numberOfLines={2}>
                   {session.classCode || session.className}
@@ -475,12 +480,12 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
               </View>
               {isCancelledSession ? (
                 <View style={{ backgroundColor: "#fee2e2", paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20 }}>
-                  <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#991b1b" }}>Đã huỷ</Text>
+                  <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#991b1b" }}>{t("Đã huỷ")}</Text>
                 </View>
               ) : session.attendanceStatus ? (
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: session.attendanceStatus === "present" ? "#198a72" : attendanceInfo.bg, paddingHorizontal: 11, paddingVertical: 7, borderRadius: 20, shadowColor: session.attendanceStatus === "present" ? "#198a72" : "transparent", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.18, shadowRadius: 6, elevation: session.attendanceStatus === "present" ? 2 : 0 }}>
                   {session.attendanceStatus === "present" ? <Feather name="check" size={13} color="#fff" /> : null}
-                  <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: session.attendanceStatus === "present" ? "#fff" : attendanceInfo.text }}>{attendanceInfo.label}</Text>
+                  <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: session.attendanceStatus === "present" ? "#fff" : attendanceInfo.text }}>{t(attendanceInfo.label)}</Text>
                 </View>
               ) : null}
             </View>
@@ -489,7 +494,7 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
               <View style={{ flexDirection: "row", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
                 {session.isTestSession ? (
                   <View style={{ backgroundColor: "#fef3c7", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: "#fde68a" }}>
-                    <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#92400e" }}>Kiểm tra</Text>
+                    <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#92400e" }}>{t("Kiểm tra")}</Text>
                   </View>
                 ) : null}
                 {!isCancelledSession && session.learningFormat ? (
@@ -573,12 +578,12 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
                 <Feather name="video" size={17} color="#fff" />
               )}
               <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: "#fff" }}>
-                {session.onlineClickedAt ? "Vào học lại" : "Vào học online"}
+                {session.onlineClickedAt ? t("Vào học lại") : t("Vào học online")}
               </Text>
             </TouchableOpacity>
             {!canJoinOnline && (
               <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>
-                Nút sẽ mở lúc {joinOpenTimeLabel}
+                {t("Nút sẽ mở lúc ")}{joinOpenTimeLabel}
               </Text>
             )}
             {/* End button — shown once the end window opens and student has joined */}
@@ -602,12 +607,12 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
                 ) : (
                   <Feather name="log-out" size={16} color="#fff" />
                 )}
-                <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: "#fff" }}>Kết thúc buổi học</Text>
+                <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: "#fff" }}>{t("Kết thúc buổi học")}</Text>
               </TouchableOpacity>
             ) : null}
             {session.onlineEndedAt ? (
               <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>
-                Đã kết thúc lúc {session.onlineEndedAt ? new Date(session.onlineEndedAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : ""}
+                {t("Đã kết thúc lúc ")}{session.onlineEndedAt ? new Date(session.onlineEndedAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : ""}
               </Text>
             ) : null}
           </View>
@@ -625,7 +630,7 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
               <View style={{ width: 32, height: 32, borderRadius: 11, backgroundColor: "#e4f5f2", alignItems: "center", justifyContent: "center" }}>
                 <Feather name="user" size={15} color={aqua} />
               </View>
-              <Text style={{ fontSize: 12, fontFamily: "Inter_700Bold", color: "#294e59", textTransform: "uppercase", letterSpacing: 1.1, flex: 1 }}>Giáo viên</Text>
+              <Text style={{ fontSize: 12, fontFamily: "Inter_700Bold", color: "#294e59", textTransform: "uppercase", letterSpacing: 1.1, flex: 1 }}>{t("Giáo viên")}</Text>
               <View style={{ backgroundColor: "#e4f5f2", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10 }}>
                 <Text style={{ fontSize: 10, fontFamily: "Inter_700Bold", color: aqua }}>{session.teacherNames.length}</Text>
               </View>
@@ -641,10 +646,10 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
                 </Text>
                 {session.teacherNames.length > 1 ? (
                   <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: "#88a1a5" }} numberOfLines={1}>
-                    +{session.teacherNames.length - 1} giáo viên khác
+                    +{session.teacherNames.length - 1} {t("giáo viên khác")}
                   </Text>
                 ) : (
-                  <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: "#88a1a5" }}>Giáo viên chính</Text>
+                  <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: "#88a1a5" }}>{t("Giáo viên chính")}</Text>
                 )}
               </View>
             </View>
@@ -658,8 +663,8 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
               <View style={{ width: 32, height: 32, borderRadius: 11, backgroundColor: "#e4f5f2", alignItems: "center", justifyContent: "center" }}>
                 <Feather name="book-open" size={16} color={aqua} />
               </View>
-              <Text style={{ fontSize: 12, fontFamily: "Inter_700Bold", color: "#294e59", textTransform: "uppercase", letterSpacing: 1.1, flex: 1 }}>Nội dung buổi học</Text>
-              <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: "#8aa3a6" }}>{allContents.length} mục</Text>
+              <Text style={{ fontSize: 12, fontFamily: "Inter_700Bold", color: "#294e59", textTransform: "uppercase", letterSpacing: 1.1, flex: 1 }}>{t("Nội dung buổi học")}</Text>
+              <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: "#8aa3a6" }}>{allContents.length} {t(" mục")}</Text>
             </View>
             <View style={{ padding: 13, gap: 9 }}>
               {allContents.map((item, idx) => (
@@ -714,18 +719,18 @@ function StudentDetailView({ session: initialSession, sessionDate, insets, color
                 <Feather name="message-circle" size={16} color={hasReview ? "#ad7a17" : aqua} />
               </View>
               <Text style={{ fontSize: 12, fontFamily: "Inter_700Bold", color: hasReview ? "#665127" : "#294e59", textTransform: "uppercase", letterSpacing: 1, flex: 1 }}>
-                Nhận xét từ giáo viên
+                {t("Nhận xét từ giáo viên")}
               </Text>
               <Feather name="chevron-right" size={17} color={hasReview ? "#ad7a17" : "#719499"} />
             </View>
             <View style={{ padding: 14 }}>
               {hasReview ? (
                 <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: "#8b7139", lineHeight: 18 }}>
-                  Giáo viên đã có nhận xét cho buổi học này. Nhấn để xem chi tiết.
+                  {t("Giáo viên đã có nhận xét cho buổi học này. Nhấn để xem chi tiết.")}
                 </Text>
               ) : (
                 <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: colors.mutedForeground, lineHeight: 18 }}>
-                  Chưa có nhận xét từ giáo viên cho buổi học này.
+                  {t("Chưa có nhận xét từ giáo viên cho buổi học này.")}
                 </Text>
               )}
             </View>
@@ -767,6 +772,7 @@ export default function SessionDetailScreen() {
   }>();
   const { user, isLoading: authLoading } = useAuth();
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
 
   // Keep the query-param route contract, but infer the view for direct URLs
@@ -834,7 +840,7 @@ export default function SessionDetailScreen() {
       return (
         <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center", gap: 14 }}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13 }}>Đang tải chi tiết...</Text>
+          <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13 }}>{t("Đang tải chi tiết...")}</Text>
         </View>
       );
     }
@@ -844,13 +850,13 @@ export default function SessionDetailScreen() {
           <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: "#fee2e2", alignItems: "center", justifyContent: "center" }}>
             <Feather name="alert-circle" size={26} color="#ef4444" />
           </View>
-          <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground, textAlign: "center" }}>Không tải được thông tin</Text>
-          <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>Vui lòng thử lại sau</Text>
+          <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground, textAlign: "center" }}>{t("Không tải được thông tin")}</Text>
+          <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>{t("Vui lòng thử lại sau")}</Text>
           <TouchableOpacity
             onPress={goBackFromSessionDetail}
             style={{ marginTop: 8, backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20 }}
           >
-            <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Quay lại</Text>
+            <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>{t("Quay lại")}</Text>
           </TouchableOpacity>
         </View>
       );
@@ -922,27 +928,27 @@ export default function SessionDetailScreen() {
         )}
 
         {loading && (
-          <Text style={{ fontSize: 17, fontFamily: "Inter_700Bold", color: colors.foreground }}>Chi tiết buổi học</Text>
+          <Text style={{ fontSize: 17, fontFamily: "Inter_700Bold", color: colors.foreground }}>{t("Chi tiết buổi học")}</Text>
         )}
       </View>
 
       {loading ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 14 }}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13 }}>Đang tải chi tiết...</Text>
+          <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13 }}>{t("Đang tải chi tiết...")}</Text>
         </View>
       ) : error || !detail ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 32 }}>
           <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: "#fee2e2", alignItems: "center", justifyContent: "center" }}>
             <Feather name="alert-circle" size={26} color="#ef4444" />
           </View>
-          <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground, textAlign: "center" }}>Không tải được thông tin</Text>
-          <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>Vui lòng thử lại sau</Text>
+          <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground, textAlign: "center" }}>{t("Không tải được thông tin")}</Text>
+          <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>{t("Vui lòng thử lại sau")}</Text>
           <TouchableOpacity
             onPress={goBackFromSessionDetail}
             style={{ marginTop: 8, backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20 }}
           >
-            <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Quay lại</Text>
+            <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>{t("Quay lại")}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -951,16 +957,16 @@ export default function SessionDetailScreen() {
           contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: insets.bottom + 40 }}
         >
           <View style={{ flexDirection: "row", gap: 10 }}>
-            <StatCard value={detail.enrolledCount ?? 0} label="Học viên" icon="users" color={colors.primary} colors={colors} />
+            <StatCard value={detail.enrolledCount ?? 0} label={t("Học viên")} icon="users" color={colors.primary} colors={colors} />
             <StatCard
               value={detail.attendancePendingCount ?? 0}
-              label="Chưa điểm danh"
+              label={t("Chưa điểm danh")}
               icon="alert-circle"
               color={detail.attendancePendingCount > 0 ? "#f97316" : colors.primary}
               highlight={detail.attendancePendingCount > 0}
               colors={colors}
             />
-            <StatCard value={detail.reviewedCount ?? 0} label="Đã nhận xét" icon="message-square" color={colors.primary} colors={colors} />
+            <StatCard value={detail.reviewedCount ?? 0} label={t("Đã nhận xét")} icon="message-square" color={colors.primary} colors={colors} />
           </View>
 
           {detail.teachers && detail.teachers.length > 0 && (
@@ -971,7 +977,7 @@ export default function SessionDetailScreen() {
             >
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, padding: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}>
                 <Feather name="user" size={15} color={colors.primary} />
-                <Text style={{ fontSize: 13, fontFamily: "Inter_700Bold", color: colors.foreground, textTransform: "uppercase", letterSpacing: 0.7, flex: 1 }}>Giáo viên</Text>
+                <Text style={{ fontSize: 13, fontFamily: "Inter_700Bold", color: colors.foreground, textTransform: "uppercase", letterSpacing: 0.7, flex: 1 }}>{t("Giáo viên")}</Text>
                 <View style={{ backgroundColor: colors.primary + "15", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 }}>
                   <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.primary }}>{detail.teachers.length}</Text>
                 </View>
@@ -988,7 +994,7 @@ export default function SessionDetailScreen() {
           )}
 
           {detail.generalContents && detail.generalContents.length > 0 && (
-            <SectionCard title="Nội dung buổi học" icon="book-open" colors={colors}>
+            <SectionCard title={t("Nội dung buổi học")} icon="book-open" colors={colors}>
               <View style={{ gap: 8 }}>
                 {detail.generalContents.map((item, idx) => (
                   <TouchableOpacity
@@ -1028,7 +1034,7 @@ export default function SessionDetailScreen() {
               style={{ flex: 1, backgroundColor: colors.card, borderRadius: 14, paddingVertical: 14, flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, borderWidth: 1, borderColor: colors.border, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 }}
             >
               <Feather name="check-circle" size={20} color="#10b981" />
-              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground, textAlign: "center" }}>Điểm danh & Nhận xét</Text>
+              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground, textAlign: "center" }}>{t("Điểm danh & Nhận xét")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               activeOpacity={0.8}
@@ -1036,7 +1042,7 @@ export default function SessionDetailScreen() {
               style={{ flex: 1, backgroundColor: colors.card, borderRadius: 14, paddingVertical: 14, flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, borderWidth: 1, borderColor: colors.border, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 }}
             >
               <Feather name="send" size={20} color="#8b5cf6" />
-              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground, textAlign: "center" }}>Giao Nội dung</Text>
+              <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.foreground, textAlign: "center" }}>{t("Giao Nội dung")}</Text>
             </TouchableOpacity>
           </View>
 
@@ -1044,7 +1050,7 @@ export default function SessionDetailScreen() {
             <View style={{ backgroundColor: "#fff7ed", borderRadius: 14, paddingVertical: 12, paddingHorizontal: 14, borderWidth: 1, borderColor: "#fed7aa", flexDirection: "row", alignItems: "center", gap: 10 }}>
               <Feather name="bell" size={16} color="#f97316" />
               <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: "#c2410c", flex: 1 }}>
-                Còn <Text style={{ fontFamily: "Inter_700Bold" }}>{detail.attendancePendingCount}</Text> học viên chưa điểm danh
+                {t("Còn ")}<Text style={{ fontFamily: "Inter_700Bold" }}>{detail.attendancePendingCount}</Text>{t(" học viên chưa điểm danh")}
               </Text>
             </View>
           )}
@@ -1130,6 +1136,7 @@ function TeachersBottomSheet({ teachers, visible, onClose, accentColor, colors, 
   colors: ReturnType<typeof useColors>;
   insets: { bottom: number; top: number };
 }) {
+  const { t } = useLanguage();
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <TouchableWithoutFeedback onPress={onClose}>
@@ -1149,7 +1156,7 @@ function TeachersBottomSheet({ teachers, visible, onClose, accentColor, colors, 
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                   <Feather name="user" size={15} color={colors.primary} />
-                  <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: colors.foreground }}>Giáo viên</Text>
+                  <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: colors.foreground }}>{t("Giáo viên")}</Text>
                   <View style={{ backgroundColor: colors.primary + "15", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 }}>
                     <Text style={{ fontSize: 12, fontFamily: "Inter_600SemiBold", color: colors.primary }}>{teachers.length}</Text>
                   </View>

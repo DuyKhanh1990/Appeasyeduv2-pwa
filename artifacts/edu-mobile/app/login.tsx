@@ -19,6 +19,7 @@ import {
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 import { getLastCredentials } from "@/lib/api";
 
@@ -31,6 +32,7 @@ export default function LoginScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { login } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
 
   const [centerUrl, setCenterUrl] = useState("");
   const [username, setUsername] = useState("");
@@ -77,7 +79,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!centerUrl.trim() || !username.trim() || !password.trim()) {
-      setError("Vui lòng điền đầy đủ thông tin");
+      setError(t("Vui lòng điền đầy đủ thông tin"));
       return;
     }
     setError("");
@@ -91,11 +93,11 @@ export default function LoginScreen() {
     } catch (err: unknown) {
       const status = (err as { status?: number })?.status;
       if (status === 401) {
-        setError("Sai tài khoản hoặc mật khẩu");
+        setError(t("Sai tài khoản hoặc mật khẩu"));
       } else if (status === 0 || err instanceof TypeError) {
-        setError("Không kết nối được tới trung tâm. Kiểm tra lại link.");
+        setError(t("Không kết nối được tới trung tâm. Kiểm tra lại link."));
       } else {
-        setError("Đăng nhập thất bại. Vui lòng thử lại.");
+        setError(t("Đăng nhập thất bại. Vui lòng thử lại."));
       }
     } finally {
       setLoading(false);
@@ -141,16 +143,53 @@ export default function LoginScreen() {
               style={styles.logoImage}
               resizeMode="contain"
             />
-            <Text style={styles.tagline}>Nền tảng giáo dục thông minh</Text>
+            <Text style={styles.tagline}>{t("Nền tảng giáo dục thông minh")}</Text>
+          </View>
+
+          <View style={styles.languagePicker}>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={t("Tiếng Việt")}
+              accessibilityState={{ selected: language === "vi" }}
+              onPress={() => void setLanguage("vi")}
+              style={[
+                styles.languageOption,
+                {
+                  borderColor: language === "vi" ? colors.primary : colors.border,
+                  backgroundColor: language === "vi" ? colors.primary + "10" : "transparent",
+                },
+              ]}
+            >
+              <Text style={{ color: language === "vi" ? colors.primary : colors.mutedForeground, fontFamily: "Inter_600SemiBold", fontSize: 12 }}>
+                Tiếng Việt
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="English"
+              accessibilityState={{ selected: language === "en" }}
+              onPress={() => void setLanguage("en")}
+              style={[
+                styles.languageOption,
+                {
+                  borderColor: language === "en" ? colors.primary : colors.border,
+                  backgroundColor: language === "en" ? colors.primary + "10" : "transparent",
+                },
+              ]}
+            >
+              <Text style={{ color: language === "en" ? colors.primary : colors.mutedForeground, fontFamily: "Inter_600SemiBold", fontSize: 12 }}>
+                English
+              </Text>
+            </TouchableOpacity>
           </View>
 
           <View style={[styles.card, { backgroundColor: "#ffffff", borderRadius: colors.radius + 4, borderWidth: 1, borderColor: "#f1f0f5" }]}>
-            <Text style={[styles.cardTitle, { color: colors.foreground }]}>Đăng nhập</Text>
-            <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>Nhập thông tin để tiếp tục</Text>
+            <Text style={[styles.cardTitle, { color: colors.foreground }]}>{t("Đăng nhập")}</Text>
+            <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>{t("Nhập thông tin để tiếp tục")}</Text>
 
             <View style={styles.fields}>
               <View style={styles.fieldGroup}>
-                <Text style={[styles.label, { color: colors.foreground }]}>Link trung tâm</Text>
+                  <Text style={[styles.label, { color: colors.foreground }]}>{t("Link trung tâm")}</Text>
                 <View style={[styles.inputRow, { borderColor: colors.border, borderRadius: colors.radius, backgroundColor: colors.muted }]}>
                   <Ionicons name="link" size={18} color={colors.mutedForeground} />
                   <TextInput
@@ -168,12 +207,12 @@ export default function LoginScreen() {
               </View>
 
               <View style={styles.fieldGroup}>
-                <Text style={[styles.label, { color: colors.foreground }]}>Tài khoản</Text>
+                  <Text style={[styles.label, { color: colors.foreground }]}>{t("Tài khoản")}</Text>
                 <View style={[styles.inputRow, { borderColor: colors.border, borderRadius: colors.radius, backgroundColor: colors.muted }]}>
                   <Feather name="user" size={18} color={colors.mutedForeground} />
                   <TextInput
                     style={[styles.input, { color: colors.foreground }]}
-                    placeholder="Nhập tài khoản"
+                    placeholder={t("Nhập tài khoản")}
                     placeholderTextColor={colors.mutedForeground}
                     value={username}
                     onChangeText={setUsername}
@@ -184,12 +223,12 @@ export default function LoginScreen() {
               </View>
 
               <View style={styles.fieldGroup}>
-                <Text style={[styles.label, { color: colors.foreground }]}>Mật khẩu</Text>
+                  <Text style={[styles.label, { color: colors.foreground }]}>{t("Mật khẩu")}</Text>
                 <View style={[styles.inputRow, { borderColor: colors.border, borderRadius: colors.radius, backgroundColor: colors.muted }]}>
                   <Feather name="lock" size={18} color={colors.mutedForeground} />
                   <TextInput
                     style={[styles.input, { color: colors.foreground }]}
-                    placeholder="Nhập mật khẩu"
+                    placeholder={t("Nhập mật khẩu")}
                     placeholderTextColor={colors.mutedForeground}
                     value={password}
                     onChangeText={setPassword}
@@ -222,14 +261,14 @@ export default function LoginScreen() {
                   {loading ? (
                     <ActivityIndicator color="#ffffff" size="small" />
                   ) : (
-                    <Text style={styles.loginBtnText}>Đăng nhập</Text>
+                    <Text style={styles.loginBtnText}>{t("Đăng nhập")}</Text>
                   )}
                 </View>
               </TouchableOpacity>
             </View>
 
             <TouchableOpacity style={styles.forgotRow}>
-              <Text style={[styles.forgotText, { color: "#ea580c" }]}>Quên mật khẩu?</Text>
+              <Text style={[styles.forgotText, { color: "#ea580c" }]}>{t("Quên mật khẩu?")}</Text>
             </TouchableOpacity>
           </View>
 
@@ -242,12 +281,12 @@ export default function LoginScreen() {
             >
               <Feather name="download" size={17} color="#ea580c" />
               <Text style={styles.installButtonText}>
-                {installing ? "Đang mở cài đặt..." : "Cài đặt EasyEdu"}
+                {installing ? t("Đang mở cài đặt...") : t("Cài đặt EasyEdu")}
               </Text>
             </TouchableOpacity>
           ) : null}
 
-          <Text style={styles.footer}>© 2026 EduCenter. Tất cả quyền được bảo lưu.</Text>
+          <Text style={styles.footer}>{t("© 2026 EduCenter. Tất cả quyền được bảo lưu.")}</Text>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -266,16 +305,16 @@ export default function LoginScreen() {
             <View style={styles.installModalIcon}>
               <Feather name="download" size={22} color="#ea580c" />
             </View>
-            <Text style={styles.installModalTitle}>Cài đặt EasyEdu</Text>
+            <Text style={styles.installModalTitle}>{t("Cài đặt EasyEdu")}</Text>
             <Text style={styles.installModalText}>
-              Trình duyệt này chưa mở được hộp thoại cài đặt tự động. Hãy mở menu trình duyệt rồi chọn “Cài đặt ứng dụng” hoặc “Thêm vào màn hình chính”.
+              {t("Trình duyệt này chưa mở được hộp thoại cài đặt tự động. Hãy mở menu trình duyệt rồi chọn “Cài đặt ứng dụng” hoặc “Thêm vào màn hình chính”.")}
             </Text>
             <TouchableOpacity
               activeOpacity={0.84}
               onPress={() => setShowInstallHelp(false)}
               style={styles.installModalButton}
             >
-              <Text style={styles.installModalButtonText}>Đã hiểu</Text>
+              <Text style={styles.installModalButtonText}>{t("Đã hiểu")}</Text>
             </TouchableOpacity>
           </View>
         </Pressable>
@@ -292,6 +331,18 @@ const styles = StyleSheet.create({
   logoSection: {
     alignItems: "center",
     gap: 8,
+  },
+  languagePicker: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: -12,
+  },
+  languageOption: {
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
   },
   logoImage: {
     width: 110,

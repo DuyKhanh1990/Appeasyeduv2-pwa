@@ -18,6 +18,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
+import { useLanguage } from "@/context/LanguageContext";
 
 import { useColors } from "@/hooks/useColors";
 import { apiGet } from "@/lib/api";
@@ -88,6 +89,7 @@ function CalendarPicker({ label, value, onChange, colors, accentColor }: {
   label: string; value: string; onChange: (v: string) => void;
   colors: ReturnType<typeof useColors>; accentColor: string;
 }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const today = new Date();
   const initial = isoToDate(value) ?? today;
@@ -162,7 +164,7 @@ function CalendarPicker({ label, value, onChange, colors, accentColor }: {
           fontFamily: hasValue ? "Inter_600SemiBold" : "Inter_400Regular",
           color: hasValue ? accentColor : colors.mutedForeground,
         }}>
-          {hasValue ? fmtDisplayDate(value) : "Chọn ngày"}
+          {hasValue ? fmtDisplayDate(value) : t("Chọn ngày")}
         </Text>
         {hasValue ? (
           <TouchableOpacity
@@ -191,7 +193,7 @@ function CalendarPicker({ label, value, onChange, colors, accentColor }: {
               <Feather name="chevron-left" size={16} color={colors.foreground} />
             </TouchableOpacity>
             <Text style={{ flex: 1, textAlign: "center", fontSize: 15, fontFamily: "Inter_700Bold", color: colors.foreground }}>
-              {MONTHS_VN[viewMonth]} {viewYear}
+              {t(MONTHS_VN[viewMonth])} {viewYear}
             </Text>
             <TouchableOpacity onPress={nextMonth} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: colors.muted, alignItems: "center", justifyContent: "center" }}>
@@ -257,19 +259,20 @@ function ClassDropdown({ selected, options, onChange, colors }: {
   selected: string[]; options: { code: string; label: string }[];
   onChange: (v: string[]) => void; colors: ReturnType<typeof useColors>;
 }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const toggle = (code: string) => {
     Haptics.selectionAsync();
     onChange(selected.includes(code) ? selected.filter((c) => c !== code) : [...selected, code]);
   };
-  const label = selected.length === 0 ? "Tất cả lớp" : selected.length === 1
+  const label = selected.length === 0 ? t("Tất cả lớp") : selected.length === 1
     ? (options.find((o) => o.code === selected[0])?.label ?? selected[0])
-    : `${selected.length} lớp đã chọn`;
+    : `${selected.length} ${t("lớp đã chọn")}`;
 
   return (
     <View style={{ gap: 4 }}>
       <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.5 }}>
-        Lớp học
+        {t("Lớp học")}
       </Text>
       <TouchableOpacity
         onPress={() => setOpen(!open)}
@@ -316,6 +319,7 @@ function FilterSheet({ visible, onClose, filters, onApply, availableClasses, col
   onApply: (f: Filters) => void; availableClasses: { code: string; label: string }[];
   colors: ReturnType<typeof useColors>; insets: { bottom: number };
 }) {
+  const { t } = useLanguage();
   const slideAnim = useRef(new Animated.Value(0)).current;
   const [draft, setDraft] = useState<Filters>(filters);
   const screenH = Dimensions.get("window").height;
@@ -346,9 +350,9 @@ function FilterSheet({ visible, onClose, filters, onApply, availableClasses, col
 
         {/* Header */}
         <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 18, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-          <Text style={{ flex: 1, fontSize: 17, fontFamily: "Inter_700Bold", color: colors.foreground }}>Bộ lọc</Text>
+          <Text style={{ flex: 1, fontSize: 17, fontFamily: "Inter_700Bold", color: colors.foreground }}>{t("Bộ lọc")}</Text>
           <TouchableOpacity onPress={() => setDraft(EMPTY_FILTERS)} style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, backgroundColor: colors.muted }}>
-            <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>Đặt lại</Text>
+            <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.mutedForeground }}>{t("Đặt lại")}</Text>
           </TouchableOpacity>
         </View>
 
@@ -366,13 +370,13 @@ function FilterSheet({ visible, onClose, filters, onApply, availableClasses, col
           {/* Số buổi còn lại */}
           <View style={{ gap: 6 }}>
             <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.5 }}>
-              Còn lại ≤ N buổi
+              {t("Còn lại ≤ N buổi")}
             </Text>
             <View style={{ flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: draft.maxRemaining ? colors.primary : colors.border, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: colors.background, gap: 8 }}>
               <Feather name="clock" size={14} color={draft.maxRemaining ? colors.primary : colors.mutedForeground} />
               <TextInput
                 style={{ flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", color: colors.foreground }}
-                placeholder="Ví dụ: 3"
+                placeholder={t("Ví dụ: 3")}
                 placeholderTextColor={colors.mutedForeground}
                 value={draft.maxRemaining}
                 onChangeText={(v) => setDraft((d) => ({ ...d, maxRemaining: v.replace(/[^0-9]/g, "") }))}
@@ -390,17 +394,17 @@ function FilterSheet({ visible, onClose, filters, onApply, availableClasses, col
           {/* Ngày kết thúc - from/to */}
           <View style={{ gap: 10 }}>
             <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.5 }}>
-              Khoảng ngày kết thúc
+              {t("Khoảng ngày kết thúc")}
             </Text>
             <CalendarPicker
-              label="Từ ngày"
+              label={t("Từ ngày")}
               value={draft.dateFrom}
               onChange={(v) => setDraft((d) => ({ ...d, dateFrom: v }))}
               colors={colors}
               accentColor="#2563eb"
             />
             <CalendarPicker
-              label="Đến ngày"
+              label={t("Đến ngày")}
               value={draft.dateTo}
               onChange={(v) => setDraft((d) => ({ ...d, dateTo: v }))}
               colors={colors}
@@ -414,7 +418,7 @@ function FilterSheet({ visible, onClose, filters, onApply, availableClasses, col
           <TouchableOpacity onPress={() => { onApply(draft); onClose(); }} style={{ borderRadius: 12, overflow: "hidden" }}>
             <View
               style={{ backgroundColor: colors.gradientStart, paddingVertical: 14, alignItems: "center" }}>
-              <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: "#1e1b4b" }}>Áp dụng</Text>
+              <Text style={{ fontSize: 15, fontFamily: "Inter_700Bold", color: "#1e1b4b" }}>{t("Áp dụng")}</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -425,6 +429,7 @@ function FilterSheet({ visible, onClose, filters, onApply, availableClasses, col
 
 // ─── Student Card ─────────────────────────────────────────────────────────────
 function StudentCard({ item, colors }: { item: Student; colors: ReturnType<typeof useColors> }) {
+  const { t } = useLanguage();
   const status = computeStatus(item);
   const isEnded = status === "ended";
   const rc = getRemainingColor(item.remainingSessions);
@@ -443,7 +448,7 @@ function StudentCard({ item, colors }: { item: Student; colors: ReturnType<typeo
             <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: colors.foreground }} numberOfLines={1}>{item.studentName}</Text>
             {item.accountStatus === "Không hoạt động" && (
               <View style={{ backgroundColor: "#fef2f2", borderRadius: 5, paddingHorizontal: 5, paddingVertical: 2, borderWidth: 1, borderColor: "#fecaca" }}>
-                <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#dc2626" }}>Bị khoá</Text>
+                <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: "#dc2626" }}>{t("Bị khoá")}</Text>
               </View>
             )}
           </View>
@@ -454,7 +459,7 @@ function StudentCard({ item, colors }: { item: Student; colors: ReturnType<typeo
         </View>
         <View style={{ alignItems: "center", backgroundColor: rb, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, minWidth: 52 }}>
           <Text style={{ fontSize: 18, fontFamily: "Inter_700Bold", color: rc, lineHeight: 22 }}>{item.remainingSessions}</Text>
-          <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: rc }}>buổi còn</Text>
+          <Text style={{ fontSize: 10, fontFamily: "Inter_500Medium", color: rc }}>{t("buổi còn")}</Text>
         </View>
       </View>
 
@@ -463,14 +468,14 @@ function StudentCard({ item, colors }: { item: Student; colors: ReturnType<typeo
           <View style={styles.stat}>
             <Feather name="calendar" size={12} color={colors.foreground} />
             <Text style={{ fontSize: 12, fontFamily: "Inter_700Bold", color: colors.foreground }}>
-              Ngày kết thúc: {fmtDate(item.endDate)}
+              {t("Ngày kết thúc: ")}{fmtDate(item.endDate)}
             </Text>
           </View>
         ) : null}
         <View style={{ flex: 1 }} />
         <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: isEnded ? colors.muted : status === "ending-soon" ? "#fff7ed" : "#f0fdf4" }}>
           <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: isEnded ? colors.mutedForeground : status === "ending-soon" ? "#ea580c" : "#16a34a" }}>
-            {isEnded ? "Đã kết thúc" : status === "ending-soon" ? "Sắp kết thúc" : "Đang học"}
+            {isEnded ? t("Đã kết thúc") : status === "ending-soon" ? t("Sắp kết thúc") : t("Đang học")}
           </Text>
         </View>
       </View>
@@ -481,6 +486,7 @@ function StudentCard({ item, colors }: { item: Student; colors: ReturnType<typeo
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function StaffExpiringStudentsScreen() {
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const topPad = insets.top;
 
@@ -525,14 +531,14 @@ export default function StaffExpiringStudentsScreen() {
     } catch (err: any) {
       if (!append) {
         setData([]); setTotal(0);
-        if (err?.status === 401) setErrorMsg("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
-        else if (err?.status === 403) setErrorMsg("Bạn không có quyền truy cập tính năng này.");
-        else setErrorMsg(`Không thể tải dữ liệu. ${err?.message || "Vui lòng thử lại."}`);
+        if (err?.status === 401) setErrorMsg(t("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."));
+        else if (err?.status === 403) setErrorMsg(t("Bạn không có quyền truy cập tính năng này."));
+        else setErrorMsg(`${t("Không thể tải dữ liệu. ")}${err?.message || t("Vui lòng thử lại.")}`);
       }
     } finally {
       setLoading(false); setLoadingMore(false); setRefreshing(false);
     }
-  }, [buildUrl]);
+  }, [buildUrl, t]);
 
   useEffect(() => {
     setPage(1); setData([]);
@@ -556,10 +562,10 @@ export default function StaffExpiringStudentsScreen() {
       <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: "#fef2f2", alignItems: "center", justifyContent: "center" }}>
         <Feather name="alert-circle" size={28} color="#ef4444" />
       </View>
-      <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground, textAlign: "center" }}>Không thể tải dữ liệu</Text>
+      <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground, textAlign: "center" }}>{t("Không thể tải dữ liệu")}</Text>
       <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center" }}>{errorMsg}</Text>
       <TouchableOpacity onPress={onRefresh} style={{ marginTop: 4, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10, backgroundColor: colors.primary }}>
-        <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>Thử lại</Text>
+        <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff" }}>{t("Thử lại")}</Text>
       </TouchableOpacity>
     </View>
   ) : (
@@ -567,9 +573,9 @@ export default function StaffExpiringStudentsScreen() {
       <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: colors.primary + "15", alignItems: "center", justifyContent: "center" }}>
         <Feather name="users" size={28} color={colors.primary} />
       </View>
-      <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>Không có dữ liệu</Text>
+        <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{t("Không có dữ liệu")}</Text>
       <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center", paddingHorizontal: 24 }}>
-        Không tìm thấy học viên phù hợp với bộ lọc đã chọn.
+        {t("Không tìm thấy học viên phù hợp với bộ lọc đã chọn.")}
       </Text>
     </View>
   );
@@ -585,8 +591,8 @@ export default function StaffExpiringStudentsScreen() {
             <Feather name="arrow-left" size={22} color="#1e1b4b" />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: "#1e1b4b" }}>Học viên sắp hết lịch</Text>
-            {total > 0 && <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(30,27,75,0.65)" }}>{total} học viên</Text>}
+            <Text style={{ fontSize: 20, fontFamily: "Inter_700Bold", color: "#1e1b4b" }}>{t("Học viên sắp hết lịch")}</Text>
+            {total > 0 && <Text style={{ fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(30,27,75,0.65)" }}>{total} {t("Học viên")}</Text>}
           </View>
         </View>
 
@@ -596,7 +602,7 @@ export default function StaffExpiringStudentsScreen() {
             <Feather name="search" size={15} color="rgba(30,27,75,0.55)" />
             <TextInput
               style={{ flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", color: "#1e1b4b" }}
-              placeholder="Tìm học viên..."
+              placeholder={t("Tìm học viên...")}
               placeholderTextColor="rgba(30,27,75,0.4)"
               value={search} onChangeText={setSearch} returnKeyType="search"
             />
@@ -626,7 +632,7 @@ export default function StaffExpiringStudentsScreen() {
               onPress={() => { Haptics.selectionAsync(); setStatusFilter(tab.key); }}
               style={{ paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: statusFilter === tab.key ? "#fff" : "rgba(255,255,255,0.18)" }}>
               <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: statusFilter === tab.key ? colors.primary : "rgba(255,255,255,0.85)" }}>
-                {tab.label}
+                {t(tab.label)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -678,7 +684,7 @@ export default function StaffExpiringStudentsScreen() {
               {loadingMore && <View style={{ alignItems: "center", paddingVertical: 12 }}><ActivityIndicator size="small" color={colors.primary} /></View>}
               {!loadingMore && data.length < total && (
                 <TouchableOpacity onPress={loadMore} style={{ alignItems: "center", paddingVertical: 12 }}>
-                  <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.primary }}>Xem thêm ({total - data.length} còn lại)</Text>
+                  <Text style={{ fontSize: 13, fontFamily: "Inter_500Medium", color: colors.primary }}>{t("Xem thêm (")}{total - data.length}{t(" còn lại)")}</Text>
                 </TouchableOpacity>
               )}
             </>

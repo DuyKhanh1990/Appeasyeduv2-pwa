@@ -63,6 +63,7 @@ const EXPANDABLE_CSS = `<style>
 
 import { useColors } from "@/hooks/useColors";
 import { apiUpload } from "@/lib/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 const editorHtmlWithImgCss = editorHtml.replace("</head>", IMG_CONSTRAIN_CSS + "</head>");
 const editorHtmlExpandable  = editorHtml.replace("</head>", EXPANDABLE_CSS   + "</head>");
@@ -80,6 +81,7 @@ interface Props {
 export const HomeworkRichEditor = forwardRef<HomeworkRichEditorHandle, Props>(
   ({ initialHtml, expandable = false }, ref) => {
     const colors = useColors();
+    const { t } = useLanguage();
     const [uploading, setUploading] = useState(false);
     const editor = useEditorBridge({
       initialContent: initialHtml || "",
@@ -114,21 +116,22 @@ export const HomeworkRichEditor = forwardRef<HomeworkRichEditorHandle, Props>(
           if (uploaded[0]?.url) {
             editor.setImage(uploaded[0].url);
           } else {
-            Alert.alert("Lỗi", "Không nhận được URL ảnh.");
+            Alert.alert(t("Lỗi"), t("Không nhận được URL ảnh."));
           }
-        } catch {
-          Alert.alert("Lỗi", "Không thể tải ảnh lên. Vui lòng thử lại.");
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error);
+          Alert.alert(t("Lỗi"), `${t("Không thể tải ảnh lên. Vui lòng thử lại.")}${detail ? `: ${detail}` : ""}`);
         } finally {
           setUploading(false);
         }
       },
-      [editor]
+      [editor, t]
     );
 
     const handleCamera = useCallback(async () => {
       const perm = await ImagePicker.requestCameraPermissionsAsync();
       if (!perm.granted) {
-        Alert.alert("Cần quyền camera", "Hãy cho phép ứng dụng sử dụng camera.");
+        Alert.alert(t("Cần quyền camera"), t("Hãy cho phép ứng dụng sử dụng camera."));
         return;
       }
       const result = await ImagePicker.launchCameraAsync({ quality: 0.85 });
@@ -139,12 +142,12 @@ export const HomeworkRichEditor = forwardRef<HomeworkRichEditorHandle, Props>(
           "image/jpeg"
         );
       }
-    }, [insertImageFromUri]);
+    }, [insertImageFromUri, t]);
 
     const handleGallery = useCallback(async () => {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
-        Alert.alert("Cần quyền", "Vui lòng cho phép truy cập thư viện ảnh.");
+        Alert.alert(t("Cần quyền"), t("Vui lòng cho phép truy cập thư viện ảnh."));
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -160,7 +163,7 @@ export const HomeworkRichEditor = forwardRef<HomeworkRichEditorHandle, Props>(
           asset.mimeType ?? "image/jpeg"
         );
       }
-    }, [insertImageFromUri]);
+    }, [insertImageFromUri, t]);
 
     return (
       <View style={expandable ? { minHeight: 120, backgroundColor: colors.muted } : { flex: 1, backgroundColor: colors.muted }}>
@@ -223,7 +226,7 @@ export const HomeworkRichEditor = forwardRef<HomeworkRichEditorHandle, Props>(
                   color: "#7c3aed",
                 }}
               >
-                {uploading ? "Đang tải..." : "Chụp ảnh"}
+                {uploading ? t("Đang tải...") : t("Chụp ảnh")}
               </Text>
             </TouchableOpacity>
 
@@ -248,7 +251,7 @@ export const HomeworkRichEditor = forwardRef<HomeworkRichEditorHandle, Props>(
                   color: colors.mutedForeground,
                 }}
               >
-                Chèn ảnh
+                {t("Chèn ảnh")}
               </Text>
             </TouchableOpacity>
           </View>

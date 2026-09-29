@@ -21,9 +21,11 @@ import {
   scheduleTestLocalNotification,
 } from "@/lib/pushNotifications";
 import { useColors } from "@/hooks/useColors";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function PushTestScreen() {
   const colors = useColors();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
   const [token, setToken] = useState<string | null>(null);
@@ -49,9 +51,9 @@ export default function PushTestScreen() {
     if (!token) return;
     await Clipboard.setStringAsync(token);
     if (Platform.OS === "web") {
-      window.alert("Đã copy Push Token");
+       window.alert(t("Đã copy Push Token"));
     } else {
-      Alert.alert("Đã sao chép", "Push Token đã được copy vào clipboard.");
+       Alert.alert(t("Đã sao chép"), t("Push Token đã được copy vào clipboard."));
     }
   };
 
@@ -62,26 +64,26 @@ export default function PushTestScreen() {
     if (result.ok) {
       setSentToBackend(true);
     } else {
-      setBackendError(result.error || "Gửi thất bại");
+       setBackendError(result.error || t("Gửi thất bại"));
     }
   };
 
   const handleLocalTest = async () => {
     await scheduleTestLocalNotification(
-      "Thông báo thử nghiệm",
-      "Đây là thông báo local test, không qua server."
+       t("Thông báo thử nghiệm"),
+       t("Đây là thông báo local test, không qua server.")
     );
   };
 
   const handleDelayedLocalTest = async () => {
     await scheduleDelayedTestLocalNotification(
-      "Thông báo hẹn giờ",
-      "Thông báo này nổ sau 5 giây. Hãy thoát app hoặc khóa máy để kiểm tra.",
+       t("Thông báo hẹn giờ"),
+       t("Thông báo này nổ sau 5 giây. Hãy thoát app hoặc khóa máy để kiểm tra."),
       5
     );
     Alert.alert(
-      "Đã hẹn giờ",
-      "Thông báo sẽ nổ sau 5 giây. Bạn hãy thoát app hoặc khóa màn hình ngay bây giờ để kiểm tra."
+       t("Đã hẹn giờ"),
+       t("Thông báo sẽ nổ sau 5 giây. Bạn hãy thoát app hoặc khóa màn hình ngay bây giờ để kiểm tra.")
     );
   };
 
@@ -94,16 +96,16 @@ export default function PushTestScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Feather name="chevron-left" size={26} color={colors.foreground} />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.foreground }]}>Test Push Notification</Text>
+         <Text style={[styles.title, { color: colors.foreground }]}>{t("Kiểm tra thông báo Push")}</Text>
       </View>
 
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
-        <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>EXPO PUSH TOKEN</Text>
+         <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>{t("TOKEN PUSH EXPO")}</Text>
 
         {loading ? (
           <View style={styles.centerRow}>
             <ActivityIndicator color={colors.primary} />
-            <Text style={[styles.hint, { color: colors.mutedForeground, marginLeft: 8 }]}>Đang lấy token...</Text>
+             <Text style={[styles.hint, { color: colors.mutedForeground, marginLeft: 8 }]}>{t("Đang lấy token...")}</Text>
           </View>
         ) : token ? (
           <>
@@ -116,12 +118,12 @@ export default function PushTestScreen() {
               activeOpacity={0.85}
             >
               <Feather name="copy" size={16} color="#fff" />
-              <Text style={styles.actionBtnText}>Copy Token</Text>
+               <Text style={styles.actionBtnText}>{t("Sao chép Token")}</Text>
             </TouchableOpacity>
           </>
         ) : (
           <Text style={[styles.hint, { color: colors.destructive }]}>
-            {error || "Không lấy được token."}
+             {error || t("Không lấy được token.")}
           </Text>
         )}
 
@@ -131,14 +133,14 @@ export default function PushTestScreen() {
           activeOpacity={0.85}
         >
           <Feather name="refresh-cw" size={16} color={colors.foreground} />
-          <Text style={[styles.actionBtnText, { color: colors.foreground }]}>Lấy lại Token</Text>
+           <Text style={[styles.actionBtnText, { color: colors.foreground }]}>{t("Lấy lại Token")}</Text>
         </TouchableOpacity>
       </View>
 
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
-        <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>GỬI TOKEN VỀ BACKEND</Text>
+         <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>{t("GỬI TOKEN VỀ MÁY CHỦ")}</Text>
         <Text style={[styles.hint, { color: colors.mutedForeground }]}>
-          App sẽ gọi POST /api/mobile/push-token tới backend thật (do team web xây dựng). Vì backend đó chưa có endpoint này, bấm nút dưới sẽ báo lỗi — đây là kết quả bình thường ở giai đoạn hiện tại, không phải lỗi app. Xem tài liệu API tại docs/push-notification-api.md.
+           {t("App sẽ gọi POST /api/mobile/push-token tới backend thật (do team web xây dựng). Vì backend đó chưa có endpoint này, bấm nút dưới sẽ báo lỗi — đây là kết quả bình thường ở giai đoạn hiện tại, không phải lỗi app. Xem tài liệu API tại docs/push-notification-api.md.")}
         </Text>
         <TouchableOpacity
           style={[styles.actionBtn, { backgroundColor: colors.primary, opacity: token ? 1 : 0.5, marginTop: 10 }]}
@@ -147,19 +149,19 @@ export default function PushTestScreen() {
           activeOpacity={0.85}
         >
           <Feather name="upload-cloud" size={16} color="#fff" />
-          <Text style={styles.actionBtnText}>{sentToBackend ? "Đã gửi thành công" : "Gửi Token lên Backend"}</Text>
+           <Text style={styles.actionBtnText}>{sentToBackend ? t("Đã gửi thành công") : t("Gửi Token lên Backend")}</Text>
         </TouchableOpacity>
         {backendError && (
           <Text style={[styles.hint, { color: colors.destructive, marginTop: 8 }]}>
-            Lỗi: {backendError}
+             {t("Lỗi")}: {backendError}
           </Text>
         )}
       </View>
 
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
-        <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>TEST NOTIFICATION LOCAL</Text>
+         <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>{t("KIỂM TRA THÔNG BÁO CỤC BỘ")}</Text>
         <Text style={[styles.hint, { color: colors.mutedForeground }]}>
-          Không cần server, hoạt động ngay cả trên Expo Go. Dùng để kiểm tra app hiển thị thông báo đúng cách.
+           {t("Không cần server, hoạt động ngay cả trên Expo Go. Dùng để kiểm tra app hiển thị thông báo đúng cách.")}
         </Text>
         <TouchableOpacity
           style={[styles.actionBtn, { backgroundColor: colors.warning, marginTop: 10 }]}
@@ -167,11 +169,11 @@ export default function PushTestScreen() {
           activeOpacity={0.85}
         >
           <Feather name="bell" size={16} color="#fff" />
-          <Text style={styles.actionBtnText}>Gửi thông báo thử (local)</Text>
+           <Text style={styles.actionBtnText}>{t("Gửi thông báo thử (local)")}</Text>
         </TouchableOpacity>
 
         <Text style={[styles.hint, { color: colors.mutedForeground, marginTop: 14 }]}>
-          Muốn kiểm tra khi app đang chạy nền hoặc đã tắt: bấm nút dưới rồi thoát app/khóa máy trong vòng 5 giây.
+           {t("Muốn kiểm tra khi app đang chạy nền hoặc đã tắt: bấm nút dưới rồi thoát app/khóa máy trong vòng 5 giây.")}
         </Text>
         <TouchableOpacity
           style={[styles.actionBtn, { backgroundColor: colors.primary, marginTop: 10 }]}
@@ -179,15 +181,15 @@ export default function PushTestScreen() {
           activeOpacity={0.85}
         >
           <Feather name="clock" size={16} color="#fff" />
-          <Text style={styles.actionBtnText}>Gửi thông báo hẹn giờ (5 giây)</Text>
+         <Text style={styles.actionBtnText}>{t("Gửi thông báo hẹn giờ (5 giây)")}</Text>
         </TouchableOpacity>
       </View>
 
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
-        <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>LƯU Ý</Text>
+         <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>{t("LƯU Ý")}</Text>
         <Text style={[styles.hint, { color: colors.mutedForeground }]}>
-          • Push Token thật (remote) chỉ lấy được khi chạy Development/Production Build, không lấy được trên bản preview web hoặc Expo Go (từ SDK 53 trở lên).{"\n\n"}
-          • Notification local hoạt động được ở mọi nơi trừ bản web.
+           {t("• Push Token thật (remote) chỉ lấy được khi chạy Development/Production Build, không lấy được trên bản preview web hoặc Expo Go (từ SDK 53 trở lên).")}{ "\n\n" }
+           {t("• Notification local hoạt động được ở mọi nơi trừ bản web.")}
         </Text>
       </View>
     </ScrollView>

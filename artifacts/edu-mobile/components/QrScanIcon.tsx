@@ -1,4 +1,5 @@
 import Svg, { Path, Rect } from "react-native-svg";
+import { useLanguage } from "@/context/LanguageContext";
 
 export function QrScanIcon({
   color = "#fff",
@@ -7,8 +8,9 @@ export function QrScanIcon({
   color?: string;
   size?: number;
 }) {
+  const { t } = useLanguage();
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" accessibilityLabel="Quét mã QR">
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" accessibilityLabel={t("Quét mã QR")}>
       <Path
         d="M4 9V5h4M16 5h4v4M20 15v4h-4M8 19H4v-4"
         stroke={color}
