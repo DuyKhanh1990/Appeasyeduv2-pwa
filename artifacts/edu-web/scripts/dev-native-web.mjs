@@ -1,4 +1,11 @@
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
+import { existsSync } from "node:fs";
+
+// The static export is ignored by git, so a fresh import needs a build
+// before Vite can serve the app.
+if (!existsSync("dist/public/index.html")) {
+  execFileSync("pnpm", ["run", "build"], { stdio: "inherit" });
+}
 
 const port = process.env.PORT || "21338";
 const child = spawn(

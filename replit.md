@@ -38,6 +38,9 @@ pnpm --filter @workspace/edu-web run dev
 
 The build exports the internal Expo Web source into
 `artifacts/edu-web/dist/public`. The PWA is mounted at `/`.
+After installing dependencies with `pnpm install --frozen-lockfile`, the
+`dev` command creates this export automatically if it is missing. To preview
+later source changes, run the build command again and restart the web workflow.
 
 ## Production boundary
 
