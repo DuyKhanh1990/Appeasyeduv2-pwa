@@ -1,8 +1,8 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React from "react";
-import { Alert, Linking, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useState } from "react";
+import { Alert, Linking, Platform, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useAuth, type UserRole } from "@/context/AuthContext";
@@ -15,6 +15,7 @@ interface MenuItem {
   onPress?: () => void;
   badge?: string;
   badgeColor?: string;
+  rightElement?: React.ReactNode;
 }
 
 interface MenuSection {
@@ -36,6 +37,7 @@ export default function MenuScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user, logout, setUserRole } = useAuth();
+  const [isEnglish, setIsEnglish] = useState(false);
   const bottomPad = Platform.OS === "web" ? 34 : 0;
 
   const handleSwitchRole = () => {
@@ -81,6 +83,27 @@ export default function MenuScreen() {
         ] : []),
         { icon: <Feather name="info" size={20} color={colors.warning} />, label: "Về chúng tôi", sub: "easyedu.vn", onPress: () => Linking.openURL("https://easyedu.vn/") },
         { icon: <Feather name="file-text" size={20} color={colors.warning} />, label: "Điều khoản và dịch vụ", sub: "Chính sách sử dụng", onPress: () => Linking.openURL("https://easyedu.vn/dieu-khoan-dich-vu/") },
+      ],
+    },
+    {
+      title: "Tùy chọn",
+      items: [
+        {
+          icon: <Feather name="globe" size={20} color={colors.primary} />,
+          label: "Ngôn ngữ",
+          sub: isEnglish ? "English" : "Tiếng Việt",
+          rightElement: (
+            <Switch
+              value={isEnglish}
+              onValueChange={setIsEnglish}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={colors.card}
+              ios_backgroundColor={colors.border}
+              accessibilityLabel="Chuyển ngôn ngữ ứng dụng"
+              testID="language-switch"
+            />
+          ),
+        },
       ],
     },
     {
@@ -167,7 +190,7 @@ export default function MenuScreen() {
                       <Text style={styles.badgeText}>{item.badge}</Text>
                     </View>
                   )}
-                  <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+                  {item.rightElement ?? <Feather name="chevron-right" size={16} color={colors.mutedForeground} />}
                 </TouchableOpacity>
               ))}
             </View>
