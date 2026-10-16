@@ -1,0 +1,109 @@
+Tài liệu bàn giao: Payment Schedule Preview → PWA
+Đây là báo cáo dựa trên code hiện tại. Trong lượt này mình chỉ kiểm tra; không sửa code, chạy migration, gọi Zalo hay gửi tin nhắn.
+
+1. Endpoint và cách gọi
+Method: GET
+Path: /api/public/payment-schedule-preview
+Token: query parameter token
+Auth: không cần đăng nhập. Không cần gửi Authorization header.
+Header tùy chọn: Accept: application/json
+Ví dụ:
+
+GET https://<center-backend>/api/public/payment-schedule-preview?token=<bearer-token>
+Accept: application/json
+Response thành công mẫu:
+
+{
+  "invoiceCode": "HD-2026-001",
+  "periodLabel": "Đợt 1",
+  "amount": "1500000.00",
+  "dueDate": "2026-11-01",
+  "status": "unpaid"
+}
+Token hiện do hàm backend nội bộ paymentSchedulePreviewService.createLink(paymentScheduleId) tạo. Hàm trả link, token, mã grant và thời điểm hết hạn; chưa có HTTP endpoint để PWA tự xin/cấp token. Link được dựng từ center_config.centerUrl.
+
+2. Các trường được trả về
+Trường	Ý nghĩa
+invoiceCode	Mã hóa đơn; có thể null.
+periodLabel	Nhãn đợt trên lịch thanh toán.
+amount	Số tiền của riêng đợt, dạng chuỗi decimal.
+dueDate	Ngày đến hạn của đợt, dạng YYYY-MM-DD; có thể null.
+status	Trạng thái hiện lưu trên đợt, trả dạng chuỗi, ví dụ unpaid.
+Response không có ID của học viên, hóa đơn hay đợt thanh toán.
+
+3. Lỗi và status
+Token sai, sai định dạng, hết hạn, đã thu hồi hoặc không còn dữ liệu lịch thanh toán phù hợp đều trả cùng lỗi 404:
+
+{ "message": "Liên kết không hợp lệ hoặc đã hết hạn." }
+Lỗi máy chủ/database trả 503:
+
+{ "message": "Tạm thời không thể hiển thị thông tin." }
+Đã xác minh trên API development: token hợp lệ 200; token sai, hết hạn, bị thu hồi và token không hợp lệ trong ngữ cảnh tenant B đều 404.
+
+4. Phạm vi trung tâm và hóa đơn
+Backend đọc trung tâm hiện tại từ center_config với singleton_key = "default". Grant lưu center_id và payment_schedule_id; khi giải token, backend đối chiếu hash token, center_id, thời hạn và trạng thái thu hồi.
+
+Sau đó backend truy vấn đúng đợt đã gắn với grant và join đến hóa đơn. Chỉ lấy hóa đơn loại Thu có student_id. PWA không cần và không nên gửi centerId, invoiceId hoặc paymentScheduleId; thêm các ID này vào request không đổi được đợt được phép xem.
+
+PWA cần gọi backend của trung tâm tương ứng. Nên dùng URL backend do luồng server cấp, thay vì hardcode domain hoặc suy ra trung tâm từ ID trong PWA.
+
+5. Base URL và CORS
+CORS đang cho phép:
+
+CENTER_PUBLIC_URL từ cấu hình chạy;
+https://app.easyedu.vn;
+https://appeasyeduv-2-pwa-mainzip.replit.app;
+các origin *.replit.dev và *.pike.replit.dev;
+localhost trong môi trường không phải production.
+CORS bật credentials: true. Endpoint không cần cookie hay credential; PWA có thể gọi không kèm credentials và không cần header tùy chỉnh. Với Accept: application/json, request GET không cần header auth riêng.
+
+Chưa xác minh được domain PWA sẽ phát hành. Nếu origin thực tế không nằm trong danh sách trên, trình duyệt có thể chặn response CORS. Cần team PWA cung cấp origin development và production chính xác để đối chiếu; domain chưa biết thì không thể khẳng định CORS cho phép.
+
+Trong .replit, CENTER_PUBLIC_URL hiện là https://easyeduv2.easyedu.vn; đây là cấu hình của môi trường hiện tại, không nên mặc định đó là domain backend của mọi trung tâm.
+
+6. Token, dữ liệu và log
+Token là bearer credential: ai có link có thể xem một đợt cụ thể cho đến khi token hết hạn hoặc bị thu hồi. Token tạo từ 32 byte ngẫu nhiên, lưu dạng SHA-256 hash, mặc định hết hạn sau 7 ngày. Endpoint đặt Cache-Control: no-store, private và Referrer-Policy: no-referrer.
+
+Lưu ý về logging trong code hiện tại:
+
+Request logger ghi req.path, không ghi query string; token không xuất hiện trong log của middleware này.
+Preview chưa nằm trong danh sách route được loại trừ khỏi ghi response body. Logger ghi JSON response trong development và ghi tối đa 300 ký tự trong production. Vì vậy các trường allowlist như mã hóa đơn, số tiền và ngày đến hạn hiện có thể xuất hiện trong application logs.
+Chưa xác minh được chính sách log của proxy/platform bên ngoài ứng dụng.
+Khuyến nghị cho PWA: không ghi URL đầy đủ hoặc token ra console, analytics, crash report hay telemetry; không lưu token/response vào local storage hoặc cache service worker; gọi với chế độ cache no-store. Không đưa token vào referrer hoặc URL của trang khác.
+
+7. Dữ liệu chưa được API cung cấp
+API hiện không trả tên/thông tin liên hệ học viên, khóa học/lớp, chi tiết sản phẩm, tổng hóa đơn, thông tin tài khoản ngân hàng, QR thanh toán, link thanh toán, trạng thái thanh toán tổng thể ngoài status của đợt, hoặc nút thao tác thanh toán. Nếu giao diện cần những dữ liệu đó, cần thống nhất yêu cầu riêng; không nên tự thêm vào PWA từ dữ liệu khác.
+
+8. File và kiểm thử
+Các file liên quan:
+
+server/services/payment-schedule-preview.service.ts — cấp/revoke grant nội bộ, xác minh token và truy vấn allowlist.
+server/routes/payment-schedule-preview.routes.ts — route GET và response lỗi.
+server/routes.ts — ngoại lệ auth/location chỉ cho đúng GET preview.
+server/index.ts — cấu hình CORS và request logger.
+shared/schema.ts — schema bảng grant.
+migrations/0037_create_payment_schedule_preview_grants.sql — migration.
+tests/payment-schedule-preview.test.ts — 5 unit test cho token hợp lệ, sai, hết hạn, thu hồi, hai tenant giả lập và việc không đổi được đợt bằng ID client.
+Ở lượt trước, API development cũng được kiểm thử với dữ liệu giả: allowlist chính xác, token/hash và tên/số điện thoại/email giả không xuất hiện trong response; POST vào preview và /api/students không đăng nhập đều trả 401. Fixture đã được dọn.
+
+Giới hạn kiểm thử tenant: ngữ cảnh tenant B được mô phỏng bằng repository center-scoped gọi bảng grant thật trên easyedu_new; workspace không có database tenant B vật lý thứ hai. Vì vậy kiểm tra xác nhận token A không hợp lệ dưới center ID B, nhưng chưa phải kiểm thử giữa hai PostgreSQL database độc lập.
+
+Hợp đồng tích hợp Backend → PWA
+Request:
+GET {CENTER_BACKEND_BASE_URL}/api/public/payment-schedule-preview?token={token}
+Không cần Authorization header; không gửi centerId/invoiceId/paymentScheduleId.
+200 JSON, chính xác:
+{
+  "invoiceCode": string | null,
+  "periodLabel": string,
+  "amount": string,
+  "dueDate": string | null,
+  "status": string
+}
+404: token sai/hết hạn/thu hồi hoặc dữ liệu không còn phù hợp
+{"message":"Liên kết không hợp lệ hoặc đã hết hạn."}
+503: lỗi máy chủ/database
+{"message":"Tạm thời không thể hiển thị thông tin."}
+Token là bearer credential; không log, analytics, persist hay cache.
+Base URL phải là backend của trung tâm; domain PWA thực tế vẫn cần được xác nhận để chốt CORS.
+Riêng trạng thái hiện tại: migration 0037 đã được áp dụng và xác minh trên development easyedu_new ở lượt trước; lượt này không chạy migration.
