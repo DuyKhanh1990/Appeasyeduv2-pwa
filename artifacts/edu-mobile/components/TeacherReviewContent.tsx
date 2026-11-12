@@ -1,5 +1,6 @@
 import React from "react";
 import { Text, View } from "react-native";
+import { Feather } from "@expo/vector-icons";
 
 import { HtmlText } from "@/components/HtmlText";
 import { useColors } from "@/hooks/useColors";
@@ -27,12 +28,7 @@ export interface TeacherReviewBlock {
 function hasRenderableItem(item: TeacherReviewItem): boolean {
   const inputType = (item.inputType ?? "").trim().toLowerCase();
   if (inputType === "checkbox") {
-    return Boolean(
-      item.subCriteriaName?.trim() ||
-      item.groupName?.trim() ||
-      typeof item.checked === "boolean" ||
-      item.comment?.trim(),
-    );
+    return item.checked === true && Boolean(item.subCriteriaName?.trim());
   }
   return Boolean(item.subCriteriaName?.trim() || item.comment?.trim());
 }
@@ -65,7 +61,6 @@ function ReviewItems({
 }: {
   items: TeacherReviewItem[];
 }) {
-  const { t } = useLanguage();
   const groups: Array<{ name: string; items: TeacherReviewItem[] }> = [];
 
   for (const item of items.filter(hasRenderableItem)) {
@@ -89,7 +84,6 @@ function ReviewItems({
           ) : null}
           {group.items.map((item, itemIndex) => {
             const isCheckbox = (item.inputType ?? "").trim().toLowerCase() === "checkbox";
-            const hasCheckedValue = typeof item.checked === "boolean";
 
             return (
               <View
@@ -97,29 +91,18 @@ function ReviewItems({
                 style={{ backgroundColor: "#fff", borderRadius: 8, padding: 10 }}
               >
                 {isCheckbox ? (
-                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <Feather name="check-square" size={15} color="#15803d" />
                     <Text style={{ flex: 1, fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#374151", lineHeight: 18 }}>
-                      {item.subCriteriaName || t("Tiêu chí")}
+                      {item.subCriteriaName}
                     </Text>
-                    {hasCheckedValue ? (
-                      <View style={{
-                        backgroundColor: item.checked ? "#dcfce7" : "#fee2e2",
-                        borderRadius: 10,
-                        paddingHorizontal: 8,
-                        paddingVertical: 4,
-                      }}>
-                        <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: item.checked ? "#166534" : "#991b1b" }}>
-                          {item.checked ? t("Đạt") : t("Chưa đạt")}
-                        </Text>
-                      </View>
-                    ) : null}
                   </View>
                 ) : item.subCriteriaName ? (
                   <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#b45309", marginBottom: item.comment?.trim() ? 4 : 0 }}>
                     {item.subCriteriaName}
                   </Text>
                 ) : null}
-                {item.comment?.trim() ? (
+                {!isCheckbox && item.comment?.trim() ? (
                   <HtmlText html={item.comment ?? ""} style={{ fontSize: 13, color: "#374151", lineHeight: 19 }} compactImages />
                 ) : null}
               </View>
