@@ -128,18 +128,26 @@ export function PwaUpdatePrompt() {
     };
   }, [clearActivationListener, offerUpdate, reloadAfterUpdate]);
 
-  const updateNow = () => {
-    const worker = waitingWorker.current;
-    if (!worker) {
-       setError(t("Bản cập nhật chưa sẵn sàng. Vui lòng thử lại."));
-      return;
+  const updateNow = async () => {
+    setUpdating(true);
+    setError(null);
+    let registration: ServiceWorkerRegistration | undefined;
+    try {
+      registration = await navigator.serviceWorker.getRegistration();
+    } catch (registrationError) {
+      console.warn("[pwa-update] Không đọc được đăng ký Service Worker:", registrationError);
     }
 
-    if (worker.state === "redundant") {
+    // The worker stored when the modal opened may have become redundant if
+    // another tab already installed the newer build. Only message the current
+    // registration's waiting worker; otherwise reload to pick up its version.
+    const worker = registration?.waiting ?? null;
+    if (!worker || worker.state === "redundant") {
       waitingWorker.current = null;
-      setError(t("Bản cập nhật chưa sẵn sàng. Vui lòng thử lại."));
+      window.location.reload();
       return;
     }
+    waitingWorker.current = worker;
 
     reloadRequested.current = true;
     reloadStarted.current = false;
