@@ -1,4 +1,4 @@
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFocusEffect, router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -406,10 +406,27 @@ function StudentInvoiceCard({
             )}
           </View>
 
-          {parseFloat(inv.remainingAmount ?? "0") > 0 && (
-            <Text style={[styles.amountRemaining, { color: colors.destructive }]}>
-              {t("Còn lại:")} {formatCurrency(inv.remainingAmount ?? "0")}
-            </Text>
+          {(parseFloat(inv.remainingAmount ?? "0") > 0 || inv.canShowPaymentQr === true) && (
+            <View style={styles.amountDetailRow}>
+              {parseFloat(inv.remainingAmount ?? "0") > 0 ? (
+                <Text style={[styles.amountRemaining, { color: colors.destructive }]}>
+                  {t("Còn lại:")} {formatCurrency(inv.remainingAmount ?? "0")}
+                </Text>
+              ) : <View />}
+              {inv.canShowPaymentQr === true && (
+                <TouchableOpacity
+                  testID={`invoice-payment-qr-${inv.id}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={t("Mở mã QR thanh toán")}
+                  onPress={() => onShowPaymentQr?.(inv)}
+                  activeOpacity={0.65}
+                  style={styles.qrIconButton}
+                  hitSlop={8}
+                >
+                  <MaterialCommunityIcons name="qrcode-scan" size={25} color={colors.primary} />
+                </TouchableOpacity>
+              )}
+            </View>
           )}
 
           <View style={styles.datesRow}>
@@ -449,18 +466,6 @@ function StudentInvoiceCard({
           <CollapsibleDescription text={inv.description} colors={colors} />
         </View>
       ) : null}
-      {inv.canShowPaymentQr === true && (
-        <TouchableOpacity
-          testID={`invoice-payment-qr-${inv.id}`}
-          accessibilityRole="button"
-          onPress={() => onShowPaymentQr?.(inv)}
-          activeOpacity={0.75}
-          style={[styles.qrAction, { borderColor: colors.primary + "40", backgroundColor: colors.primary + "0d" }]}
-        >
-          <Feather name="maximize" size={15} color={colors.primary} />
-          <Text style={[styles.qrActionText, { color: colors.primary }]}>{t("Xem mã QR thanh toán")}</Text>
-        </TouchableOpacity>
-      )}
     </View>
   );
 }
@@ -1157,20 +1162,17 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     paddingTop: 0,
   },
-  qrAction: {
-    marginHorizontal: 12,
-    marginBottom: 12,
-    minHeight: 40,
-    borderWidth: 1,
-    borderRadius: 10,
+  amountDetailRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
+    justifyContent: "space-between",
+    minHeight: 38,
   },
-  qrActionText: {
-    fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
+  qrIconButton: {
+    minWidth: 40,
+    minHeight: 40,
+    alignItems: "center",
+    justifyContent: "center",
   },
   dateItem: {
     flexDirection: "row",
