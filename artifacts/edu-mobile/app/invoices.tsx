@@ -468,10 +468,19 @@ function StudentInvoiceCard({
               accessibilityLabel={t("Mở mã QR thanh toán")}
               onPress={() => onShowPaymentQr?.(inv)}
               activeOpacity={0.65}
-              style={styles.qrIconButton}
+              style={[
+                styles.qrActionButton,
+                {
+                  borderColor: colors.primary + "35",
+                  backgroundColor: colors.primary + "0a",
+                },
+              ]}
               hitSlop={8}
             >
-              <QrScanIcon size={30} color={colors.primary} />
+              <QrScanIcon size={34} color={colors.primary} />
+              <Text style={[styles.qrActionLabel, { color: colors.primary }]}>
+                {t("Xem mã QR")}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -1187,11 +1196,21 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     gap: 6,
   },
-  qrIconButton: {
-    minWidth: 44,
-    minHeight: 44,
+  qrActionButton: {
+    width: 104,
+    minHeight: 66,
     alignItems: "center",
     justifyContent: "center",
+    gap: 3,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderRadius: 11,
+  },
+  qrActionLabel: {
+    fontSize: 10,
+    lineHeight: 13,
+    fontFamily: "Inter_600SemiBold",
+    textAlign: "center",
   },
   dateItem: {
     flexDirection: "row",
