@@ -422,26 +422,11 @@ function StudentInvoiceCard({
             )}
           </View>
 
-          {(parseFloat(inv.remainingAmount ?? "0") > 0 || showPaymentQr) && (
+          {parseFloat(inv.remainingAmount ?? "0") > 0 && (
             <View style={styles.amountDetailRow}>
-              {parseFloat(inv.remainingAmount ?? "0") > 0 ? (
-                <Text style={[styles.amountRemaining, { color: colors.destructive }]}>
-                  {t("Còn lại:")} {formatCurrency(inv.remainingAmount ?? "0")}
-                </Text>
-              ) : <View />}
-              {showPaymentQr && (
-                <TouchableOpacity
-                  testID={`invoice-payment-qr-${inv.id}`}
-                  accessibilityRole="button"
-                  accessibilityLabel={t("Mở mã QR thanh toán")}
-                  onPress={() => onShowPaymentQr?.(inv)}
-                  activeOpacity={0.65}
-                  style={styles.qrIconButton}
-                  hitSlop={8}
-                >
-                  <QrScanIcon size={25} color={colors.primary} />
-                </TouchableOpacity>
-              )}
+              <Text style={[styles.amountRemaining, { color: colors.destructive }]}>
+                {t("Còn lại:")} {formatCurrency(inv.remainingAmount ?? "0")}
+              </Text>
             </View>
           )}
 
@@ -474,7 +459,22 @@ function StudentInvoiceCard({
 
         </View>
 
-        <StatusBadge status={inv.status} />
+        <View style={styles.statusActionsColumn}>
+          <StatusBadge status={inv.status} />
+          {showPaymentQr && (
+            <TouchableOpacity
+              testID={`invoice-payment-qr-${inv.id}`}
+              accessibilityRole="button"
+              accessibilityLabel={t("Mở mã QR thanh toán")}
+              onPress={() => onShowPaymentQr?.(inv)}
+              activeOpacity={0.65}
+              style={styles.qrIconButton}
+              hitSlop={8}
+            >
+              <QrScanIcon size={30} color={colors.primary} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {inv.description ? (
@@ -1181,12 +1181,15 @@ const styles = StyleSheet.create({
   amountDetailRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    minHeight: 38,
+    minHeight: 18,
+  },
+  statusActionsColumn: {
+    alignItems: "flex-end",
+    gap: 6,
   },
   qrIconButton: {
-    minWidth: 40,
-    minHeight: 40,
+    minWidth: 44,
+    minHeight: 44,
     alignItems: "center",
     justifyContent: "center",
   },
