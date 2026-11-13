@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
+import { InvoicePaymentModal } from "@/components/InvoicePaymentModal";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 import { apiGet } from "@/lib/api";
@@ -96,6 +97,10 @@ interface StudentInvoice {
   student: InvoiceStudent | null;
   isParent: boolean;
   description: string | null;
+  paymentMethod?: string | null;
+  canShowPaymentQr?: boolean;
+  locationId?: string | null;
+  isBidvQrEnabled?: boolean;
 }
 
 interface StudentInvoiceResponse {
@@ -340,12 +345,14 @@ function StudentInvoiceCard({
   colors,
   highlighted,
   onLayout,
+  onShowPaymentQr,
 }: {
   inv: StudentInvoice;
   isParent: boolean;
   colors: ReturnType<typeof useColors>;
   highlighted?: boolean;
   onLayout?: (y: number) => void;
+  onShowPaymentQr?: (invoice: StudentInvoice) => void;
 }) {
   const { t, locale } = useLanguage();
   return (
@@ -422,6 +429,14 @@ function StudentInvoiceCard({
                 </Text>
               </View>
             )}
+            {inv.paymentMethod && (
+              <View style={styles.dateItem}>
+                <Feather name="credit-card" size={11} color={colors.mutedForeground} />
+                <Text style={[styles.dateText, { color: colors.mutedForeground }]}>
+                  {t(PAYMENT_METHOD_LABELS[inv.paymentMethod] ?? inv.paymentMethod)}
+                </Text>
+              </View>
+            )}
           </View>
 
         </View>
@@ -434,6 +449,18 @@ function StudentInvoiceCard({
           <CollapsibleDescription text={inv.description} colors={colors} />
         </View>
       ) : null}
+      {inv.canShowPaymentQr === true && (
+        <TouchableOpacity
+          testID={`invoice-payment-qr-${inv.id}`}
+          accessibilityRole="button"
+          onPress={() => onShowPaymentQr?.(inv)}
+          activeOpacity={0.75}
+          style={[styles.qrAction, { borderColor: colors.primary + "40", backgroundColor: colors.primary + "0d" }]}
+        >
+          <Feather name="maximize" size={15} color={colors.primary} />
+          <Text style={[styles.qrActionText, { color: colors.primary }]}>{t("Xem mã QR thanh toán")}</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -468,6 +495,7 @@ export default function InvoicesScreen() {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [paymentInvoice, setPaymentInvoice] = useState<StudentInvoice | null>(null);
 
   const monthKey = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}`;
 
@@ -864,6 +892,7 @@ export default function InvoicesScreen() {
                       colors={colors}
                       highlighted={isHighlighted}
                       onLayout={isHighlighted ? handleHighlightLayout : undefined}
+                      onShowPaymentQr={setPaymentInvoice}
                     />
                   );
                 })}
@@ -875,6 +904,13 @@ export default function InvoicesScreen() {
           )}
         </ScrollView>
       )}
+      <InvoicePaymentModal
+        invoice={paymentInvoice}
+        visible={paymentInvoice !== null}
+        fallbackStudentName={user?.name}
+        fallbackStudentCode={user?.profileCode}
+        onClose={() => setPaymentInvoice(null)}
+      />
     </View>
   );
 }
@@ -1120,6 +1156,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingBottom: 12,
     paddingTop: 0,
+  },
+  qrAction: {
+    marginHorizontal: 12,
+    marginBottom: 12,
+    minHeight: 40,
+    borderWidth: 1,
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  qrActionText: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
   },
   dateItem: {
     flexDirection: "row",
