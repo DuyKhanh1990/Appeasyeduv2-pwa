@@ -1,4 +1,4 @@
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { useFocusEffect, router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { InvoicePaymentModal } from "@/components/InvoicePaymentModal";
+import { QrScanIcon } from "@/components/QrScanIcon";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 import { apiGet } from "@/lib/api";
@@ -172,6 +173,20 @@ function isUnpaidLike(status: string) {
 function getInvoiceMonth(inv: StudentInvoice): string {
   const dateStr = inv.dueDate || inv.createdAt;
   return dateStr ? dateStr.slice(0, 7) : "";
+}
+
+function canShowStudentInvoiceQr(inv: StudentInvoice): boolean {
+  if (typeof inv.canShowPaymentQr === "boolean") return inv.canShowPaymentQr;
+
+  const paymentMethod = inv.paymentMethod?.trim().toLowerCase();
+  const type = inv.type.trim().toLowerCase();
+  const isExpense = type === "chi" || type === "expense" || type === "outgoing";
+  return (
+    isUnpaidLike(inv.status) &&
+    Boolean(paymentMethod) &&
+    paymentMethod !== "cash" &&
+    !isExpense
+  );
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -355,6 +370,7 @@ function StudentInvoiceCard({
   onShowPaymentQr?: (invoice: StudentInvoice) => void;
 }) {
   const { t, locale } = useLanguage();
+  const showPaymentQr = canShowStudentInvoiceQr(inv);
   return (
     <View
       onLayout={highlighted && onLayout ? (e) => onLayout(e.nativeEvent.layout.y) : undefined}
@@ -406,14 +422,14 @@ function StudentInvoiceCard({
             )}
           </View>
 
-          {(parseFloat(inv.remainingAmount ?? "0") > 0 || inv.canShowPaymentQr === true) && (
+          {(parseFloat(inv.remainingAmount ?? "0") > 0 || showPaymentQr) && (
             <View style={styles.amountDetailRow}>
               {parseFloat(inv.remainingAmount ?? "0") > 0 ? (
                 <Text style={[styles.amountRemaining, { color: colors.destructive }]}>
                   {t("Còn lại:")} {formatCurrency(inv.remainingAmount ?? "0")}
                 </Text>
               ) : <View />}
-              {inv.canShowPaymentQr === true && (
+              {showPaymentQr && (
                 <TouchableOpacity
                   testID={`invoice-payment-qr-${inv.id}`}
                   accessibilityRole="button"
@@ -423,7 +439,7 @@ function StudentInvoiceCard({
                   style={styles.qrIconButton}
                   hitSlop={8}
                 >
-                  <MaterialCommunityIcons name="qrcode-scan" size={25} color={colors.primary} />
+                  <QrScanIcon size={25} color={colors.primary} />
                 </TouchableOpacity>
               )}
             </View>
