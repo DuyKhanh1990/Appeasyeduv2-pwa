@@ -500,7 +500,7 @@ function StudentInvoiceCard({
 export default function InvoicesScreen() {
   const colors = useColors();
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const insets = useSafeAreaInsets();
   const topPad = insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -571,10 +571,15 @@ export default function InvoicesScreen() {
   }, [highlightInvoiceId]);
 
   useFocusEffect(useCallback(() => {
+    if (authLoading || !user) {
+      setLoading(true);
+      setError(null);
+      return;
+    }
     setPage(1);
     fetchInvoices(false, 1);
     return () => { setActiveHighlightId(null); };
-  }, [fetchInvoices]));
+  }, [authLoading, user, fetchInvoices]));
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -652,6 +657,19 @@ export default function InvoicesScreen() {
   };
 
   const summary = isStaff ? staffData?.summary : studentMonthSummary;
+
+  if (authLoading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.centerText, { color: colors.mutedForeground }]}>
+            {t("Đang tải hoá đơn...")}
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
