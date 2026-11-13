@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -62,7 +63,13 @@ let index = readFileSync(indexPath, "utf8");
 const bundleVersion =
   index.match(/_expo\/static\/js\/web\/entry-([a-z0-9]+)\.js/i)?.[1] ||
   "unknown";
-const serviceWorkerFilename = `sw-${bundleVersion}.js`;
+const serviceWorkerSource = readFileSync(path.join(artifactDir, "public", "sw.js"));
+const serviceWorkerVersion = createHash("sha256")
+  .update(serviceWorkerSource)
+  .digest("hex")
+  .slice(0, 12);
+const buildVersion = `${bundleVersion}-${serviceWorkerVersion}`;
+const serviceWorkerFilename = `sw-${buildVersion}.js`;
 index = index
   .replace("<html>", '<html lang="vi">')
   .replace(
@@ -110,7 +117,7 @@ const serviceWorkerPath = path.join(outputDir, "sw.js");
 if (existsSync(serviceWorkerPath)) {
   const serviceWorker = readFileSync(serviceWorkerPath, "utf8").replaceAll(
     "__EASYEDU_BUILD_VERSION__",
-    bundleVersion,
+    buildVersion,
   );
   writeFileSync(serviceWorkerPath, serviceWorker);
   writeFileSync(path.join(outputDir, serviceWorkerFilename), serviceWorker);
