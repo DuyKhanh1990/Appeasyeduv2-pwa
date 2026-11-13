@@ -35,6 +35,7 @@ import { useChatUnread } from "@/context/ChatUnreadContext";
 import { apiDelete, apiGet, apiPost, apiPut, getCenterUrl, getAuthToken } from "@/lib/api";
 import { popChatDeeplink } from "@/lib/deeplinkStore";
 import { setActiveChatTopic } from "@/lib/activeChatTopic";
+import { allowWebImageZoom } from "@/lib/webImageZoom";
 import {
   getTabBarStyle,
   WEB_BOTTOM_INSET_FALLBACK,
@@ -211,6 +212,11 @@ function ReactionChips({ seq, reactions, colors }: { seq: number; reactions: Rea
 function ImageLightbox({ uri, visible, onClose }: { uri: string; visible: boolean; onClose: () => void }) {
   const { width: sw, height: sh } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  useEffect(() => {
+    if (!visible || Platform.OS !== "web") return;
+    return allowWebImageZoom();
+  }, [visible]);
+
   return (
     <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.95)" }}>

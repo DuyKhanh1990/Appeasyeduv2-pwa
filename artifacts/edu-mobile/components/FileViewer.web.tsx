@@ -11,6 +11,7 @@ import {
 
 import { useColors } from "@/hooks/useColors";
 import { apiGet } from "@/lib/api";
+import { allowWebImageZoom } from "@/lib/webImageZoom";
 import { useLanguage } from "@/context/LanguageContext";
 
 // ─── Types (shared) ───────────────────────────────────────────────────────────
@@ -272,6 +273,8 @@ const dv = StyleSheet.create({
 
 // ─── Image Fullscreen ─────────────────────────────────────────────────────────
 function ImageFullscreen({ url, name, onClose }: { url: string; name: string; onClose: () => void }) {
+  useEffect(() => allowWebImageZoom(), []);
+
   return (
     <Modal visible animationType="fade" onRequestClose={onClose}>
       <View style={s.fsContainer}>

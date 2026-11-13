@@ -74,7 +74,7 @@ index = index
   .replace("<html>", '<html lang="vi">')
   .replace(
     'content="width=device-width, initial-scale=1, shrink-to-fit=no"',
-    'content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"',
+    'content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover, maximum-scale=1, user-scalable=no"',
   )
   .replace("</head>", [
     '    <meta name="theme-color" content="#173f3d" />',
