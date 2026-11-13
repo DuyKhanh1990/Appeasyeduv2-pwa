@@ -1,4 +1,4 @@
-image: docker:27-cli
+?image: docker:27-cli
 
 stages: [build_images]
 
