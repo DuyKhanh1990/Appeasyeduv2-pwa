@@ -112,7 +112,10 @@ export const HomeworkRichEditor = forwardRef<HomeworkRichEditorHandle, Props>(
       async (uri: string, fileName: string, mimeType: string) => {
         setUploading(true);
         try {
-          const uploaded = await apiUpload([{ uri, name: fileName, mimeType }]);
+          const uploaded = await apiUpload(
+            [{ uri, name: fileName, mimeType }],
+            { credentials: "include" },
+          );
           if (uploaded[0]?.url) {
             editor.setImage(uploaded[0].url);
           } else {

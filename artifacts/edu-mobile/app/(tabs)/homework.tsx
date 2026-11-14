@@ -23,6 +23,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useColors } from "@/hooks/useColors";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 import { apiGet, apiPost, apiUpload, clearSession } from "@/lib/api";
 import { HtmlText } from "@/components/HtmlText";
 import { FileList, FileItem } from "@/components/FileViewer";
@@ -74,7 +75,7 @@ interface AssignmentRow {
   isPersonalized?: boolean;
   submissionStatus?: "pending" | "submitted" | "graded" | string;
   submissionContent?: string | null;
-  submissionAttachments?: string[];
+  submissionAttachments?: Array<string | Attachment>;
   studentSessionContentId?: string | null;
   score?: string | null;
   comment?: string | null;
@@ -94,6 +95,30 @@ interface AssignmentResponse {
   page?: number;
   pageSize?: number;
   totalPages?: number;
+}
+
+interface WebAssignmentRow extends Omit<Partial<AssignmentRow>, "itemType"> {
+  itemType?: string;
+  homeworkTitle?: string | null;
+  homeworkDescription?: string | null;
+  homeworkAttachments?: Attachment[] | null;
+  studentId?: string | null;
+  studentName?: string | null;
+  studentCode?: string | null;
+}
+
+function normalizeWebAssignment(row: WebAssignmentRow, isParentUser: boolean): AssignmentRow {
+  return {
+    ...row,
+    itemType: row.itemType === "exam" || row.itemType === "Bài kiểm tra" ? "Bài kiểm tra" : "BTVN",
+    title: row.homeworkTitle ?? row.title ?? "",
+    description: row.homeworkDescription ?? row.description ?? "",
+    attachments: row.homeworkAttachments ?? row.attachments ?? [],
+    isParent: row.isParent ?? isParentUser,
+    student: row.student ?? (row.studentId || row.studentName
+      ? { id: row.studentId ?? "", name: row.studentName ?? "", code: row.studentCode ?? "" }
+      : undefined),
+  };
 }
 
 interface AttemptCountResponse {
@@ -203,16 +228,17 @@ function SubmitModal({
 
       if (pickedFiles.length > 0) {
         const uploaded = await apiUpload(
-          pickedFiles.map(f => ({ uri: f.uri, name: f.name, mimeType: f.mimeType, file: f.file }))
+          pickedFiles.map(f => ({ uri: f.uri, name: f.name, mimeType: f.mimeType, file: f.file })),
+          { credentials: "include" },
         );
         uploaded.forEach(u => attachments.push({ name: u.name, url: u.url }));
       }
 
-      await apiPost("/api/mobile/student/assignments/submit", {
+      await apiPost("/api/my-space/assignments/student/submit", {
         homeworkId: assignment.homeworkId,
         submissionContent: html,
-        submissionAttachments: attachments,
-      });
+        submissionAttachments: attachments.map(file => file.url),
+      }, { credentials: "include" });
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       onSubmitted(assignment.homeworkId, html, attachments);
       onClose();
@@ -792,6 +818,7 @@ function AssignmentCard({
 export default function HomeworkScreen() {
   const colors = useColors();
   const { t, locale } = useLanguage();
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
 
   const topPad = insets.top;
@@ -839,10 +866,11 @@ export default function HomeworkScreen() {
       setLoadingMore(true);
     }
     try {
-      const data = await apiGet<AssignmentResponse>(
-        `/api/mobile/student/assignments?month=${monthKey}&page=${page}&pageSize=50`
+      const data = await apiGet<Omit<AssignmentResponse, "rows"> & { rows?: WebAssignmentRow[] }>(
+        `/api/my-space/assignments/student?month=${monthKey}&page=${page}&pageSize=50`,
+        { credentials: "include" },
       );
-      const newRows = data.rows || [];
+      const newRows = (data.rows || []).map((row) => normalizeWebAssignment(row, user?.role === "parent"));
       if (page === 1) {
         setRows(newRows);
       } else {
@@ -874,7 +902,7 @@ export default function HomeworkScreen() {
         loadingMoreRef.current = false;
       }
     }
-  }, [monthKey]);
+  }, [monthKey, user?.role]);
 
   const loadMore = useCallback(() => {
     if (loadingMoreRef.current || !hasMore || loading) return;
@@ -882,7 +910,7 @@ export default function HomeworkScreen() {
     fetchAssignments(true, currentPageRef.current + 1);
   }, [hasMore, loading, fetchAssignments]);
 
-  useEffect(() => { fetchAssignments(); }, [monthKey]);
+  useEffect(() => { fetchAssignments(); }, [fetchAssignments]);
 
   useEffect(() => {
     if (!deepLinkDate) return;

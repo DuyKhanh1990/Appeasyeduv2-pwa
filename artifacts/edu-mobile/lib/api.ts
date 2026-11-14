@@ -146,11 +146,16 @@ async function readErrorMessage(response: Response): Promise<string | undefined>
   }
 }
 
-export async function apiPost<T>(path: string, body: unknown): Promise<{ data: T; response: Response }> {
+export async function apiPost<T>(
+  path: string,
+  body: unknown,
+  options: { credentials?: RequestCredentials } = {},
+): Promise<{ data: T; response: Response }> {
   if (!centerUrl) throw new Error("Center URL chưa được cài đặt");
   const response = await fetch(`${centerUrl}${path}`, {
     method: "POST",
     headers: buildHeaders(),
+    ...(options.credentials ? { credentials: options.credentials } : {}),
     body: JSON.stringify(body),
   });
   if (!response.ok) {
@@ -214,11 +219,15 @@ export async function apiDelete<T = void>(path: string, body?: unknown): Promise
   return response.json() as Promise<T>;
 }
 
-export async function apiGet<T>(path: string): Promise<T> {
+export async function apiGet<T>(
+  path: string,
+  options: { credentials?: RequestCredentials } = {},
+): Promise<T> {
   if (!centerUrl) throw new Error("Center URL chưa được cài đặt");
   const response = await fetch(`${centerUrl}${path}`, {
     method: "GET",
     headers: buildHeaders(),
+    ...(options.credentials ? { credentials: options.credentials } : {}),
   });
   if (!response.ok) {
     handleUnauthorized(response.status);
@@ -304,7 +313,8 @@ export interface UploadedFile {
 }
 
 export async function apiUpload(
-  files: Array<{ uri: string; name: string; mimeType?: string; file?: File }>
+  files: Array<{ uri: string; name: string; mimeType?: string; file?: File }>,
+  options: { credentials?: RequestCredentials } = {},
 ): Promise<UploadedFile[]> {
   if (!centerUrl) throw new Error("Center URL chưa được cài đặt");
 
@@ -336,6 +346,7 @@ export async function apiUpload(
   const response = await fetch(`${centerUrl}/api/upload`, {
     method: "POST",
     headers,
+    ...(options.credentials ? { credentials: options.credentials } : {}),
     body: formData,
   });
 
