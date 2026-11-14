@@ -29,6 +29,15 @@ and preserve the backend's payload shape. Confirm the parent-submit limitation:
 the current contract can list linked children's work, but has no child selector
 for submitting on a child's behalf.
 
+Resolve relative attachment and embedded-media URLs against the configured
+center/backend origin before rendering them in the PWA.
+
+**Why:** The PWA and center backend may use different domains, so a relative
+file URL otherwise resolves against the PWA host and appears missing.
+
+**How to apply:** Preserve absolute URLs; only resolve relative paths for
+attachments and `src`/`poster` media attributes when adapting API responses.
+
 The backend does not localize business responses or expose a language-switch
 API. The PWA owns translated UI labels and display-only enum labels; values sent
 back to the API and user-authored/server-authored content must remain unchanged.
