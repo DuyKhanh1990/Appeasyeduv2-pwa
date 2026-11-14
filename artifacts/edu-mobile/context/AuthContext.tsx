@@ -189,7 +189,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       let profileId: string | undefined;
 
       try {
-        const me = await apiGet<MobileAuthResponse>("/api/mobile/auth/me", { credentials: "include" });
+        const me = await apiGet<MobileAuthResponse>("/api/mobile/auth/me");
         role = resolveRole(me);
         userData = {
           id: String(me.user.id),
@@ -202,10 +202,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const storedRole = await getStoredRole();
         if (storedRole) {
           role = storedRole as UserRole;
-          const legacyMe = await apiGet<{ id: string; username: string; name?: string; role?: string }>(
-            "/api/auth/me",
-            { credentials: "include" },
-          );
+          const legacyMe = await apiGet<{ id: string; username: string; name?: string; role?: string }>("/api/auth/me");
           userData = {
             ...legacyMe,
             name: legacyMe.name?.trim().toLowerCase() === legacyMe.username.trim().toLowerCase()
@@ -248,7 +245,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data } = await apiPost<MobileAuthResponse>("/api/mobile/auth/login", {
         username,
         password,
-      }, { credentials: "include" });
+      });
       if (data.token) {
         setAuthToken(data.token);
       }
@@ -265,7 +262,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data: legacyRaw } = await apiPost<
         | { id: string | number; username: string; name?: string; role?: string }
         | { user: { id: string | number; username: string; name?: string; role?: string } }
-      >("/api/auth/login", { username, password }, { credentials: "include" });
+      >("/api/auth/login", { username, password });
 
       const raw =
         "user" in legacyRaw && legacyRaw.user
