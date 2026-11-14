@@ -334,7 +334,17 @@ export function FileViewer({ file, imageSize = 88 }: FileViewerProps) {
         {React.createElement("video", {
           src: file.url,
           controls: true,
-          style: { width: "100%", maxHeight: 260, display: "block" } as any,
+          style: {
+            width: "100%",
+            maxWidth: "100%",
+            maxHeight: 260,
+            aspectRatio: "16 / 9",
+            objectFit: "contain",
+            outline: "none",
+            backgroundColor: "#000",
+            borderRadius: 12,
+            display: "block",
+          } as any,
         })}
       </View>
     );

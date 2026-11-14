@@ -110,7 +110,18 @@ function HtmlTextFull({ html, style, compactImages }: { html: string; style?: St
       margin: ${compactImages ? "4px 4px 0 0" : "6px 0 0 0"};
       object-fit: cover;
     }
-    video { max-width: 100%; border-radius: 6px; display: block; margin: 6px 0; }
+    video {
+      width: 100%;
+      max-width: 100%;
+      max-height: 260px;
+      aspect-ratio: 16 / 9;
+      object-fit: contain;
+      outline: none;
+      background: #000;
+      border-radius: 12px;
+      display: block;
+      margin: 6px 0;
+    }
     table { width: 100%; border-collapse: collapse; font-size: 0.88em; margin: 8px 0; }
     th, td { border: 1px solid #e5e7eb; padding: 5px 8px; text-align: left; }
     th { background: #f9fafb; font-weight: 600; }
