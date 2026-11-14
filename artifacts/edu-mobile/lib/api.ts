@@ -15,6 +15,31 @@ const WEB_PROFILE_CODE_KEY = "easyedu_profile_code";
 let centerUrl: string | null = null;
 let authToken: string | null = null;
 
+export function resolveCenterAssetUrl(rawUrl: string): string {
+  const value = rawUrl.trim();
+  if (
+    !value ||
+    !centerUrl ||
+    value.startsWith("#") ||
+    /^(?:[a-z][a-z\d+.-]*:|\/\/)/i.test(value)
+  ) {
+    return rawUrl;
+  }
+  try {
+    return new URL(value, `${centerUrl}/`).toString();
+  } catch {
+    return rawUrl;
+  }
+}
+
+export function resolveCenterHtmlAssetUrls(html: string): string {
+  return html.replace(
+    /\b(src|poster)\s*=\s*(["'])(.*?)\2/gi,
+    (_match, attribute: string, quote: string, url: string) =>
+      `${attribute}=${quote}${resolveCenterAssetUrl(url)}${quote}`,
+  );
+}
+
 function getWebStorageValue(key: string): string | null {
   if (Platform.OS !== "web" || typeof window === "undefined") return null;
   try {

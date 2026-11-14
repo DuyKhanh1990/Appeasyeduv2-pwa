@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useColors } from "@/hooks/useColors";
 import { useLanguage } from "@/context/LanguageContext";
-import { apiGet } from "@/lib/api";
+import { apiGet, resolveCenterAssetUrl, resolveCenterHtmlAssetUrls } from "@/lib/api";
 import { useFocusEffect } from "expo-router";
 import { setCurrentAssignment, getCurrentAssignment } from "@/lib/assignmentStore";
 import type { AssignmentRow } from "@/lib/assignmentStore";
@@ -65,7 +65,7 @@ function normalizeStaffAssignment(row: WebStaffAssignmentRow): AssignmentRow {
       if (file && typeof file === "object" && "url" in file && typeof file.url === "string") {
         return [{
           name: "name" in file && typeof file.name === "string" ? file.name : "File đính kèm",
-          url: file.url,
+          url: resolveCenterAssetUrl(file.url),
         }];
       }
       return [];
@@ -86,7 +86,7 @@ function normalizeStaffAssignment(row: WebStaffAssignmentRow): AssignmentRow {
     itemType: row.itemType === "exam" || row.itemType === "Bài kiểm tra" ? "Bài kiểm tra" : "BTVN",
     homeworkId: row.homeworkId ?? null,
     homeworkTitle: row.homeworkTitle ?? row.title ?? "",
-    homeworkDescription: row.homeworkDescription ?? row.description ?? "",
+    homeworkDescription: resolveCenterHtmlAssetUrls(row.homeworkDescription ?? row.description ?? ""),
     homeworkAttachments: normalizeFiles(row.homeworkAttachments),
     isPersonalized: row.isPersonalized ?? false,
     submissionStatus: row.submissionStatus === "graded"
@@ -94,7 +94,7 @@ function normalizeStaffAssignment(row: WebStaffAssignmentRow): AssignmentRow {
       : row.submissionStatus === "submitted"
         ? "submitted"
         : "pending",
-    submissionContent: row.submissionContent ?? "",
+    submissionContent: row.submissionContent ? resolveCenterHtmlAssetUrls(row.submissionContent) : "",
     submissionAttachments: normalizeFiles(row.submissionAttachments),
     studentSessionContentId: row.studentSessionContentId ?? null,
     score: row.score == null ? null : String(row.score),

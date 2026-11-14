@@ -24,7 +24,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import { useColors } from "@/hooks/useColors";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
-import { apiGet, apiPost, apiUpload } from "@/lib/api";
+import { apiGet, apiPost, apiUpload, resolveCenterAssetUrl, resolveCenterHtmlAssetUrls } from "@/lib/api";
 import { HtmlText } from "@/components/HtmlText";
 import { FileList, FileItem } from "@/components/FileViewer";
 import {
@@ -43,10 +43,14 @@ function isHtmlEmpty(html: string): boolean {
 /** Normalise submissionAttachments: handles legacy string[] and { name, url }[] from DB. */
 function normaliseSubmissionFiles(raw: unknown[]): FileItem[] {
   return raw.map((a) => {
-    if (typeof a === "string") return { name: "File đính kèm", url: a };
+    if (typeof a === "string") return { name: "File đính kèm", url: resolveCenterAssetUrl(a) };
     const item = a as FileItem;
     const nameIsUrl = (item.name || "").startsWith("http") || (item.name || "").startsWith("/api/");
-    return { ...item, name: nameIsUrl ? "File đính kèm" : (item.name || "File đính kèm") };
+    return {
+      ...item,
+      name: nameIsUrl ? "File đính kèm" : (item.name || "File đính kèm"),
+      url: resolveCenterAssetUrl(item.url),
+    };
   });
 }
 import ExamIntroModal, { ExamMeta } from "@/components/ExamIntroModal";
@@ -112,8 +116,19 @@ function normalizeWebAssignment(row: WebAssignmentRow, isParentUser: boolean): A
     ...row,
     itemType: row.itemType === "exam" || row.itemType === "Bài kiểm tra" ? "Bài kiểm tra" : "BTVN",
     title: row.homeworkTitle ?? row.title ?? "",
-    description: row.homeworkDescription ?? row.description ?? "",
-    attachments: row.homeworkAttachments ?? row.attachments ?? [],
+    description: resolveCenterHtmlAssetUrls(row.homeworkDescription ?? row.description ?? ""),
+    attachments: (row.homeworkAttachments ?? row.attachments ?? []).map((file) => ({
+      ...file,
+      url: resolveCenterAssetUrl(file.url),
+    })),
+    submissionContent: row.submissionContent
+      ? resolveCenterHtmlAssetUrls(row.submissionContent)
+      : row.submissionContent,
+    submissionAttachments: row.submissionAttachments?.map((file) =>
+      typeof file === "string"
+        ? resolveCenterAssetUrl(file)
+        : { ...file, url: resolveCenterAssetUrl(file.url) }
+    ),
     isParent: row.isParent ?? isParentUser,
     student: row.student ?? (row.studentId || row.studentName
       ? { id: row.studentId ?? "", name: row.studentName ?? "", code: row.studentCode ?? "" }
@@ -231,7 +246,7 @@ function SubmitModal({
           pickedFiles.map(f => ({ uri: f.uri, name: f.name, mimeType: f.mimeType, file: f.file })),
           { credentials: "include", logoutOnUnauthorized: false },
         );
-        uploaded.forEach(u => attachments.push({ name: u.name, url: u.url }));
+        uploaded.forEach(u => attachments.push({ name: u.name, url: resolveCenterAssetUrl(u.url) }));
       }
 
       await apiPost("/api/my-space/assignments/student/submit", {
