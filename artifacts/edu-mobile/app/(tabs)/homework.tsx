@@ -880,11 +880,14 @@ export default function HomeworkScreen() {
       const tp = data.totalPages ?? 1;
       setHasMore(page < tp);
     } catch (err: unknown) {
-      const status = (err as { status?: number })?.status;
+      const apiError = err as { status?: number; serverMessage?: string };
+      const status = apiError.status;
       if (page === 1) {
         setRows([]);
-        if (status === 401 || status === 403) {
-          setFetchError(`Backend BTVN từ chối phiên hoặc quyền truy cập (lỗi ${status}). Phiên đăng nhập vẫn được giữ; hãy kiểm tra cấu hình xác thực API.`);
+        if (status === 401) {
+          setFetchError(`API BTVN trả về 401 (chưa xác thực).${apiError.serverMessage ? ` ${apiError.serverMessage}` : " Hãy đăng nhập lại để tạo phiên mới rồi thử lại."}`);
+        } else if (status === 403) {
+          setFetchError(`API BTVN trả về 403 (không đủ quyền).${apiError.serverMessage ? ` ${apiError.serverMessage}` : " Kiểm tra quyền của tài khoản với backend."}`);
         } else if (status) {
           setFetchError(`Không thể tải bài tập (lỗi ${status}). Kéo xuống để thử lại.`);
         } else {
