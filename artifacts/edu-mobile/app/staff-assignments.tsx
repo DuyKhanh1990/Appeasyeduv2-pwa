@@ -266,7 +266,7 @@ export default function StaffAssignmentsScreen() {
       }
       const data = await apiGet<AssignmentResponse>(
         `/api/my-space/assignments/staff?${params.toString()}`,
-        { credentials: "include" },
+        { credentials: "include", logoutOnUnauthorized: false },
       );
       const allFetched = (Array.isArray(data.rows) ? data.rows : []).map(normalizeStaffAssignment);
       setAllRows(allFetched);

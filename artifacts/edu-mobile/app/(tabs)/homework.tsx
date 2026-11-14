@@ -24,7 +24,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import { useColors } from "@/hooks/useColors";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
-import { apiGet, apiPost, apiUpload, clearSession } from "@/lib/api";
+import { apiGet, apiPost, apiUpload } from "@/lib/api";
 import { HtmlText } from "@/components/HtmlText";
 import { FileList, FileItem } from "@/components/FileViewer";
 import {
@@ -229,7 +229,7 @@ function SubmitModal({
       if (pickedFiles.length > 0) {
         const uploaded = await apiUpload(
           pickedFiles.map(f => ({ uri: f.uri, name: f.name, mimeType: f.mimeType, file: f.file })),
-          { credentials: "include" },
+          { credentials: "include", logoutOnUnauthorized: false },
         );
         uploaded.forEach(u => attachments.push({ name: u.name, url: u.url }));
       }
@@ -238,7 +238,7 @@ function SubmitModal({
         homeworkId: assignment.homeworkId,
         submissionContent: html,
         submissionAttachments: attachments.map(file => file.url),
-      }, { credentials: "include" });
+      }, { credentials: "include", logoutOnUnauthorized: false });
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       onSubmitted(assignment.homeworkId, html, attachments);
       onClose();
@@ -868,7 +868,7 @@ export default function HomeworkScreen() {
     try {
       const data = await apiGet<Omit<AssignmentResponse, "rows"> & { rows?: WebAssignmentRow[] }>(
         `/api/my-space/assignments/student?month=${monthKey}&page=${page}&pageSize=50`,
-        { credentials: "include" },
+        { credentials: "include", logoutOnUnauthorized: false },
       );
       const newRows = (data.rows || []).map((row) => normalizeWebAssignment(row, user?.role === "parent"));
       if (page === 1) {
@@ -881,14 +881,11 @@ export default function HomeworkScreen() {
       setHasMore(page < tp);
     } catch (err: unknown) {
       const status = (err as { status?: number })?.status;
-      if (status === 401 || status === 403) {
-        clearSession();
-        router.replace("/login");
-        return;
-      }
       if (page === 1) {
         setRows([]);
-        if (status) {
+        if (status === 401 || status === 403) {
+          setFetchError(`Backend BTVN từ chối phiên hoặc quyền truy cập (lỗi ${status}). Phiên đăng nhập vẫn được giữ; hãy kiểm tra cấu hình xác thực API.`);
+        } else if (status) {
           setFetchError(`Không thể tải bài tập (lỗi ${status}). Kéo xuống để thử lại.`);
         } else {
           setFetchError("Không thể kết nối đến máy chủ. Kiểm tra mạng và thử lại.");

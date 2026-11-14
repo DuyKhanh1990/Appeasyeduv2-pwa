@@ -39,6 +39,10 @@ function setWebStorageValue(key: string, value?: string): void {
 
 // Callback được set bởi AuthContext để tự động logout khi nhận 401
 let onUnauthorized: (() => void) | null = null;
+type ApiRequestOptions = {
+  credentials?: RequestCredentials;
+  logoutOnUnauthorized?: boolean;
+};
 
 export function setUnauthorizedHandler(handler: () => void) {
   onUnauthorized = handler;
@@ -131,8 +135,8 @@ function buildHeaders(extra: Record<string, string> = {}): Record<string, string
   return headers;
 }
 
-function handleUnauthorized(status: number) {
-  if (status === 401 && onUnauthorized) {
+function handleUnauthorized(status: number, shouldLogout = true) {
+  if (status === 401 && shouldLogout && onUnauthorized) {
     onUnauthorized();
   }
 }
@@ -149,7 +153,7 @@ async function readErrorMessage(response: Response): Promise<string | undefined>
 export async function apiPost<T>(
   path: string,
   body: unknown,
-  options: { credentials?: RequestCredentials } = {},
+  options: ApiRequestOptions = {},
 ): Promise<{ data: T; response: Response }> {
   if (!centerUrl) throw new Error("Center URL chưa được cài đặt");
   const response = await fetch(`${centerUrl}${path}`, {
@@ -159,7 +163,7 @@ export async function apiPost<T>(
     body: JSON.stringify(body),
   });
   if (!response.ok) {
-    handleUnauthorized(response.status);
+    handleUnauthorized(response.status, options.logoutOnUnauthorized !== false);
     const serverMessage = await readErrorMessage(response);
     throw Object.assign(new Error(serverMessage ?? `HTTP ${response.status}`), {
       status: response.status,
@@ -221,7 +225,7 @@ export async function apiDelete<T = void>(path: string, body?: unknown): Promise
 
 export async function apiGet<T>(
   path: string,
-  options: { credentials?: RequestCredentials } = {},
+  options: ApiRequestOptions = {},
 ): Promise<T> {
   if (!centerUrl) throw new Error("Center URL chưa được cài đặt");
   const response = await fetch(`${centerUrl}${path}`, {
@@ -230,7 +234,7 @@ export async function apiGet<T>(
     ...(options.credentials ? { credentials: options.credentials } : {}),
   });
   if (!response.ok) {
-    handleUnauthorized(response.status);
+    handleUnauthorized(response.status, options.logoutOnUnauthorized !== false);
     const serverMessage = await readErrorMessage(response);
     throw Object.assign(new Error(serverMessage ?? `HTTP ${response.status}`), {
       status: response.status,
@@ -314,7 +318,7 @@ export interface UploadedFile {
 
 export async function apiUpload(
   files: Array<{ uri: string; name: string; mimeType?: string; file?: File }>,
-  options: { credentials?: RequestCredentials } = {},
+  options: ApiRequestOptions = {},
 ): Promise<UploadedFile[]> {
   if (!centerUrl) throw new Error("Center URL chưa được cài đặt");
 
@@ -351,7 +355,7 @@ export async function apiUpload(
   });
 
   if (!response.ok) {
-    handleUnauthorized(response.status);
+    handleUnauthorized(response.status, options.logoutOnUnauthorized !== false);
     throw Object.assign(new Error(`HTTP ${response.status}`), { status: response.status });
   }
 

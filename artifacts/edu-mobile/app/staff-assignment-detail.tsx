@@ -169,7 +169,7 @@ export default function StaffAssignmentDetailScreen() {
         studentSessionContentId: row.studentSessionContentId,
         score: score.trim() || null,
         gradingComment: commentHtml.trim() || null,
-      }, { credentials: "include" });
+      }, { credentials: "include", logoutOnUnauthorized: false });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setSaved(true);
       const patch = { score: score.trim() || null, comment: commentHtml.trim() || null };

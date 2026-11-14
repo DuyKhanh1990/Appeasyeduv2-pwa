@@ -742,7 +742,7 @@ export default function HomeScreen() {
       const [assignmentResult, scheduleResult] = await Promise.allSettled([
         apiGet<AssignmentStatResponse>(
           `/api/my-space/assignments/student?month=${month}&page=1&pageSize=100`,
-          { credentials: "include" },
+          { credentials: "include", logoutOnUnauthorized: false },
         ),
         apiGet<StudentMonthScheduleResponse>(`/api/mobile/student/calendar?month=${month}`),
       ]);
@@ -754,7 +754,7 @@ export default function HomeScreen() {
         Array.from({ length: totalPages - 1 }, (_, index) =>
           apiGet<AssignmentStatResponse>(
             `/api/my-space/assignments/student?month=${month}&page=${index + 2}&pageSize=100`,
-            { credentials: "include" },
+            { credentials: "include", logoutOnUnauthorized: false },
           )
         )
       );
