@@ -101,7 +101,6 @@ interface AssignmentRowStat {
 
 interface AssignmentStatResponse {
   rows: AssignmentRowStat[];
-  totalPages?: number;
 }
 
 interface StudentMonthSession {
@@ -741,27 +740,14 @@ export default function HomeScreen() {
       const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
       const [assignmentResult, scheduleResult] = await Promise.allSettled([
         apiGet<AssignmentStatResponse>(
-          `/api/my-space/assignments/student?month=${month}&page=1&pageSize=100`,
-          { credentials: "include", logoutOnUnauthorized: false },
+          `/api/mobile/student/assignments?month=${month}&pageSize=200`
         ),
         apiGet<StudentMonthScheduleResponse>(`/api/mobile/student/calendar?month=${month}`),
       ]);
 
       if (assignmentResult.status !== "fulfilled") throw assignmentResult.reason;
 
-      const totalPages = Math.max(1, assignmentResult.value.totalPages ?? 1);
-      const remainingPages = await Promise.all(
-        Array.from({ length: totalPages - 1 }, (_, index) =>
-          apiGet<AssignmentStatResponse>(
-            `/api/my-space/assignments/student?month=${month}&page=${index + 2}&pageSize=100`,
-            { credentials: "include", logoutOnUnauthorized: false },
-          )
-        )
-      );
-      const rows = [
-        ...(assignmentResult.value.rows ?? []),
-        ...remainingPages.flatMap((result) => result.rows ?? []),
-      ];
+      const rows = assignmentResult.value.rows ?? [];
       const classIds = new Set(rows.map((r) => r.classId).filter(Boolean));
       const done = rows.filter(
         (r) => r.submissionStatus === "submitted" || r.submissionStatus === "graded"

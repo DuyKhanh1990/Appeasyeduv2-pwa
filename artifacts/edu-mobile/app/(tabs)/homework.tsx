@@ -23,8 +23,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useColors } from "@/hooks/useColors";
 import { useLanguage } from "@/context/LanguageContext";
-import { useAuth } from "@/context/AuthContext";
-import { apiGet, apiPost, apiUpload, resolveCenterAssetUrl, resolveCenterHtmlAssetUrls } from "@/lib/api";
+import { apiGet, apiPost, apiUpload, clearSession } from "@/lib/api";
 import { HtmlText } from "@/components/HtmlText";
 import { FileList, FileItem } from "@/components/FileViewer";
 import {
@@ -43,14 +42,10 @@ function isHtmlEmpty(html: string): boolean {
 /** Normalise submissionAttachments: handles legacy string[] and { name, url }[] from DB. */
 function normaliseSubmissionFiles(raw: unknown[]): FileItem[] {
   return raw.map((a) => {
-    if (typeof a === "string") return { name: "File đính kèm", url: resolveCenterAssetUrl(a) };
+    if (typeof a === "string") return { name: "File đính kèm", url: a };
     const item = a as FileItem;
     const nameIsUrl = (item.name || "").startsWith("http") || (item.name || "").startsWith("/api/");
-    return {
-      ...item,
-      name: nameIsUrl ? "File đính kèm" : (item.name || "File đính kèm"),
-      url: resolveCenterAssetUrl(item.url),
-    };
+    return { ...item, name: nameIsUrl ? "File đính kèm" : (item.name || "File đính kèm") };
   });
 }
 import ExamIntroModal, { ExamMeta } from "@/components/ExamIntroModal";
@@ -79,7 +74,7 @@ interface AssignmentRow {
   isPersonalized?: boolean;
   submissionStatus?: "pending" | "submitted" | "graded" | string;
   submissionContent?: string | null;
-  submissionAttachments?: Array<string | Attachment>;
+  submissionAttachments?: string[];
   studentSessionContentId?: string | null;
   score?: string | null;
   comment?: string | null;
@@ -99,41 +94,6 @@ interface AssignmentResponse {
   page?: number;
   pageSize?: number;
   totalPages?: number;
-}
-
-interface WebAssignmentRow extends Omit<Partial<AssignmentRow>, "itemType"> {
-  itemType?: string;
-  homeworkTitle?: string | null;
-  homeworkDescription?: string | null;
-  homeworkAttachments?: Attachment[] | null;
-  studentId?: string | null;
-  studentName?: string | null;
-  studentCode?: string | null;
-}
-
-function normalizeWebAssignment(row: WebAssignmentRow, isParentUser: boolean): AssignmentRow {
-  return {
-    ...row,
-    itemType: row.itemType === "exam" || row.itemType === "Bài kiểm tra" ? "Bài kiểm tra" : "BTVN",
-    title: row.homeworkTitle ?? row.title ?? "",
-    description: resolveCenterHtmlAssetUrls(row.homeworkDescription ?? row.description ?? ""),
-    attachments: (row.homeworkAttachments ?? row.attachments ?? []).map((file) => ({
-      ...file,
-      url: resolveCenterAssetUrl(file.url),
-    })),
-    submissionContent: row.submissionContent
-      ? resolveCenterHtmlAssetUrls(row.submissionContent)
-      : row.submissionContent,
-    submissionAttachments: row.submissionAttachments?.map((file) =>
-      typeof file === "string"
-        ? resolveCenterAssetUrl(file)
-        : { ...file, url: resolveCenterAssetUrl(file.url) }
-    ),
-    isParent: row.isParent ?? isParentUser,
-    student: row.student ?? (row.studentId || row.studentName
-      ? { id: row.studentId ?? "", name: row.studentName ?? "", code: row.studentCode ?? "" }
-      : undefined),
-  };
 }
 
 interface AttemptCountResponse {
@@ -243,17 +203,16 @@ function SubmitModal({
 
       if (pickedFiles.length > 0) {
         const uploaded = await apiUpload(
-          pickedFiles.map(f => ({ uri: f.uri, name: f.name, mimeType: f.mimeType, file: f.file })),
-          { credentials: "include", logoutOnUnauthorized: false },
+          pickedFiles.map(f => ({ uri: f.uri, name: f.name, mimeType: f.mimeType, file: f.file }))
         );
-        uploaded.forEach(u => attachments.push({ name: u.name, url: resolveCenterAssetUrl(u.url) }));
+        uploaded.forEach(u => attachments.push({ name: u.name, url: u.url }));
       }
 
-      await apiPost("/api/my-space/assignments/student/submit", {
+      await apiPost("/api/mobile/student/assignments/submit", {
         homeworkId: assignment.homeworkId,
         submissionContent: html,
-        submissionAttachments: attachments.map(file => file.url),
-      }, { credentials: "include", logoutOnUnauthorized: false });
+        submissionAttachments: attachments,
+      });
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       onSubmitted(assignment.homeworkId, html, attachments);
       onClose();
@@ -833,7 +792,6 @@ function AssignmentCard({
 export default function HomeworkScreen() {
   const colors = useColors();
   const { t, locale } = useLanguage();
-  const { user } = useAuth();
   const insets = useSafeAreaInsets();
 
   const topPad = insets.top;
@@ -881,11 +839,10 @@ export default function HomeworkScreen() {
       setLoadingMore(true);
     }
     try {
-      const data = await apiGet<Omit<AssignmentResponse, "rows"> & { rows?: WebAssignmentRow[] }>(
-        `/api/my-space/assignments/student?month=${monthKey}&page=${page}&pageSize=50`,
-        { credentials: "include", logoutOnUnauthorized: false },
+      const data = await apiGet<AssignmentResponse>(
+        `/api/mobile/student/assignments?month=${monthKey}&page=${page}&pageSize=50`
       );
-      const newRows = (data.rows || []).map((row) => normalizeWebAssignment(row, user?.role === "parent"));
+      const newRows = data.rows || [];
       if (page === 1) {
         setRows(newRows);
       } else {
@@ -895,15 +852,15 @@ export default function HomeworkScreen() {
       const tp = data.totalPages ?? 1;
       setHasMore(page < tp);
     } catch (err: unknown) {
-      const apiError = err as { status?: number; serverMessage?: string };
-      const status = apiError.status;
+      const status = (err as { status?: number })?.status;
+      if (status === 401 || status === 403) {
+        clearSession();
+        router.replace("/login");
+        return;
+      }
       if (page === 1) {
         setRows([]);
-        if (status === 401) {
-          setFetchError(`API BTVN trả về 401 (chưa xác thực).${apiError.serverMessage ? ` ${apiError.serverMessage}` : " Hãy đăng nhập lại để tạo phiên mới rồi thử lại."}`);
-        } else if (status === 403) {
-          setFetchError(`API BTVN trả về 403 (không đủ quyền).${apiError.serverMessage ? ` ${apiError.serverMessage}` : " Kiểm tra quyền của tài khoản với backend."}`);
-        } else if (status) {
+        if (status) {
           setFetchError(`Không thể tải bài tập (lỗi ${status}). Kéo xuống để thử lại.`);
         } else {
           setFetchError("Không thể kết nối đến máy chủ. Kiểm tra mạng và thử lại.");
@@ -917,7 +874,7 @@ export default function HomeworkScreen() {
         loadingMoreRef.current = false;
       }
     }
-  }, [monthKey, user?.role]);
+  }, [monthKey]);
 
   const loadMore = useCallback(() => {
     if (loadingMoreRef.current || !hasMore || loading) return;
@@ -925,7 +882,7 @@ export default function HomeworkScreen() {
     fetchAssignments(true, currentPageRef.current + 1);
   }, [hasMore, loading, fetchAssignments]);
 
-  useEffect(() => { fetchAssignments(); }, [fetchAssignments]);
+  useEffect(() => { fetchAssignments(); }, [monthKey]);
 
   useEffect(() => {
     if (!deepLinkDate) return;

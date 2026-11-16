@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useColors } from "@/hooks/useColors";
 import { useLanguage } from "@/context/LanguageContext";
-import { apiGet, resolveCenterAssetUrl, resolveCenterHtmlAssetUrls } from "@/lib/api";
+import { apiGet } from "@/lib/api";
 import { useFocusEffect } from "expo-router";
 import { setCurrentAssignment, getCurrentAssignment } from "@/lib/assignmentStore";
 import type { AssignmentRow } from "@/lib/assignmentStore";
@@ -25,81 +25,8 @@ import type { AssignmentRow } from "@/lib/assignmentStore";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface AssignmentResponse {
-  month?: string;
-  rows?: WebStaffAssignmentRow[];
-}
-
-interface WebStaffAssignmentRow extends Omit<
-  Partial<AssignmentRow>,
-  | "itemType"
-  | "weekday"
-  | "score"
-  | "studentSessionContentId"
-  | "homeworkTitle"
-  | "homeworkDescription"
-  | "homeworkAttachments"
-  | "submissionAttachments"
-> {
-  itemType?: string;
-  weekday?: string | number;
-  score?: string | number | null;
-  studentSessionContentId?: string | null;
-  homeworkTitle?: string | null;
-  title?: string | null;
-  homeworkDescription?: string | null;
-  description?: string | null;
-  homeworkAttachments?: unknown[] | null;
-  submissionAttachments?: unknown[] | null;
-}
-
-function normalizeStaffAssignment(row: WebStaffAssignmentRow): AssignmentRow {
-  const sessionDate = row.sessionDate ?? "";
-  const weekday = typeof row.weekday === "string"
-    ? row.weekday
-    : sessionDate
-      ? new Date(`${sessionDate.slice(0, 10)}T12:00:00`).toLocaleDateString("vi-VN", { weekday: "long" })
-      : "";
-  const normalizeFiles = (files: unknown[] | null | undefined) =>
-    (files ?? []).flatMap((file) => {
-      if (typeof file === "string") return [{ name: "File đính kèm", url: file }];
-      if (file && typeof file === "object" && "url" in file && typeof file.url === "string") {
-        return [{
-          name: "name" in file && typeof file.name === "string" ? file.name : "File đính kèm",
-          url: resolveCenterAssetUrl(file.url),
-        }];
-      }
-      return [];
-    });
-
-  return {
-    ...row,
-    classSessionId: row.classSessionId ?? "",
-    className: row.className ?? "",
-    classCode: row.classCode ?? "",
-    sessionDate,
-    weekday,
-    startTime: row.startTime ?? "",
-    endTime: row.endTime ?? "",
-    sessionIndex: row.sessionIndex ?? 0,
-    studentId: row.studentId ?? "",
-    studentName: row.studentName ?? "",
-    itemType: row.itemType === "exam" || row.itemType === "Bài kiểm tra" ? "Bài kiểm tra" : "BTVN",
-    homeworkId: row.homeworkId ?? null,
-    homeworkTitle: row.homeworkTitle ?? row.title ?? "",
-    homeworkDescription: resolveCenterHtmlAssetUrls(row.homeworkDescription ?? row.description ?? ""),
-    homeworkAttachments: normalizeFiles(row.homeworkAttachments),
-    isPersonalized: row.isPersonalized ?? false,
-    submissionStatus: row.submissionStatus === "graded"
-      ? "graded"
-      : row.submissionStatus === "submitted"
-        ? "submitted"
-        : "pending",
-    submissionContent: row.submissionContent ? resolveCenterHtmlAssetUrls(row.submissionContent) : "",
-    submissionAttachments: normalizeFiles(row.submissionAttachments),
-    studentSessionContentId: row.studentSessionContentId ?? null,
-    score: row.score == null ? null : String(row.score),
-    comment: row.comment ?? null,
-  };
+  month: string;
+  rows: AssignmentRow[];
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -136,7 +63,7 @@ function AssignmentCard({
 }) {
   const { t, locale } = useLanguage();
   const isBTVN = row.itemType === "BTVN";
-  const isSubmitted = row.submissionStatus === "submitted" || row.submissionStatus === "graded";
+  const isSubmitted = row.submissionStatus === "submitted";
   const hasScore = row.score !== null && row.score !== undefined && row.score !== "";
   const typeColor = isBTVN ? "#2563eb" : "#9333ea";
   const typeBg = isBTVN ? "#eff6ff" : "#fdf4ff";
@@ -257,25 +184,17 @@ export default function StaffAssignmentsScreen() {
     const { year, month, status, classNames, studentIds, dateFrom, dateTo, silent } = opts;
     if (!silent) setLoading(true);
     try {
-      const params = new URLSearchParams();
+      let url: string;
       if (dateFrom && dateTo) {
-        params.set("dateFrom", dateFrom);
-        params.set("dateTo", dateTo);
+        url = `/api/mobile/staff/assignments?dateFrom=${dateFrom}&dateTo=${dateTo}&status=${status}`;
       } else {
-        params.set("month", `${year}-${String(month + 1).padStart(2, "0")}`);
+        const monthStr = `${year}-${String(month + 1).padStart(2, "0")}`;
+        url = `/api/mobile/staff/assignments?month=${monthStr}&status=${status}`;
       }
-      const data = await apiGet<AssignmentResponse>(
-        `/api/my-space/assignments/staff?${params.toString()}`,
-        { credentials: "include", logoutOnUnauthorized: false },
-      );
-      const allFetched = (Array.isArray(data.rows) ? data.rows : []).map(normalizeStaffAssignment);
-      setAllRows(allFetched);
-      let fetched = allFetched;
-      if (status === "submitted") {
-        fetched = fetched.filter((r) => r.submissionStatus === "submitted" || r.submissionStatus === "graded");
-      } else if (status === "pending") {
-        fetched = fetched.filter((r) => r.submissionStatus === "pending");
-      }
+      for (const cn of classNames) url += `&className=${encodeURIComponent(cn)}`;
+      for (const si of studentIds) url += `&studentId=${encodeURIComponent(si)}`;
+      const data = await apiGet<AssignmentResponse>(url);
+      let fetched = Array.isArray(data.rows) ? data.rows : [];
       if (classNames.length > 0) {
         const lowerClassNames = classNames.map((c) => c.toLowerCase());
         fetched = fetched.filter((r) => lowerClassNames.includes((r.className ?? "").toLowerCase()));
@@ -284,9 +203,9 @@ export default function StaffAssignmentsScreen() {
         fetched = fetched.filter((r) => studentIds.includes(r.studentId));
       }
       setRows(fetched);
+      if (classNames.length === 0 && studentIds.length === 0) setAllRows(fetched);
     } catch {
       setRows([]);
-      setAllRows([]);
     } finally {
       setLoading(false);
       setRefreshing(false);

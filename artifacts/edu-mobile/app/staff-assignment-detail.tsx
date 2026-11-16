@@ -149,7 +149,7 @@ export default function StaffAssignmentDetailScreen() {
     );
   }
 
-  const isSubmitted = row.submissionStatus === "submitted" || row.submissionStatus === "graded";
+  const isSubmitted = row.submissionStatus === "submitted";
   const isBTVN = row.itemType === "BTVN";
   const isExam = row.itemType === "Bài kiểm tra";
   const typeColor = isBTVN ? "#2563eb" : "#9333ea";
@@ -158,18 +158,14 @@ export default function StaffAssignmentDetailScreen() {
   const submissionFiles = normaliseAttachments((row.submissionAttachments ?? []) as unknown[], t("File đính kèm"));
 
   const handleSave = async () => {
-    if (!row.studentSessionContentId) {
-      Alert.alert(t("Lỗi"), t("Không tìm thấy mã bài nộp để lưu điểm."));
-      return;
-    }
     setSaving(true);
     const commentHtml = editorRef.current?.getContent() ?? "";
     try {
-      await apiPost("/api/my-space/assignments/staff/grade", {
+      await apiPost("/api/mobile/staff/assignments/grade", {
         studentSessionContentId: row.studentSessionContentId,
         score: score.trim() || null,
         gradingComment: commentHtml.trim() || null,
-      }, { credentials: "include", logoutOnUnauthorized: false });
+      });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setSaved(true);
       const patch = { score: score.trim() || null, comment: commentHtml.trim() || null };

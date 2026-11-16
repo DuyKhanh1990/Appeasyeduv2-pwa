@@ -15,31 +15,6 @@ const WEB_PROFILE_CODE_KEY = "easyedu_profile_code";
 let centerUrl: string | null = null;
 let authToken: string | null = null;
 
-export function resolveCenterAssetUrl(rawUrl: string): string {
-  const value = rawUrl.trim();
-  if (
-    !value ||
-    !centerUrl ||
-    value.startsWith("#") ||
-    /^(?:[a-z][a-z\d+.-]*:|\/\/)/i.test(value)
-  ) {
-    return rawUrl;
-  }
-  try {
-    return new URL(value, `${centerUrl}/`).toString();
-  } catch {
-    return rawUrl;
-  }
-}
-
-export function resolveCenterHtmlAssetUrls(html: string): string {
-  return html.replace(
-    /\b(src|poster)\s*=\s*(["'])(.*?)\2/gi,
-    (_match, attribute: string, quote: string, url: string) =>
-      `${attribute}=${quote}${resolveCenterAssetUrl(url)}${quote}`,
-  );
-}
-
 function getWebStorageValue(key: string): string | null {
   if (Platform.OS !== "web" || typeof window === "undefined") return null;
   try {
@@ -64,10 +39,6 @@ function setWebStorageValue(key: string, value?: string): void {
 
 // Callback được set bởi AuthContext để tự động logout khi nhận 401
 let onUnauthorized: (() => void) | null = null;
-type ApiRequestOptions = {
-  credentials?: RequestCredentials;
-  logoutOnUnauthorized?: boolean;
-};
 
 export function setUnauthorizedHandler(handler: () => void) {
   onUnauthorized = handler;
@@ -160,8 +131,8 @@ function buildHeaders(extra: Record<string, string> = {}): Record<string, string
   return headers;
 }
 
-function handleUnauthorized(status: number, shouldLogout = true) {
-  if (status === 401 && shouldLogout && onUnauthorized) {
+function handleUnauthorized(status: number) {
+  if (status === 401 && onUnauthorized) {
     onUnauthorized();
   }
 }
@@ -175,20 +146,15 @@ async function readErrorMessage(response: Response): Promise<string | undefined>
   }
 }
 
-export async function apiPost<T>(
-  path: string,
-  body: unknown,
-  options: ApiRequestOptions = {},
-): Promise<{ data: T; response: Response }> {
+export async function apiPost<T>(path: string, body: unknown): Promise<{ data: T; response: Response }> {
   if (!centerUrl) throw new Error("Center URL chưa được cài đặt");
   const response = await fetch(`${centerUrl}${path}`, {
     method: "POST",
     headers: buildHeaders(),
-    ...(options.credentials ? { credentials: options.credentials } : {}),
     body: JSON.stringify(body),
   });
   if (!response.ok) {
-    handleUnauthorized(response.status, options.logoutOnUnauthorized !== false);
+    handleUnauthorized(response.status);
     const serverMessage = await readErrorMessage(response);
     throw Object.assign(new Error(serverMessage ?? `HTTP ${response.status}`), {
       status: response.status,
@@ -248,18 +214,14 @@ export async function apiDelete<T = void>(path: string, body?: unknown): Promise
   return response.json() as Promise<T>;
 }
 
-export async function apiGet<T>(
-  path: string,
-  options: ApiRequestOptions = {},
-): Promise<T> {
+export async function apiGet<T>(path: string): Promise<T> {
   if (!centerUrl) throw new Error("Center URL chưa được cài đặt");
   const response = await fetch(`${centerUrl}${path}`, {
     method: "GET",
     headers: buildHeaders(),
-    ...(options.credentials ? { credentials: options.credentials } : {}),
   });
   if (!response.ok) {
-    handleUnauthorized(response.status, options.logoutOnUnauthorized !== false);
+    handleUnauthorized(response.status);
     const serverMessage = await readErrorMessage(response);
     throw Object.assign(new Error(serverMessage ?? `HTTP ${response.status}`), {
       status: response.status,
@@ -342,8 +304,7 @@ export interface UploadedFile {
 }
 
 export async function apiUpload(
-  files: Array<{ uri: string; name: string; mimeType?: string; file?: File }>,
-  options: ApiRequestOptions = {},
+  files: Array<{ uri: string; name: string; mimeType?: string; file?: File }>
 ): Promise<UploadedFile[]> {
   if (!centerUrl) throw new Error("Center URL chưa được cài đặt");
 
@@ -375,12 +336,11 @@ export async function apiUpload(
   const response = await fetch(`${centerUrl}/api/upload`, {
     method: "POST",
     headers,
-    ...(options.credentials ? { credentials: options.credentials } : {}),
     body: formData,
   });
 
   if (!response.ok) {
-    handleUnauthorized(response.status, options.logoutOnUnauthorized !== false);
+    handleUnauthorized(response.status);
     throw Object.assign(new Error(`HTTP ${response.status}`), { status: response.status });
   }
 

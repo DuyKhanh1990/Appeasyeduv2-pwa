@@ -15,10 +15,10 @@ export interface AssignmentRow {
   homeworkDescription?: string;
   homeworkAttachments?: { name: string; url: string }[];
   isPersonalized: boolean;
-  submissionStatus: "submitted" | "pending" | "graded";
+  submissionStatus: "submitted" | "pending";
   submissionContent?: string;
-  submissionAttachments?: Array<string | { name: string; url: string }>;
-  studentSessionContentId: string | null;
+  submissionAttachments?: { name: string; url: string }[];
+  studentSessionContentId: string;
   score?: string | null;
   comment?: string | null;
   examId?: string | null;
