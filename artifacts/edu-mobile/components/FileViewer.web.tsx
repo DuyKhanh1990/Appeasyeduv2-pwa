@@ -342,8 +342,13 @@ export function FileViewer({
       /\.mkv(?:[?#]|$)/i.test(file.name) ||
       /\.mkv(?:[?#]|$)/i.test(file.url) ||
       /matroska/i.test(file.mimetype || file.type || "");
+    const isMov =
+      /\.mov(?:[?#]|$)/i.test(file.name) ||
+      /\.mov(?:[?#]|$)/i.test(file.url) ||
+      /quicktime/i.test(file.mimetype || file.type || "");
+    const canDownloadOriginal = isMkv || isMov;
     const processingStatus = file.mediaProcessingStatus?.toLowerCase();
-    const isProcessing = isMkv && (processingStatus === "queued" || processingStatus === "processing");
+    const isProcessing = processingStatus === "queued" || processingStatus === "processing";
     const videoUrl = file.playbackUrl || file.url;
     const statusLabel = processingStatus === "queued"
       ? t("Video đang chờ xử lý")
@@ -389,9 +394,9 @@ export function FileViewer({
             </View>
             {statusLabel ? <Text style={s.videoStatusLabel}>{statusLabel}</Text> : null}
           </TouchableOpacity>
-          {isMkv ? (
+          {canDownloadOriginal ? (
             <a href={file.url} target="_blank" rel="noreferrer" download={file.name} style={s.videoOriginalDownload}>
-              {t("Tải file gốc MKV")}
+              {t("Tải file gốc")}
             </a>
           ) : null}
         </View>
@@ -409,9 +414,9 @@ export function FileViewer({
           poster: file.posterUrl,
           style: { width: "100%", maxHeight: 260, display: "block" } as any,
         })}
-        {isMkv ? (
+        {canDownloadOriginal ? (
           <a href={file.url} target="_blank" rel="noreferrer" download={file.name} style={s.videoOriginalDownload}>
-            {t("Tải file gốc MKV")}
+            {t("Tải file gốc")}
           </a>
         ) : null}
       </View>
