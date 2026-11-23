@@ -382,6 +382,7 @@ function SubmitModal({
                           <HtmlText
                             html={assignment.description}
                             style={{ fontSize: 14, color: colors.foreground, lineHeight: 22 } as any}
+                            deferVideoLoading
                           />
                         ) : (
                           <Text style={{ fontSize: 14, fontFamily: "Inter_400Regular", color: colors.mutedForeground, fontStyle: "italic" }}>
@@ -391,7 +392,7 @@ function SubmitModal({
                         {assignment.attachments && assignment.attachments.length > 0 && (
                           <View style={{ marginTop: 12 }}>
                             <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: colors.mutedForeground, marginBottom: 8 }}>{t("Tệp đính kèm:")}</Text>
-                            <FileList files={assignment.attachments} />
+                            <FileList files={assignment.attachments} deferVideoUntilPlay />
                           </View>
                         )}
                       </>
@@ -652,11 +653,11 @@ function AssignmentCard({
                 <View style={{ backgroundColor: colors.card, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.border }}>
                   {item.title ? <Text style={{ fontSize: 14, fontFamily: "Inter_700Bold", color: colors.foreground, marginBottom: item.description ? 8 : 0 }}>{item.title}</Text> : null}
                   {item.description ? (
-                    <HtmlText html={item.description} style={{ color: colors.foreground }} />
+                    <HtmlText html={item.description} style={{ color: colors.foreground }} deferVideoLoading />
                   ) : null}
                   {item.attachments && item.attachments.length > 0 && (
                     <View style={{ marginTop: 10 }}>
-                      <FileList files={item.attachments} />
+                      <FileList files={item.attachments} deferVideoUntilPlay />
                     </View>
                   )}
                 </View>
@@ -667,14 +668,14 @@ function AssignmentCard({
             <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 }}>{t("Bài nộp của học viên")}</Text>
             {item.submissionContent ? (
               <View style={{ backgroundColor: "#eff6ff", borderRadius: 12, padding: 14, borderLeftWidth: 3, borderLeftColor: colors.primary, marginBottom: 12, borderWidth: 1, borderColor: "#bfdbfe" }}>
-                <HtmlText html={item.submissionContent} style={{ color: "#1e3a5f" }} />
+                <HtmlText html={item.submissionContent} style={{ color: "#1e3a5f" }} deferVideoLoading />
               </View>
             ) : null}
 
             {/* File đính kèm bài nộp */}
             {item.submissionAttachments && item.submissionAttachments.length > 0 ? (
               <View style={{ marginTop: item.submissionContent ? 0 : 0 }}>
-                <FileList files={normaliseSubmissionFiles(item.submissionAttachments as unknown[])} />
+                <FileList files={normaliseSubmissionFiles(item.submissionAttachments as unknown[])} deferVideoUntilPlay />
               </View>
             ) : !item.submissionContent ? (
               <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>{t("Học viên không để lại nội dung.")}</Text>

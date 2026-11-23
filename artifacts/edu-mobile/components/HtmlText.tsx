@@ -9,6 +9,8 @@ interface HtmlTextProps {
   numberOfLines?: number;
   /** Web-only: constrain images to thumbnail size. Ignored on native. */
   compactImages?: boolean;
+  /** Prevent embedded videos from preloading in BTVN content. */
+  deferVideoLoading?: boolean;
 }
 
 function stripHtml(html: string): string {
@@ -46,12 +48,30 @@ function stripHtml(html: string): string {
 }
 
 /** Full rich HTML renderer via WebView — used when no numberOfLines truncation is needed */
-function HtmlTextFull({ html, style, compactImages }: { html: string; style?: StyleProp<TextStyle>; compactImages?: boolean }) {
+function HtmlTextFull({
+  html,
+  style,
+  compactImages,
+  deferVideoLoading,
+}: {
+  html: string;
+  style?: StyleProp<TextStyle>;
+  compactImages?: boolean;
+  deferVideoLoading?: boolean;
+}) {
   const [height, setHeight] = useState(40);
 
   // Extract color from style for the WebView
   const flatStyle = style as any;
   const textColor = flatStyle?.color ?? "#111827";
+  const renderedHtml = deferVideoLoading
+    ? html.replace(/<video\b([^>]*)>/gi, (_match, attributes: string) => {
+        const attrsWithoutPreload = attributes
+          .replace(/\s+preload\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+          .replace(/\s+autoplay(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?/gi, "");
+        return `<video${attrsWithoutPreload} preload="none">`;
+      })
+    : html;
 
   const fullHtml = `<!DOCTYPE html>
 <html>
@@ -117,7 +137,7 @@ function HtmlTextFull({ html, style, compactImages }: { html: string; style?: St
   </style>
 </head>
 <body>
-${html}
+${renderedHtml}
 <script>
   function sendHeight() {
     var h = document.body.scrollHeight;
@@ -157,7 +177,7 @@ ${html}
   );
 }
 
-export function HtmlText({ html, style, numberOfLines, compactImages }: HtmlTextProps) {
+export function HtmlText({ html, style, numberOfLines, compactImages, deferVideoLoading }: HtmlTextProps) {
   // When numberOfLines is set we need native Text truncation — strip HTML to plain text.
   // Otherwise render full rich HTML (with images) via WebView.
   if (numberOfLines !== undefined) {
@@ -167,5 +187,5 @@ export function HtmlText({ html, style, numberOfLines, compactImages }: HtmlText
       </Text>
     );
   }
-  return <HtmlTextFull html={html} style={style} compactImages={compactImages} />;
+  return <HtmlTextFull html={html} style={style} compactImages={compactImages} deferVideoLoading={deferVideoLoading} />;
 }

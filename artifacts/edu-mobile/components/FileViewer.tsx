@@ -737,11 +737,16 @@ interface FileViewerProps {
   imageSize?: number;
 }
 
-export function FileViewer({ file, imageSize = 88 }: FileViewerProps) {
+export function FileViewer({
+  file,
+  imageSize = 88,
+  deferVideoUntilPlay = false,
+}: FileViewerProps & { deferVideoUntilPlay?: boolean }) {
   const colors = useColors();
   const { t } = useLanguage();
   const [fsOpen, setFsOpen] = useState(false);
   const [docOpen, setDocOpen] = useState(false);
+  const [videoActivated, setVideoActivated] = useState(false);
   const kind = detectKind(file);
   const { icon, color, bg } = fileIcon(kind);
 
@@ -765,6 +770,20 @@ export function FileViewer({ file, imageSize = 88 }: FileViewerProps) {
 
   // ── VIDEO ──
   if (kind === "video") {
+    if (deferVideoUntilPlay && !videoActivated) {
+      return (
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={`${t("Tải và phát video")}: ${file.name}`}
+          onPress={() => setVideoActivated(true)}
+          style={[s.videoWrap, s.deferredVideo]}
+        >
+          <Feather name="play-circle" size={38} color="#fff" />
+          <Text style={s.deferredVideoText}>{t("Bấm để tải và phát video")}</Text>
+          <Text style={s.deferredVideoName} numberOfLines={1}>{file.name}</Text>
+        </TouchableOpacity>
+      );
+    }
     return (
       <View style={[s.videoWrap, { backgroundColor: "#000", borderRadius: 12, overflow: "hidden" }]}>
         <Video
@@ -772,7 +791,7 @@ export function FileViewer({ file, imageSize = 88 }: FileViewerProps) {
           useNativeControls
           resizeMode={ResizeMode.CONTAIN}
           style={{ width: "100%", height: 210 }}
-          shouldPlay={false}
+          shouldPlay={deferVideoUntilPlay ? videoActivated : false}
         />
         <View style={s.videoBadge}>
           <Feather name="film" size={11} color="#fff" />
@@ -868,7 +887,15 @@ export function FileAttachmentChip({ file, onPress }: { file: FileItem; onPress?
 }
 
 // ─── FileList ─────────────────────────────────────────────────────────────────
-export function FileList({ files, imageSize }: { files: FileItem[]; imageSize?: number }) {
+export function FileList({
+  files,
+  imageSize,
+  deferVideoUntilPlay = false,
+}: {
+  files: FileItem[];
+  imageSize?: number;
+  deferVideoUntilPlay?: boolean;
+}) {
   const images = files.filter((f) => detectKind(f) === "image");
   const others = files.filter((f) => detectKind(f) !== "image");
 
@@ -877,12 +904,12 @@ export function FileList({ files, imageSize }: { files: FileItem[]; imageSize?: 
       {images.length > 0 && (
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
           {images.map((f, i) => (
-            <FileViewer key={i} file={f} imageSize={imageSize} />
+            <FileViewer key={i} file={f} imageSize={imageSize} deferVideoUntilPlay={deferVideoUntilPlay} />
           ))}
         </View>
       )}
       {others.map((f, i) => (
-        <FileViewer key={i} file={f} imageSize={imageSize} />
+        <FileViewer key={i} file={f} imageSize={imageSize} deferVideoUntilPlay={deferVideoUntilPlay} />
       ))}
     </View>
   );
@@ -995,6 +1022,29 @@ const s = StyleSheet.create({
   },
   videoWrap: {
     position: "relative",
+  },
+  deferredVideo: {
+    width: "100%",
+    height: 210,
+    borderRadius: 12,
+    backgroundColor: "#111827",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    paddingHorizontal: 16,
+  },
+  deferredVideoText: {
+    color: "#fff",
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    textAlign: "center",
+  },
+  deferredVideoName: {
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    textAlign: "center",
+    maxWidth: "100%",
   },
   videoBadge: {
     position: "absolute",
