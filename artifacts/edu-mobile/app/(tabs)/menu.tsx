@@ -47,7 +47,10 @@ export default function MenuScreen() {
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [updateMessage, setUpdateMessage] = useState("");
   const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
-  const appVersion = Constants.expoConfig?.version ?? "1.0.0";
+  const appVersion =
+    process.env.EXPO_PUBLIC_APP_DISPLAY_VERSION?.trim() ||
+    Constants.expoConfig?.version ||
+    "1.0.0";
 
   const checkForPwaUpdate = useCallback(async () => {
     if (Platform.OS !== "web" || !("serviceWorker" in navigator)) return null;
