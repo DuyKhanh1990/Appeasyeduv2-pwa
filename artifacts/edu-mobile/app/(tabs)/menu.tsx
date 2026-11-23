@@ -1,13 +1,15 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
+import Constants from "expo-constants";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Linking, Platform, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useAuth, type UserRole } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
+import { registerWebServiceWorker } from "@/lib/pushNotifications";
 
 interface MenuItem {
   icon: React.ReactNode;
@@ -41,6 +43,113 @@ export default function MenuScreen() {
   const { language, setLanguage, t } = useLanguage();
   const isEnglish = language === "en";
   const bottomPad = Platform.OS === "web" ? 34 : 0;
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateMessage, setUpdateMessage] = useState("");
+  const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
+  const appVersion = Constants.expoConfig?.version ?? "1.0.0";
+
+  const checkForPwaUpdate = useCallback(async () => {
+    if (Platform.OS !== "web" || !("serviceWorker" in navigator)) return null;
+    setCheckingUpdate(true);
+    try {
+      const registration = registrationRef.current ?? await registerWebServiceWorker();
+      if (!registration) return null;
+      registrationRef.current = registration;
+      await registration.update();
+      const waitingWorker = registration.waiting;
+      setUpdateAvailable(Boolean(waitingWorker));
+      return { registration, waitingWorker };
+    } catch (error) {
+      console.warn("[pwa-update] Menu không kiểm tra được bản cập nhật:", error);
+      setUpdateMessage(t("Không thể kiểm tra cập nhật. Vui lòng thử lại."));
+      return null;
+    } finally {
+      setCheckingUpdate(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    if (Platform.OS !== "web" || !("serviceWorker" in navigator)) return;
+    let disposed = false;
+    let registration: ServiceWorkerRegistration | null = null;
+
+    const syncUpdateState = async () => {
+      const result = await checkForPwaUpdate();
+      if (!disposed && result) {
+        registration = result.registration;
+        registrationRef.current = registration;
+        setUpdateAvailable(Boolean(registration.waiting));
+      }
+    };
+
+    const handleUpdateFound = () => {
+      const installing = registration?.installing;
+      if (!installing) return;
+      installing.addEventListener("statechange", () => {
+        if (installing.state === "installed" && navigator.serviceWorker.controller) {
+          setUpdateAvailable(Boolean(registration?.waiting));
+        }
+      });
+    };
+
+    void registerWebServiceWorker().then((nextRegistration) => {
+      if (disposed || !nextRegistration) return;
+      registration = nextRegistration;
+      registrationRef.current = nextRegistration;
+      setUpdateAvailable(Boolean(nextRegistration.waiting));
+      nextRegistration.addEventListener("updatefound", handleUpdateFound);
+      void syncUpdateState();
+    });
+
+    window.addEventListener("pageshow", syncUpdateState);
+    window.addEventListener("focus", syncUpdateState);
+    document.addEventListener("visibilitychange", syncUpdateState);
+    return () => {
+      disposed = true;
+      window.removeEventListener("pageshow", syncUpdateState);
+      window.removeEventListener("focus", syncUpdateState);
+      document.removeEventListener("visibilitychange", syncUpdateState);
+      registration?.removeEventListener("updatefound", handleUpdateFound);
+    };
+  }, [checkForPwaUpdate]);
+
+  const handlePwaUpdatePress = async () => {
+    if (checkingUpdate) return;
+    setUpdateMessage("");
+    const result = await checkForPwaUpdate();
+    if (!result) return;
+
+    const waitingWorker = result.registration.waiting;
+    if (!waitingWorker) {
+      if (result.registration.installing) {
+        setUpdateMessage(t("Bản cập nhật đang được tải. Vui lòng chờ."));
+        return;
+      }
+      setUpdateAvailable(false);
+      setUpdateMessage(t("Bạn đang dùng phiên bản mới nhất."));
+      return;
+    }
+
+    setUpdateAvailable(true);
+    if (waitingWorker.state === "activated") {
+      window.location.reload();
+      return;
+    }
+
+    let reloaded = false;
+    const reload = () => {
+      if (reloaded) return;
+      reloaded = true;
+      window.location.reload();
+    };
+    navigator.serviceWorker.addEventListener("controllerchange", reload, { once: true });
+    waitingWorker.addEventListener("statechange", () => {
+      if (waitingWorker.state === "activated") reload();
+    });
+    waitingWorker.postMessage({ type: "SKIP_WAITING" });
+    setUpdateMessage(t("Đang cập nhật ứng dụng..."));
+  };
 
   const handleSwitchRole = () => {
     const options: { label: string; role: UserRole }[] = [
@@ -210,6 +319,35 @@ export default function MenuScreen() {
             <Feather name="log-out" size={18} color={colors.destructive} />
             <Text style={[styles.logoutText, { color: colors.destructive }]}>{t("Đăng xuất")}</Text>
           </TouchableOpacity>
+          {Platform.OS === "web" ? (
+            <View style={styles.pwaUpdateArea}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={t(updateAvailable ? "Cập nhật phiên bản mới" : "Kiểm tra cập nhật")}
+                disabled={checkingUpdate}
+                onPress={handlePwaUpdatePress}
+                style={[styles.pwaUpdateButton, { borderColor: colors.primary }]}
+                activeOpacity={0.75}
+              >
+                <Feather
+                  name={updateAvailable ? "download-cloud" : "refresh-cw"}
+                  size={14}
+                  color={colors.primary}
+                />
+                <Text style={[styles.pwaUpdateButtonText, { color: colors.primary }]}>
+                  {checkingUpdate
+                    ? t("Đang kiểm tra...")
+                    : t(updateAvailable ? "Cập nhật phiên bản mới" : "Kiểm tra cập nhật")}
+                </Text>
+              </TouchableOpacity>
+              {updateMessage ? (
+                <Text style={[styles.pwaUpdateMessage, { color: colors.mutedForeground }]}>{updateMessage}</Text>
+              ) : null}
+              <Text style={[styles.appVersion, { color: colors.mutedForeground }]}>
+                {t("Phiên bản")} {appVersion}
+              </Text>
+            </View>
+          ) : null}
         </View>
       </ScrollView>
     </View>
@@ -339,5 +477,33 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: 16,
     fontFamily: "Inter_600SemiBold",
+  },
+  pwaUpdateArea: {
+    alignItems: "center",
+    marginTop: 8,
+    gap: 6,
+  },
+  pwaUpdateButton: {
+    minHeight: 36,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    gap: 7,
+  },
+  pwaUpdateButtonText: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+  },
+  pwaUpdateMessage: {
+    fontSize: 11,
+    textAlign: "center",
+  },
+  appVersion: {
+    fontSize: 10,
+    fontFamily: "Inter_400Regular",
+    textAlign: "center",
   },
 });
