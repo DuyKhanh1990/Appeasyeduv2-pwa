@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Text, View } from "react-native";
+import { Platform, Text, View } from "react-native";
 import { WebView } from "react-native-webview";
 import type { StyleProp, TextStyle } from "react-native";
 
@@ -47,6 +47,84 @@ function stripHtml(html: string): string {
     .trim();
 }
 
+function moveVideoSourceToDataAttribute(attributes: string): string {
+  return attributes.replace(
+    /(\s)src(\s*=\s*)(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi,
+    (_match, space: string, equals: string, doubleQuoted?: string, singleQuoted?: string, unquoted?: string) => {
+      const source = doubleQuoted ?? singleQuoted ?? unquoted ?? "";
+      const escapedSource = source
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;");
+      return `${space}data-deferred-src${equals}"${escapedSource}"`;
+    },
+  );
+}
+
+function deferEmbeddedVideoSources(html: string): string {
+  let videoCount = 0;
+  const deferredHtml = html.replace(
+    /<video\b([^>]*)>([\s\S]*?)<\/video>/gi,
+    (_match, attributes: string, contents: string) => {
+      const hasVideoSource =
+        /\ssrc\s*=/i.test(attributes) || /<source\b[^>]*\ssrc\s*=/i.test(contents);
+      if (!hasVideoSource) return _match;
+
+      videoCount += 1;
+      let deferredAttributes = moveVideoSourceToDataAttribute(attributes)
+        .replace(/\s+preload\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+        .replace(/\s+autoplay(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?/gi, "");
+      if (!/\scontrols(?:\s|=|$)/i.test(deferredAttributes)) {
+        deferredAttributes += " controls";
+      }
+      if (!/\splaysinline(?:\s|=|$)/i.test(deferredAttributes)) {
+        deferredAttributes += " playsinline";
+      }
+
+      const deferredContents = contents.replace(
+        /<source\b([^>]*)>/gi,
+        (_sourceMatch: string, sourceAttributes: string) =>
+          `<source${moveVideoSourceToDataAttribute(sourceAttributes)}>`,
+      );
+
+      return `<div class="easyedu-deferred-video" data-video-index="${videoCount}"><button class="easyedu-deferred-video-trigger" type="button" aria-label="Tải và phát video"><span class="easyedu-deferred-video-play">▶</span><span>Chạm để tải và phát video</span></button><video${deferredAttributes} preload="none">${deferredContents}</video></div>`;
+    },
+  );
+
+  if (videoCount === 0) return html;
+  return `${deferredHtml}
+<script>
+  document.addEventListener('click', function(event) {
+    var trigger = event.target.closest('.easyedu-deferred-video-trigger');
+    if (!trigger) return;
+    var card = trigger.parentElement;
+    var video = card && card.querySelector('video');
+    if (!video) return;
+
+    var directSource = video.getAttribute('data-deferred-src');
+    if (directSource) {
+      video.setAttribute('src', directSource);
+      video.removeAttribute('data-deferred-src');
+    }
+    var sources = video.querySelectorAll('source[data-deferred-src]');
+    for (var i = 0; i < sources.length; i++) {
+      sources[i].setAttribute('src', sources[i].getAttribute('data-deferred-src'));
+      sources[i].removeAttribute('data-deferred-src');
+    }
+
+    card.classList.add('is-active');
+    video.load();
+    var playRequest = video.play();
+    if (playRequest && playRequest.catch) playRequest.catch(function() {});
+    video.addEventListener('loadedmetadata', function() {
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ height: document.body.scrollHeight }));
+      }
+    }, { once: true });
+  });
+</script>`;
+}
+
 /** Full rich HTML renderer via WebView — used when no numberOfLines truncation is needed */
 function HtmlTextFull({
   html,
@@ -64,7 +142,9 @@ function HtmlTextFull({
   // Extract color from style for the WebView
   const flatStyle = style as any;
   const textColor = flatStyle?.color ?? "#111827";
-  const renderedHtml = deferVideoLoading
+  const renderedHtml = deferVideoLoading && Platform.OS === "web"
+    ? deferEmbeddedVideoSources(html)
+    : deferVideoLoading
     ? html.replace(/<video\b([^>]*)>/gi, (_match, attributes: string) => {
         const attrsWithoutPreload = attributes
           .replace(/\s+preload\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "")
@@ -131,6 +211,20 @@ function HtmlTextFull({
       object-fit: cover;
     }
     video { max-width: 100%; border-radius: 6px; display: block; margin: 6px 0; }
+    .easyedu-deferred-video { margin: 6px 0; }
+    .easyedu-deferred-video-trigger {
+      width: 100%; min-height: 190px; border: 0; border-radius: 8px;
+      background: #111827; color: #fff; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px;
+      font: 600 14px -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .easyedu-deferred-video-play {
+      width: 54px; height: 54px; border-radius: 50%; background: #ffffff2b;
+      display: grid; place-items: center; font-size: 22px; padding-left: 3px;
+    }
+    .easyedu-deferred-video video { display: none; width: 100%; }
+    .easyedu-deferred-video.is-active video { display: block; }
+    .easyedu-deferred-video.is-active .easyedu-deferred-video-trigger { display: none; }
     table { width: 100%; border-collapse: collapse; font-size: 0.88em; margin: 8px 0; }
     th, td { border: 1px solid #e5e7eb; padding: 5px 8px; text-align: left; }
     th { background: #f9fafb; font-weight: 600; }
