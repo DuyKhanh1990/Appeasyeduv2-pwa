@@ -930,9 +930,20 @@ export default function HomeworkScreen() {
       setLoadingMore(true);
     }
     try {
-      const data = await apiGet<WebAssignmentResponse>(
-        `/api/my-space/assignments/student?month=${monthKey}&page=${page}&pageSize=50`
-      );
+      let data: WebAssignmentResponse;
+      for (let attempt = 0; ; attempt++) {
+        try {
+          data = await apiGet<WebAssignmentResponse>(
+            `/api/my-space/assignments/student?month=${monthKey}&page=${page}&pageSize=50`
+          );
+          break;
+        } catch (requestError: unknown) {
+          const status = (requestError as { status?: number })?.status;
+          const shouldRetry = attempt === 0 && (status === undefined || status >= 500);
+          if (!shouldRetry) throw requestError;
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
       const newRows = (data.rows || []).map(mapWebAssignment);
       if (page === 1) {
         setRows(newRows);
