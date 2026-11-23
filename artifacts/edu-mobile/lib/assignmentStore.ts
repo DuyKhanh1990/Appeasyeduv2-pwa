@@ -13,11 +13,23 @@ export interface AssignmentRow {
   homeworkId: string | null;
   homeworkTitle: string;
   homeworkDescription?: string;
-  homeworkAttachments?: { name: string; url: string }[];
+  homeworkAttachments?: {
+    name: string;
+    url: string;
+    playbackUrl?: string;
+    posterUrl?: string;
+    mediaProcessingStatus?: "queued" | "processing" | "ready" | "failed" | string;
+  }[];
   isPersonalized: boolean;
   submissionStatus: "submitted" | "pending" | "graded";
   submissionContent?: string;
-  submissionAttachments?: { name: string; url: string }[];
+  submissionAttachments?: {
+    name: string;
+    url: string;
+    playbackUrl?: string;
+    posterUrl?: string;
+    mediaProcessingStatus?: "queued" | "processing" | "ready" | "failed" | string;
+  }[];
   studentSessionContentId: string;
   score?: string | null;
   comment?: string | null;

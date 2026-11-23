@@ -6,6 +6,9 @@ export interface AssignmentFile {
   mimetype?: string;
   type?: string;
   size?: number;
+  playbackUrl?: string;
+  posterUrl?: string;
+  mediaProcessingStatus?: "queued" | "processing" | "ready" | "failed" | string;
 }
 
 /**
@@ -36,6 +39,12 @@ export function normalizeAssignmentFiles(value: unknown): AssignmentFile[] {
       ...file,
       name: typeof file.name === "string" && file.name ? file.name : "File đính kèm",
       url: resolveAssignmentFileUrl(file.url),
+      ...(typeof file.playbackUrl === "string"
+        ? { playbackUrl: resolveAssignmentFileUrl(file.playbackUrl) }
+        : {}),
+      ...(typeof file.posterUrl === "string"
+        ? { posterUrl: resolveAssignmentFileUrl(file.posterUrl) }
+        : {}),
     }];
   });
 }

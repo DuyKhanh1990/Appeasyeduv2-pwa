@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -54,6 +54,18 @@ function mapStaffAssignment(raw: Record<string, unknown>): AssignmentRow {
     ) ?? undefined,
     submissionAttachments: normalizeAssignmentFiles(raw.submissionAttachments),
   };
+}
+
+function hasPendingMediaProcessing(row: AssignmentRow): boolean {
+  if (row.itemType !== "BTVN") return false;
+  const files = [
+    ...(row.homeworkAttachments ?? []),
+    ...(row.submissionAttachments ?? []),
+  ];
+  return files.some((file) => {
+    const status = file.mediaProcessingStatus?.toLowerCase();
+    return status === "queued" || status === "processing";
+  });
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -174,6 +186,7 @@ export default function StaffAssignmentsScreen() {
 
   const [allRows, setAllRows] = useState<AssignmentRow[]>([]);
   const [rows, setRows] = useState<AssignmentRow[]>([]);
+  const isFocusedRef = useRef(false);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -236,12 +249,51 @@ export default function StaffAssignmentsScreen() {
       }
       setRows(fetched);
     } catch {
-      setRows([]);
+      if (!silent) {
+        setRows([]);
+        setAllRows([]);
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      isFocusedRef.current = true;
+      return () => {
+        isFocusedRef.current = false;
+      };
+    }, []),
+  );
+
+  useEffect(() => {
+    if (!isFocusedRef.current || !allRows.some(hasPendingMediaProcessing)) return;
+    const timeout = setTimeout(() => {
+      void fetchData({
+        year: viewYear,
+        month: viewMonth,
+        status: statusFilter,
+        classNames: classNamesFilter,
+        studentIds: studentIdsFilter,
+        dateFrom: dateFromFilter,
+        dateTo: dateToFilter,
+        silent: true,
+      });
+    }, 4000);
+    return () => clearTimeout(timeout);
+  }, [
+    allRows,
+    viewYear,
+    viewMonth,
+    statusFilter,
+    classNamesFilter,
+    studentIdsFilter,
+    dateFromFilter,
+    dateToFilter,
+    fetchData,
+  ]);
 
   useEffect(() => {
     fetchData({ year: viewYear, month: viewMonth, status: statusFilter, classNames: classNamesFilter, studentIds: studentIdsFilter, dateFrom: dateFromFilter, dateTo: dateToFilter });

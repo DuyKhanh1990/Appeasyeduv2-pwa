@@ -45,6 +45,9 @@ export interface FileItem {
   mimetype?: string;
   type?: string;
   size?: number;
+  playbackUrl?: string;
+  posterUrl?: string;
+  mediaProcessingStatus?: "queued" | "processing" | "ready" | "failed" | string;
 }
 
 type FileKind = "image" | "video" | "audio" | "pdf" | "doc" | "other";

@@ -60,10 +60,7 @@ function normaliseSubmissionFiles(raw: unknown[]): FileItem[] {
 import ExamIntroModal, { ExamMeta } from "@/components/ExamIntroModal";
 import ExamTakingScreen, { ExamData, ExamSection, ExamSubmitPayload } from "@/components/ExamTakingScreen";
 
-interface Attachment {
-  name: string;
-  url: string;
-}
+type Attachment = FileItem;
 
 interface AssignmentRow {
   itemType: "BTVN" | "Bài kiểm tra";
@@ -143,6 +140,22 @@ function mapWebAssignment(raw: Record<string, unknown>): AssignmentRow {
         : undefined
     ),
   };
+}
+
+function hasMediaProcessingFiles(row: AssignmentRow): boolean {
+  if (row.itemType !== "BTVN") return false;
+  const files = [
+    ...(row.attachments ?? []),
+    ...normaliseSubmissionFiles(row.submissionAttachments ?? []),
+  ];
+  return files.some((file) => {
+    const status = file.mediaProcessingStatus?.toLowerCase();
+    return status === "queued" || status === "processing";
+  });
+}
+
+function assignmentRowKey(row: AssignmentRow): string {
+  return `${row.itemType}:${row.homeworkId ?? row.studentSessionContentId ?? `${row.classSessionId ?? ""}:${row.title}`}`;
 }
 
 interface AttemptCountResponse {
@@ -900,6 +913,7 @@ export default function HomeworkScreen() {
   const [hasMore, setHasMore] = useState(false);
   const currentPageRef = useRef(1);
   const loadingMoreRef = useRef(false);
+  const isFocusedRef = useRef(false);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [fetchError, setFetchError] = useState<string | null>(null);
 
@@ -979,6 +993,46 @@ export default function HomeworkScreen() {
     }
   }, [monthKey]);
 
+  // Keep already-loaded homework pages intact while waiting for backend MKV
+  // processing metadata to move from queued/processing to ready/failed.
+  useEffect(() => {
+    if (!isFocusedRef.current || !rows.some(hasMediaProcessingFiles)) return;
+    const timeout = setTimeout(async () => {
+      try {
+        const pages = Array.from({ length: currentPageRef.current }, (_, index) => index + 1);
+        const responses = await Promise.all(
+          pages.map((page) =>
+            apiGet<WebAssignmentResponse>(
+              `/api/my-space/assignments/student?month=${monthKey}&page=${page}&pageSize=50`,
+            ),
+          ),
+        );
+        const latestRows = new Map<string, AssignmentRow>();
+        for (const response of responses) {
+          for (const raw of response.rows ?? []) {
+            const latest = mapWebAssignment(raw);
+            latestRows.set(assignmentRowKey(latest), latest);
+          }
+        }
+        setRows((current) =>
+          current.map((row) => {
+            const latest = latestRows.get(assignmentRowKey(row));
+            return latest
+              ? {
+                  ...row,
+                  attachments: latest.attachments,
+                  submissionAttachments: latest.submissionAttachments,
+                }
+              : row;
+          }),
+        );
+      } catch {
+        // A transient polling failure should not replace the homework error state.
+      }
+    }, 4000);
+    return () => clearTimeout(timeout);
+  }, [monthKey, rows]);
+
   const loadMore = useCallback(() => {
     if (loadingMoreRef.current || !hasMore || loading) return;
     loadingMoreRef.current = true;
@@ -1001,6 +1055,7 @@ export default function HomeworkScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      isFocusedRef.current = true;
       const dl = popAssignmentsDeeplink();
       if (dl?.date) {
         const d = new Date(dl.date + "T00:00:00");
@@ -1013,6 +1068,7 @@ export default function HomeworkScreen() {
       if (dl?.classId) setActiveHighlightClassId(dl.classId);
       fetchAssignments();
       return () => {
+        isFocusedRef.current = false;
         setActiveHighlightDate(null);
         setActiveHighlightClassId(null);
       };

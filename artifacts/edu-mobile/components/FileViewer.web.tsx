@@ -21,6 +21,9 @@ export interface FileItem {
   mimetype?: string;
   type?: string;
   size?: number;
+  playbackUrl?: string;
+  posterUrl?: string;
+  mediaProcessingStatus?: "queued" | "processing" | "ready" | "failed" | string;
 }
 
 type FileKind = "image" | "video" | "audio" | "pdf" | "doc" | "other";
@@ -335,32 +338,82 @@ export function FileViewer({
 
   // ── VIDEO (HTML5 on web) ──
   if (kind === "video") {
+    const isMkv =
+      /\.mkv(?:[?#]|$)/i.test(file.name) ||
+      /\.mkv(?:[?#]|$)/i.test(file.url) ||
+      /matroska/i.test(file.mimetype || file.type || "");
+    const processingStatus = file.mediaProcessingStatus?.toLowerCase();
+    const isProcessing = isMkv && (processingStatus === "queued" || processingStatus === "processing");
+    const videoUrl = isMkv && file.playbackUrl ? file.playbackUrl : file.url;
+    const statusLabel = processingStatus === "queued"
+      ? t("Video đang chờ xử lý")
+      : processingStatus === "processing"
+        ? t("Video đang được xử lý")
+        : processingStatus === "failed"
+          ? t("Chưa tạo được bản phát video")
+          : "";
+
+    if (isProcessing) {
+      return (
+        <View style={s.deferredVideo}>
+          {file.posterUrl ? (
+            <Image source={{ uri: file.posterUrl }} style={s.videoPoster} resizeMode="cover" />
+          ) : null}
+          <View style={s.videoStatusOverlay}>
+            <Feather name="clock" size={24} color="#fff" />
+            <Text style={s.deferredVideoText}>{statusLabel}</Text>
+            <Text style={s.deferredVideoName}>{t("Đang cập nhật trạng thái")}</Text>
+          </View>
+          <a href={file.url} target="_blank" rel="noreferrer" download={file.name} style={s.originalDownload}>
+            {t("Tải file gốc")}
+          </a>
+        </View>
+      );
+    }
+
     if (deferVideoUntilPlay && !videoActivated) {
       return (
-        <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityLabel={`${t("Tải và phát video")}: ${file.name}`}
-          onPress={() => setVideoActivated(true)}
-          style={s.deferredVideo}
-          activeOpacity={0.85}
-        >
-          <Feather name="play-circle" size={38} color="#fff" />
-          <Text style={s.deferredVideoText}>{t("Bấm để tải và phát video")}</Text>
-          <Text style={s.deferredVideoName} numberOfLines={1}>{file.name}</Text>
-        </TouchableOpacity>
+        <View>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={`${t("Tải và phát video")}: ${file.name}`}
+            onPress={() => setVideoActivated(true)}
+            style={[s.deferredVideo, file.posterUrl ? { backgroundColor: "#111827" } : null]}
+            activeOpacity={0.85}
+          >
+            {file.posterUrl ? <Image source={{ uri: file.posterUrl }} style={s.videoPoster} resizeMode="cover" /> : null}
+            <View style={s.videoPlayOverlay}>
+              <Feather name="play-circle" size={38} color="#fff" />
+              <Text style={s.deferredVideoText}>{t("Bấm để tải và phát video")}</Text>
+              <Text style={s.deferredVideoName} numberOfLines={1}>{file.name}</Text>
+            </View>
+            {statusLabel ? <Text style={s.videoStatusLabel}>{statusLabel}</Text> : null}
+          </TouchableOpacity>
+          {isMkv ? (
+            <a href={file.url} target="_blank" rel="noreferrer" download={file.name} style={s.videoOriginalDownload}>
+              {t("Tải file gốc MKV")}
+            </a>
+          ) : null}
+        </View>
       );
     }
 
     return (
       <View style={{ borderRadius: 12, overflow: "hidden", backgroundColor: "#000" }}>
         {React.createElement("video", {
-          src: file.url,
+          src: videoUrl,
           controls: true,
           autoPlay: deferVideoUntilPlay,
           playsInline: true,
           preload: deferVideoUntilPlay ? "none" : "metadata",
+          poster: file.posterUrl,
           style: { width: "100%", maxHeight: 260, display: "block" } as any,
         })}
+        {isMkv ? (
+          <a href={file.url} target="_blank" rel="noreferrer" download={file.name} style={s.videoOriginalDownload}>
+            {t("Tải file gốc MKV")}
+          </a>
+        ) : null}
       </View>
     );
   }
@@ -517,6 +570,8 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   deferredVideo: {
+    position: "relative",
+    overflow: "hidden",
     width: "100%",
     height: 210,
     borderRadius: 12,
@@ -539,6 +594,54 @@ const s = StyleSheet.create({
     textAlign: "center",
     maxWidth: "100%",
   },
+  videoPoster: {
+    ...StyleSheet.absoluteFillObject,
+    width: "100%",
+    height: "100%",
+  },
+  videoPlayOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "rgba(17,24,39,0.35)",
+  },
+  videoStatusOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "rgba(17,24,39,0.55)",
+  },
+  videoStatusLabel: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    color: "#fff",
+    backgroundColor: "rgba(17,24,39,0.78)",
+    borderRadius: 12,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    fontSize: 11,
+  },
+  originalDownload: {
+    position: "absolute",
+    bottom: 8,
+    right: 8,
+    zIndex: 2,
+    color: "#fff",
+    backgroundColor: "rgba(17,24,39,0.8)",
+    borderRadius: 12,
+    padding: "6px 10px",
+    fontSize: 12,
+    textDecoration: "none",
+  } as any,
+  videoOriginalDownload: {
+    display: "inline-block",
+    marginTop: 6,
+    color: "#2563eb",
+    fontSize: 12,
+  } as any,
   pill: {
     flexDirection: "row",
     alignItems: "center",
