@@ -28,16 +28,14 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 import { apiGet, apiPost } from "@/lib/api";
 import { FileList } from "@/components/FileViewer";
+import { normalizeAssignmentFiles, type AssignmentFile } from "@/lib/assignmentFiles";
 import { HtmlText } from "@/components/HtmlText";
 import { PostHtmlContent } from "@/components/PostHtmlContent";
 import { TeacherReviewContent, type TeacherReviewBlock } from "@/components/TeacherReviewContent";
 
 // ─── Student types ──────────────────────────────────────────────────────────
 
-interface Attachment {
-  name: string;
-  url: string;
-}
+type Attachment = AssignmentFile;
 
 interface ContentItem {
   id: string;
@@ -903,6 +901,21 @@ export default function ScheduleScreen() {
           seen.add(k);
           return true;
         });
+        data.sessions = data.sessions.map((session) => ({
+          ...session,
+          generalContents: session.generalContents?.map((content) => ({
+            ...content,
+            ...(content.attachments
+              ? { attachments: normalizeAssignmentFiles(content.attachments) }
+              : {}),
+          })),
+          personalContents: session.personalContents?.map((content) => ({
+            ...content,
+            ...(content.attachments
+              ? { attachments: normalizeAssignmentFiles(content.attachments) }
+              : {}),
+          })),
+        }));
       }
 
       setDaySchedule(data);

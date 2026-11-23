@@ -17,6 +17,18 @@ VAPID key. Derive tenant and user server-side from the authenticated request;
 never accept them from push subscription payloads or store production data in
 the workspace database.
 
+The backend now returns `posterUrl` and `mediaProcessingStatus` for MOV files in
+assignment and calendar data. The PWA should preserve and display those shared
+file fields; MOV support does not require changes to login or assignment-submit
+APIs.
+
+**Why:** The user confirmed this backend contract and asked to keep the current
+authentication and submission API flows unchanged.
+
+**How to apply:** Normalize backend-relative poster URLs alongside the original
+video URL, then pass poster and processing metadata through to the shared file
+viewer in both homework and calendar screens.
+
 For the BTVN/assignments feature, use the existing web backend contract for all
 student/parent and staff flows (`/api/my-space/assignments/...`); do not mix in
 the `/api/mobile/...` assignment routes. Submission attachments are URL strings.

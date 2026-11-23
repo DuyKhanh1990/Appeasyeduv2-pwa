@@ -414,6 +414,9 @@ export function FileViewer({
           poster: file.posterUrl,
           style: { width: "100%", maxHeight: 260, display: "block" } as any,
         })}
+        {processingStatus === "failed" ? (
+          <Text style={s.videoStatusLabel}>{statusLabel}</Text>
+        ) : null}
         {canDownloadOriginal ? (
           <a href={file.url} target="_blank" rel="noreferrer" download={file.name} style={s.videoOriginalDownload}>
             {t("Tải file gốc")}
