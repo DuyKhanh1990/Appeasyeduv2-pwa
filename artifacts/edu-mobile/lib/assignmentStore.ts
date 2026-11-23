@@ -15,7 +15,7 @@ export interface AssignmentRow {
   homeworkDescription?: string;
   homeworkAttachments?: { name: string; url: string }[];
   isPersonalized: boolean;
-  submissionStatus: "submitted" | "pending";
+  submissionStatus: "submitted" | "pending" | "graded";
   submissionContent?: string;
   submissionAttachments?: { name: string; url: string }[];
   studentSessionContentId: string;

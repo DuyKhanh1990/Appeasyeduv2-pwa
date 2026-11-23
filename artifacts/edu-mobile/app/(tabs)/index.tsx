@@ -740,7 +740,7 @@ export default function HomeScreen() {
       const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
       const [assignmentResult, scheduleResult] = await Promise.allSettled([
         apiGet<AssignmentStatResponse>(
-          `/api/mobile/student/assignments?month=${month}&pageSize=200`
+          `/api/my-space/assignments/student?month=${month}&pageSize=100`
         ),
         apiGet<StudentMonthScheduleResponse>(`/api/mobile/student/calendar?month=${month}`),
       ]);

@@ -24,6 +24,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import { useColors } from "@/hooks/useColors";
 import { useLanguage } from "@/context/LanguageContext";
 import { apiGet, apiPost, apiUpload, clearSession } from "@/lib/api";
+import { normalizeAssignmentFiles, resolveAssignmentHtmlUrls } from "@/lib/assignmentFiles";
 import { HtmlText } from "@/components/HtmlText";
 import { FileList, FileItem } from "@/components/FileViewer";
 import {
@@ -74,7 +75,7 @@ interface AssignmentRow {
   isPersonalized?: boolean;
   submissionStatus?: "pending" | "submitted" | "graded" | string;
   submissionContent?: string | null;
-  submissionAttachments?: string[];
+  submissionAttachments?: unknown[];
   studentSessionContentId?: string | null;
   score?: string | null;
   comment?: string | null;
@@ -87,13 +88,53 @@ interface AssignmentRow {
   isParent?: boolean;
 }
 
-interface AssignmentResponse {
-  month: string;
-  rows: AssignmentRow[];
+interface WebAssignmentResponse {
+  month?: string;
+  rows?: Array<Record<string, unknown>>;
   total?: number;
   page?: number;
   pageSize?: number;
   totalPages?: number;
+}
+
+function mapWebAssignment(raw: Record<string, unknown>): AssignmentRow {
+  const rawType = raw.itemType;
+  const rawSubmissionFiles = raw.submissionAttachments;
+  const submissionFiles = Array.isArray(rawSubmissionFiles)
+    ? rawSubmissionFiles.map((entry) => {
+        if (typeof entry === "string") {
+          const file = normalizeAssignmentFiles([entry])[0];
+          return file?.url ?? entry;
+        }
+        if (entry && typeof entry === "object" && typeof (entry as { url?: unknown }).url === "string") {
+          return normalizeAssignmentFiles([entry])[0] ?? entry;
+        }
+        return entry;
+      })
+    : [];
+  const studentName = typeof raw.studentName === "string" ? raw.studentName : "";
+  const studentCode = typeof raw.studentCode === "string" ? raw.studentCode : "";
+
+  return {
+    ...(raw as unknown as AssignmentRow),
+    itemType: rawType === "exam" || rawType === "Bài kiểm tra" ? "Bài kiểm tra" : "BTVN",
+    title: String(raw.homeworkTitle ?? raw.examTitle ?? raw.title ?? raw.name ?? ""),
+    description: resolveAssignmentHtmlUrls(
+      typeof raw.homeworkDescription === "string"
+        ? raw.homeworkDescription
+        : typeof raw.description === "string" ? raw.description : null,
+    ) ?? undefined,
+    attachments: normalizeAssignmentFiles(raw.homeworkAttachments ?? raw.attachments),
+    submissionContent: resolveAssignmentHtmlUrls(
+      typeof raw.submissionContent === "string" ? raw.submissionContent : null,
+    ),
+    submissionAttachments: submissionFiles,
+    student: (raw.student as AssignmentRow["student"] | undefined) ?? (
+      studentName || studentCode
+        ? { id: String(raw.studentId ?? ""), name: studentName, code: studentCode }
+        : undefined
+    ),
+  };
 }
 
 interface AttemptCountResponse {
@@ -208,10 +249,10 @@ function SubmitModal({
         uploaded.forEach(u => attachments.push({ name: u.name, url: u.url }));
       }
 
-      await apiPost("/api/mobile/student/assignments/submit", {
+      await apiPost("/api/my-space/assignments/student/submit", {
         homeworkId: assignment.homeworkId,
         submissionContent: html,
-        submissionAttachments: attachments,
+        submissionAttachments: attachments.map((file) => file.url),
       });
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       onSubmitted(assignment.homeworkId, html, attachments);
@@ -839,10 +880,10 @@ export default function HomeworkScreen() {
       setLoadingMore(true);
     }
     try {
-      const data = await apiGet<AssignmentResponse>(
-        `/api/mobile/student/assignments?month=${monthKey}&page=${page}&pageSize=50`
+      const data = await apiGet<WebAssignmentResponse>(
+        `/api/my-space/assignments/student?month=${monthKey}&page=${page}&pageSize=50`
       );
-      const newRows = data.rows || [];
+      const newRows = (data.rows || []).map(mapWebAssignment);
       if (page === 1) {
         setRows(newRows);
       } else {

@@ -20,7 +20,8 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import { useLanguage } from "@/context/LanguageContext";
 
 import { useColors } from "@/hooks/useColors";
-import { apiPost } from "@/lib/api";
+import { apiPatch, apiPost } from "@/lib/api";
+import { normalizeAssignmentFiles, resolveAssignmentHtmlUrls } from "@/lib/assignmentFiles";
 import { getCurrentAssignment, updateCurrentAssignment, AssignmentRow } from "@/lib/assignmentStore";
 import { FileList, FileItem } from "@/components/FileViewer";
 import { HomeworkRichEditor, HomeworkRichEditorHandle } from "@/components/HomeworkRichEditor";
@@ -155,20 +156,34 @@ export default function StaffAssignmentDetailScreen() {
   const typeColor = isBTVN ? "#2563eb" : "#9333ea";
   const hasHomeworkFiles = (row.homeworkAttachments?.length ?? 0) > 0;
   const hasSubmissionFiles = (row.submissionAttachments?.length ?? 0) > 0;
-  const submissionFiles = normaliseAttachments((row.submissionAttachments ?? []) as unknown[], t("File đính kèm"));
+  const submissionFiles = normaliseAttachments(
+    normalizeAssignmentFiles(row.submissionAttachments ?? []),
+    t("File đính kèm"),
+  );
 
   const handleSave = async () => {
     setSaving(true);
     const commentHtml = editorRef.current?.getContent() ?? "";
     try {
-      await apiPost("/api/mobile/staff/assignments/grade", {
-        studentSessionContentId: row.studentSessionContentId,
-        score: score.trim() || null,
-        gradingComment: commentHtml.trim() || null,
-      });
+      if (isExam) {
+        const submissionId = (row as AssignmentRow & { submissionId?: string; examSubmissionId?: string }).submissionId
+          ?? (row as AssignmentRow & { examSubmissionId?: string }).examSubmissionId;
+        if (!submissionId) throw new Error("Không tìm thấy mã bài thi đã nộp.");
+        await apiPatch(`/api/my-space/assignments/staff/exam-comment/${encodeURIComponent(submissionId)}`, {
+          comment: commentHtml.trim() || null,
+        });
+      } else {
+        await apiPost("/api/my-space/assignments/staff/grade", {
+          studentSessionContentId: row.studentSessionContentId,
+          score: score.trim() || null,
+          gradingComment: commentHtml.trim() || null,
+        });
+      }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setSaved(true);
-      const patch = { score: score.trim() || null, comment: commentHtml.trim() || null };
+      const patch = isExam
+        ? { comment: commentHtml.trim() || null }
+        : { score: score.trim() || null, comment: commentHtml.trim() || null };
       setRow((prev) => prev ? { ...prev, ...patch } : prev);
       updateCurrentAssignment(patch);
       setTimeout(() => setSaved(false), 2500);
@@ -238,11 +253,11 @@ export default function StaffAssignmentDetailScreen() {
         <Section label={t("Đề bài")} icon="edit-3" accent="#2563eb" colors={colors}>
           <Text style={[styles.homeworkTitle, { color: colors.foreground }]}>{row.homeworkTitle}</Text>
           {row.homeworkDescription ? (
-            <HtmlText html={row.homeworkDescription} style={{ fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21, color: colors.mutedForeground }} />
+            <HtmlText html={resolveAssignmentHtmlUrls(row.homeworkDescription) ?? row.homeworkDescription} style={{ fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21, color: colors.mutedForeground }} />
           ) : null}
           {hasHomeworkFiles && (
             <View style={{ marginTop: row.homeworkDescription ? 10 : 0 }}>
-              <FileList files={row.homeworkAttachments!} />
+              <FileList files={normalizeAssignmentFiles(row.homeworkAttachments)} />
             </View>
           )}
           {!row.homeworkDescription && !hasHomeworkFiles && (
@@ -253,7 +268,7 @@ export default function StaffAssignmentDetailScreen() {
         {isSubmitted ? (
           <Section label={t("Bài nộp của học viên")} icon="upload" accent="#16a34a" colors={colors}>
             {row.submissionContent ? (
-              <HtmlText html={row.submissionContent} style={{ fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21, color: colors.foreground }} />
+              <HtmlText html={resolveAssignmentHtmlUrls(row.submissionContent) ?? row.submissionContent} style={{ fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21, color: colors.foreground }} />
             ) : null}
             {!isExam && hasSubmissionFiles ? (
               <View style={{ marginTop: row.submissionContent ? 10 : 0 }}>

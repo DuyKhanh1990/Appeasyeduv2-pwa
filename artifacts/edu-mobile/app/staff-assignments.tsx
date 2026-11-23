@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 import { useColors } from "@/hooks/useColors";
 import { useLanguage } from "@/context/LanguageContext";
 import { apiGet } from "@/lib/api";
+import { normalizeAssignmentFiles, resolveAssignmentHtmlUrls } from "@/lib/assignmentFiles";
 import { useFocusEffect } from "expo-router";
 import { setCurrentAssignment, getCurrentAssignment } from "@/lib/assignmentStore";
 import type { AssignmentRow } from "@/lib/assignmentStore";
@@ -26,7 +27,33 @@ import type { AssignmentRow } from "@/lib/assignmentStore";
 
 interface AssignmentResponse {
   month: string;
-  rows: AssignmentRow[];
+  rows: Array<Record<string, unknown>>;
+}
+
+function mapStaffAssignment(raw: Record<string, unknown>): AssignmentRow {
+  const weekdayValue = raw.weekday;
+  const sessionDate = typeof raw.sessionDate === "string" ? raw.sessionDate : "";
+  const weekday = typeof weekdayValue === "number"
+    ? (() => {
+        const date = sessionDate ? new Date(`${sessionDate.slice(0, 10)}T12:00:00`) : null;
+        const day = date && !Number.isNaN(date.getTime()) ? date.getDay() : -1;
+        return day === 0 ? "Chủ nhật" : day > 0 ? `Thứ ${day + 1}` : String(weekdayValue);
+      })()
+    : String(weekdayValue ?? "");
+  return {
+    ...(raw as unknown as AssignmentRow),
+    weekday,
+    itemType: raw.itemType === "exam" || raw.itemType === "Bài kiểm tra" ? "Bài kiểm tra" : "BTVN",
+    homeworkTitle: String(raw.homeworkTitle ?? raw.examTitle ?? raw.title ?? ""),
+    homeworkDescription: resolveAssignmentHtmlUrls(
+      typeof raw.homeworkDescription === "string" ? raw.homeworkDescription : null,
+    ) ?? undefined,
+    homeworkAttachments: normalizeAssignmentFiles(raw.homeworkAttachments ?? raw.attachments),
+    submissionContent: resolveAssignmentHtmlUrls(
+      typeof raw.submissionContent === "string" ? raw.submissionContent : null,
+    ) ?? undefined,
+    submissionAttachments: normalizeAssignmentFiles(raw.submissionAttachments),
+  };
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -186,15 +213,20 @@ export default function StaffAssignmentsScreen() {
     try {
       let url: string;
       if (dateFrom && dateTo) {
-        url = `/api/mobile/staff/assignments?dateFrom=${dateFrom}&dateTo=${dateTo}&status=${status}`;
+        url = `/api/my-space/assignments/staff?dateFrom=${dateFrom}&dateTo=${dateTo}`;
       } else {
         const monthStr = `${year}-${String(month + 1).padStart(2, "0")}`;
-        url = `/api/mobile/staff/assignments?month=${monthStr}&status=${status}`;
+        url = `/api/my-space/assignments/staff?month=${monthStr}`;
       }
-      for (const cn of classNames) url += `&className=${encodeURIComponent(cn)}`;
-      for (const si of studentIds) url += `&studentId=${encodeURIComponent(si)}`;
       const data = await apiGet<AssignmentResponse>(url);
-      let fetched = Array.isArray(data.rows) ? data.rows : [];
+      const allFetched = Array.isArray(data.rows) ? data.rows.map(mapStaffAssignment) : [];
+      setAllRows(allFetched);
+      let fetched = allFetched;
+      if (status !== "all") {
+        fetched = fetched.filter((r) => status === "submitted"
+          ? r.submissionStatus === "submitted" || r.submissionStatus === "graded"
+          : r.submissionStatus === "pending");
+      }
       if (classNames.length > 0) {
         const lowerClassNames = classNames.map((c) => c.toLowerCase());
         fetched = fetched.filter((r) => lowerClassNames.includes((r.className ?? "").toLowerCase()));
@@ -203,7 +235,6 @@ export default function StaffAssignmentsScreen() {
         fetched = fetched.filter((r) => studentIds.includes(r.studentId));
       }
       setRows(fetched);
-      if (classNames.length === 0 && studentIds.length === 0) setAllRows(fetched);
     } catch {
       setRows([]);
     } finally {
