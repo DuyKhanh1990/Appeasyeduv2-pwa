@@ -344,7 +344,7 @@ export function FileViewer({
       /matroska/i.test(file.mimetype || file.type || "");
     const processingStatus = file.mediaProcessingStatus?.toLowerCase();
     const isProcessing = isMkv && (processingStatus === "queued" || processingStatus === "processing");
-    const videoUrl = isMkv && file.playbackUrl ? file.playbackUrl : file.url;
+    const videoUrl = file.playbackUrl || file.url;
     const statusLabel = processingStatus === "queued"
       ? t("Video đang chờ xử lý")
       : processingStatus === "processing"
