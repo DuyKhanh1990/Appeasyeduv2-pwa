@@ -56,6 +56,20 @@ export function PwaUpdatePrompt() {
   useEffect(() => {
     let disposed = false;
     let registration: ServiceWorkerRegistration | null = null;
+    let checkingForUpdate = false;
+
+    const checkForUpdate = async () => {
+      if (!registration || checkingForUpdate || disposed) return;
+      checkingForUpdate = true;
+      try {
+        await registration.update();
+        if (!disposed) offerUpdate(registration.waiting);
+      } catch (updateError) {
+        console.warn("[pwa-update] Không kiểm tra được bản cập nhật:", updateError);
+      } finally {
+        checkingForUpdate = false;
+      }
+    };
 
     const handleControllerChange = () => {
       waitingWorker.current = null;
@@ -74,9 +88,11 @@ export function PwaUpdatePrompt() {
         setVisible(true);
       }
 
-      void registration?.update().catch((updateError) => {
-        console.warn("[pwa-update] Không kiểm tra được bản cập nhật:", updateError);
-      });
+      void checkForUpdate();
+    };
+
+    const handleAppResume = () => {
+      if (document.visibilityState === "visible") void checkForUpdate();
     };
 
     navigator.serviceWorker.addEventListener(
@@ -84,6 +100,8 @@ export function PwaUpdatePrompt() {
       handleControllerChange,
     );
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pageshow", handleAppResume);
+    window.addEventListener("focus", handleAppResume);
 
     void registerWebServiceWorker()
       .then((nextRegistration) => {
@@ -105,9 +123,7 @@ export function PwaUpdatePrompt() {
           });
         });
 
-        void nextRegistration.update().catch((updateError) => {
-          console.warn("[pwa-update] Không kiểm tra được bản cập nhật:", updateError);
-        });
+        void checkForUpdate();
       })
       .catch((registrationError) => {
         console.warn(
@@ -123,6 +139,8 @@ export function PwaUpdatePrompt() {
         handleControllerChange,
       );
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pageshow", handleAppResume);
+      window.removeEventListener("focus", handleAppResume);
       if (reloadTimeout.current) clearTimeout(reloadTimeout.current);
       clearActivationListener();
     };
