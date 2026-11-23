@@ -23,7 +23,7 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useColors } from "@/hooks/useColors";
 import { useLanguage } from "@/context/LanguageContext";
-import { apiGet, apiPost, apiUpload, clearSession } from "@/lib/api";
+import { apiGet, apiPost, apiUpload, apiUploadAssignmentFile, clearSession } from "@/lib/api";
 import { normalizeAssignmentFiles, resolveAssignmentHtmlUrls } from "@/lib/assignmentFiles";
 import { HtmlText } from "@/components/HtmlText";
 import { FileList, FileItem } from "@/components/FileViewer";
@@ -222,7 +222,7 @@ function SubmitModal({
   const insets = useSafeAreaInsets();
   const panelH = Math.round((screenH - insets.top - insets.bottom) * 0.35);
   const editorRef = useRef<HomeworkRichEditorHandle>(null);
-  const [pickedFiles, setPickedFiles] = useState<{ name: string; uri: string; mimeType?: string; file?: File }[]>([]);
+  const [pickedFiles, setPickedFiles] = useState<{ name: string; uri: string; mimeType?: string; size?: number; file?: File }[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -243,10 +243,17 @@ function SubmitModal({
       const attachments: { name: string; url: string }[] = [];
 
       if (pickedFiles.length > 0) {
-        const uploaded = await apiUpload(
-          pickedFiles.map(f => ({ uri: f.uri, name: f.name, mimeType: f.mimeType, file: f.file }))
-        );
-        uploaded.forEach(u => attachments.push({ name: u.name, url: u.url }));
+        if (Platform.OS === "web") {
+          for (const file of pickedFiles) {
+            const uploaded = await apiUploadAssignmentFile(file);
+            attachments.push({ name: uploaded.name, url: uploaded.url });
+          }
+        } else {
+          const uploaded = await apiUpload(
+            pickedFiles.map(f => ({ uri: f.uri, name: f.name, mimeType: f.mimeType, file: f.file }))
+          );
+          uploaded.forEach(u => attachments.push({ name: u.name, url: u.url }));
+        }
       }
 
       await apiPost("/api/my-space/assignments/student/submit", {
@@ -273,6 +280,7 @@ function SubmitModal({
           name: a.name,
           uri: a.uri,
           mimeType: a.mimeType ?? undefined,
+          size: a.size ?? undefined,
           file: (a as unknown as { file?: File }).file ?? undefined,
         }));
         setPickedFiles(prev => [...prev, ...docs]);

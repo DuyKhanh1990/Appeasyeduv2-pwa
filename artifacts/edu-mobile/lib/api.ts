@@ -347,3 +347,57 @@ export async function apiUpload(
   const data = await response.json() as { files: UploadedFile[] };
   return data.files;
 }
+
+/**
+ * Upload one student homework attachment as a raw request body on the web.
+ * Keep apiUpload unchanged because it is shared by unrelated upload flows.
+ */
+export async function apiUploadAssignmentFile(
+  file: { uri: string; name: string; mimeType?: string; size?: number; file?: File }
+): Promise<UploadedFile> {
+  if (Platform.OS !== "web") {
+    throw new Error("Streaming BTVN upload is available on web only");
+  }
+  if (!centerUrl) throw new Error("Center URL chưa được cài đặt");
+
+  let body: Blob;
+  let size = file.size;
+  if (file.file) {
+    body = file.file;
+    size ??= file.file.size;
+  } else {
+    const fileResponse = await fetch(file.uri);
+    if (!fileResponse.ok) {
+      throw new Error(`Không thể đọc tệp đã chọn (lỗi ${fileResponse.status})`);
+    }
+    body = await fileResponse.blob();
+    size ??= body.size;
+  }
+
+  const mimeType = file.mimeType || file.file?.type || body.type || "application/octet-stream";
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    "Content-Type": "application/octet-stream",
+    "X-Upload-File-Size": String(size ?? body.size),
+    "X-Upload-File-Name": encodeURIComponent(file.name),
+    "X-Upload-Content-Type": mimeType,
+  };
+  if (authToken) headers.Authorization = `Bearer ${authToken}`;
+
+  const response = await fetch(`${centerUrl}/api/my-space/assignments/student/upload`, {
+    method: "POST",
+    headers,
+    body,
+  });
+
+  if (!response.ok) {
+    handleUnauthorized(response.status);
+    throw Object.assign(new Error(`HTTP ${response.status}`), { status: response.status });
+  }
+
+  const uploaded = await response.json() as UploadedFile;
+  if (typeof uploaded.url !== "string" || typeof uploaded.name !== "string") {
+    throw new Error("Phản hồi upload BTVN không hợp lệ");
+  }
+  return uploaded;
+}
