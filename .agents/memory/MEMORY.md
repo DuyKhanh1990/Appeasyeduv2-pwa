@@ -4,7 +4,7 @@
 - [PWA backend boundary](pwa-backend-boundary.md) — edu-web is frontend-only; production auth, tenant DB, push subscriptions, and delivery stay in EasyEdu Backend chính
 - [Expo Web base path preview](expo-web-base-path.md) — serve the static export for path-mounted PWA previews; Expo Router dev mode does not strip baseUrl
 - [PWA Expo build boundary](pwa-expo-build-boundary.md) — edu-web's export still depends on the internal Expo source and local shell-quote firewall stub
-- [PWA production asset serving](pwa-production-asset-serving.md) — verify public asset MIME/worker freshness; update prompts must target registration.waiting, not a merely installing worker
+- [PWA production asset serving](pwa-production-asset-serving.md) — verify deployed assets and tie the user-visible version to Argo's Harbor image tag
 - [Session detail visual direction](session-detail-visual-direction.md) — use the approved Modern Cards direction for student session details while preserving existing behavior
 - [Teacher review display contract](teacher-review-display.md) — session `reviewData` embeds checkbox `inputType`/`checked`; show only checked items and preserve text reviews
 - [Calendar dots and auth readiness](calendar-dots-auth-readiness.md) — month-level calendar markers must wait for restored auth or the day view can work while all dots stay empty
