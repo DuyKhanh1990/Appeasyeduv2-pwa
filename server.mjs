@@ -90,6 +90,16 @@ const server = createServer(async (req, res) => {
     return send(res, 400, "Bad Request\n");
   }
 
+  // Older open PWA pages may still request their build-specific worker URL.
+  // Serve the current worker at those legacy paths so they can discover an
+  // update without requiring the user to close and reopen the app.
+  if (/^\/sw-[a-z0-9.-]+\.js$/i.test(pathname)) {
+    const currentWorker = path.join(root, "sw.js");
+    if (await fileExists(currentWorker)) {
+      return serveFile(req, res, currentWorker);
+    }
+  }
+
   const requestedPath = pathname === "/" ? "/index.html" : pathname;
   const candidate = path.resolve(root, `.${requestedPath}`);
 

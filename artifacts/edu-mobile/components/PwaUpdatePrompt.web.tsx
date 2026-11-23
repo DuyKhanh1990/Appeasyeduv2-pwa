@@ -12,6 +12,7 @@ import { registerWebServiceWorker } from "@/lib/pushNotifications";
 import { useLanguage } from "@/context/LanguageContext";
 
 const REMIND_AFTER_MS = 60 * 60 * 1000;
+const UPDATE_CHECK_INTERVAL_MS = 2 * 60 * 1000;
 
 export function PwaUpdatePrompt() {
   const waitingWorker = useRef<ServiceWorker | null>(null);
@@ -102,6 +103,9 @@ export function PwaUpdatePrompt() {
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("pageshow", handleAppResume);
     window.addEventListener("focus", handleAppResume);
+    const updateCheckInterval = window.setInterval(() => {
+      if (document.visibilityState === "visible") void checkForUpdate();
+    }, UPDATE_CHECK_INTERVAL_MS);
 
     void registerWebServiceWorker()
       .then((nextRegistration) => {
@@ -141,6 +145,7 @@ export function PwaUpdatePrompt() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("pageshow", handleAppResume);
       window.removeEventListener("focus", handleAppResume);
+      window.clearInterval(updateCheckInterval);
       if (reloadTimeout.current) clearTimeout(reloadTimeout.current);
       clearActivationListener();
     };

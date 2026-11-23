@@ -20,3 +20,9 @@ For in-app update prompts, expose only `registration.waiting`; do not fall back 
 **Why:** Posting `SKIP_WAITING` to a worker that is not actually waiting can leave the old page open without a `controllerchange`, producing a misleading connection error.
 
 **How to apply:** Validate the worker state before offering an update, observe activation as a fallback to the controller event, and use error copy that recommends retrying the reload rather than assuming connectivity failed.
+
+Keep the registered service-worker script URL stable across builds (for example, `/sw.js`) and version its contents/cache instead. When migrating from versioned worker URLs, serve the current worker at legacy hashed paths so already-open clients can discover it.
+
+**Why:** An already-open page continues requesting the script URL it loaded. If each deployment removes that URL and only publishes a new hashed filename, the page cannot discover the new worker until it reloads and reads the new HTML.
+
+**How to apply:** Use no-store headers for the stable worker path, keep foreground update checks, and retain a compatibility route for old hashed service-worker URLs during migration.

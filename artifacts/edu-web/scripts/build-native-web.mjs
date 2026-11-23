@@ -69,7 +69,6 @@ const serviceWorkerVersion = createHash("sha256")
   .digest("hex")
   .slice(0, 12);
 const buildVersion = `${bundleVersion}-${serviceWorkerVersion}`;
-const serviceWorkerFilename = `sw-${buildVersion}.js`;
 index = index
   .replace("<html>", '<html lang="vi">')
   .replace(
@@ -80,7 +79,7 @@ index = index
     '    <meta name="theme-color" content="#173f3d" />',
     '    <link rel="manifest" type="application/manifest+json" href="./manifest.webmanifest" />',
     '    <link rel="icon" type="image/png" href="./icon-192.png" />',
-    `    <script>window.__EASYEDU_SW_URL__ = "./${serviceWorkerFilename}";</script>`,
+    '    <script>window.__EASYEDU_SW_URL__ = "./sw.js";</script>',
     '    <style id="easyedu-ios-viewport-lock">',
     "      html, body, #root {",
     "        width: 100%;",
@@ -105,7 +104,7 @@ index = index
   .replace("</body>", [
     "  <script>",
     "    if ('serviceWorker' in navigator) {",
-    "      const workerUrl = window.__EASYEDU_SW_URL__ || './sw.js';",
+    "      const workerUrl = './sw.js';",
     "      window.addEventListener('load', () => navigator.serviceWorker.register(workerUrl, { updateViaCache: 'none' }).catch(() => {}));",
     "    }",
     "  </script>",
@@ -120,7 +119,6 @@ if (existsSync(serviceWorkerPath)) {
     buildVersion,
   );
   writeFileSync(serviceWorkerPath, serviceWorker);
-  writeFileSync(path.join(outputDir, serviceWorkerFilename), serviceWorker);
 }
 
 console.log(`Expo Web PWA exported to ${outputDir}`);
