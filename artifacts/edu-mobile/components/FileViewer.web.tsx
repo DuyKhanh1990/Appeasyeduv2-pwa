@@ -389,8 +389,6 @@ export function FileViewer({
             {file.posterUrl ? <Image source={{ uri: file.posterUrl }} style={s.videoPoster} resizeMode="cover" /> : null}
             <View style={s.videoPlayOverlay}>
               <Feather name="play-circle" size={38} color="#fff" />
-              <Text style={s.deferredVideoText}>{t("Bấm để tải và phát video")}</Text>
-              <Text style={s.deferredVideoName} numberOfLines={1}>{file.name}</Text>
             </View>
             {statusLabel ? <Text style={s.videoStatusLabel}>{statusLabel}</Text> : null}
           </TouchableOpacity>

@@ -782,8 +782,6 @@ export function FileViewer({
           style={[s.videoWrap, s.deferredVideo]}
         >
           <Feather name="play-circle" size={38} color="#fff" />
-          <Text style={s.deferredVideoText}>{t("Bấm để tải và phát video")}</Text>
-          <Text style={s.deferredVideoName} numberOfLines={1}>{file.name}</Text>
         </TouchableOpacity>
       );
     }
@@ -796,10 +794,6 @@ export function FileViewer({
           style={{ width: "100%", height: 210 }}
           shouldPlay={deferVideoUntilPlay ? videoActivated : false}
         />
-        <View style={s.videoBadge}>
-          <Feather name="film" size={11} color="#fff" />
-          <Text style={s.videoBadgeText}>{file.name}</Text>
-        </View>
       </View>
     );
   }
