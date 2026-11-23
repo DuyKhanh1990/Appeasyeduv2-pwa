@@ -338,15 +338,6 @@ export function FileViewer({
 
   // ── VIDEO (HTML5 on web) ──
   if (kind === "video") {
-    const isMkv =
-      /\.mkv(?:[?#]|$)/i.test(file.name) ||
-      /\.mkv(?:[?#]|$)/i.test(file.url) ||
-      /matroska/i.test(file.mimetype || file.type || "");
-    const isMov =
-      /\.mov(?:[?#]|$)/i.test(file.name) ||
-      /\.mov(?:[?#]|$)/i.test(file.url) ||
-      /quicktime/i.test(file.mimetype || file.type || "");
-    const canDownloadOriginal = isMkv || isMov;
     const processingStatus = file.mediaProcessingStatus?.toLowerCase();
     const isProcessing = processingStatus === "queued" || processingStatus === "processing";
     const videoUrl = file.playbackUrl || file.url;
@@ -369,9 +360,6 @@ export function FileViewer({
             <Text style={s.deferredVideoText}>{statusLabel}</Text>
             <Text style={s.deferredVideoName}>{t("Đang cập nhật trạng thái")}</Text>
           </View>
-          <a href={file.url} target="_blank" rel="noreferrer" download={file.name} style={s.originalDownload}>
-            {t("Tải file gốc")}
-          </a>
         </View>
       );
     }
@@ -392,11 +380,6 @@ export function FileViewer({
             </View>
             {statusLabel ? <Text style={s.videoStatusLabel}>{statusLabel}</Text> : null}
           </TouchableOpacity>
-          {canDownloadOriginal ? (
-            <a href={file.url} target="_blank" rel="noreferrer" download={file.name} style={s.videoOriginalDownload}>
-              {t("Tải file gốc")}
-            </a>
-          ) : null}
         </View>
       );
     }
@@ -414,11 +397,6 @@ export function FileViewer({
         })}
         {processingStatus === "failed" ? (
           <Text style={s.videoStatusLabel}>{statusLabel}</Text>
-        ) : null}
-        {canDownloadOriginal ? (
-          <a href={file.url} target="_blank" rel="noreferrer" download={file.name} style={s.videoOriginalDownload}>
-            {t("Tải file gốc")}
-          </a>
         ) : null}
       </View>
     );
@@ -630,24 +608,6 @@ const s = StyleSheet.create({
     paddingVertical: 5,
     fontSize: 11,
   },
-  originalDownload: {
-    position: "absolute",
-    bottom: 8,
-    right: 8,
-    zIndex: 2,
-    color: "#fff",
-    backgroundColor: "rgba(17,24,39,0.8)",
-    borderRadius: 12,
-    padding: "6px 10px",
-    fontSize: 12,
-    textDecoration: "none",
-  } as any,
-  videoOriginalDownload: {
-    display: "inline-block",
-    marginTop: 6,
-    color: "#2563eb",
-    fontSize: 12,
-  } as any,
   pill: {
     flexDirection: "row",
     alignItems: "center",
