@@ -23,7 +23,15 @@ import { useSafeAreaInsets } from "@/hooks/useSafeAreaInsets";
 
 import { useColors } from "@/hooks/useColors";
 import { useLanguage } from "@/context/LanguageContext";
-import { apiGet, apiPost, apiUpload, apiUploadAssignmentFile, clearSession } from "@/lib/api";
+import {
+  apiGet,
+  apiPost,
+  apiUpload,
+  apiUploadAssignmentFile,
+  ASSIGNMENT_UPLOAD_MAX_BATCH_SIZE,
+  ASSIGNMENT_UPLOAD_MAX_FILE_SIZE,
+  clearSession,
+} from "@/lib/api";
 import { normalizeAssignmentFiles, resolveAssignmentHtmlUrls } from "@/lib/assignmentFiles";
 import { HtmlText } from "@/components/HtmlText";
 import { FileList, FileItem } from "@/components/FileViewer";
@@ -222,7 +230,15 @@ function SubmitModal({
   const insets = useSafeAreaInsets();
   const panelH = Math.round((screenH - insets.top - insets.bottom) * 0.35);
   const editorRef = useRef<HomeworkRichEditorHandle>(null);
-  const [pickedFiles, setPickedFiles] = useState<{ name: string; uri: string; mimeType?: string; size?: number; file?: File }[]>([]);
+  const [pickedFiles, setPickedFiles] = useState<{
+    name: string;
+    uri: string;
+    mimeType?: string;
+    size?: number;
+    file?: File;
+    batchId: number;
+  }[]>([]);
+  const uploadBatchCounterRef = useRef(0);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -244,8 +260,16 @@ function SubmitModal({
 
       if (pickedFiles.length > 0) {
         if (Platform.OS === "web") {
+          const batchTotals = new Map<number, number>();
           for (const file of pickedFiles) {
-            const uploaded = await apiUploadAssignmentFile(file);
+            const size = file.size ?? file.file?.size;
+            if (!Number.isSafeInteger(size) || size! < 0) {
+              throw new Error("Không xác định được dung lượng tệp");
+            }
+            batchTotals.set(file.batchId, (batchTotals.get(file.batchId) ?? 0) + size!);
+          }
+          for (const file of pickedFiles) {
+            const uploaded = await apiUploadAssignmentFile(file, batchTotals.get(file.batchId)!);
             attachments.push({ name: uploaded.name, url: uploaded.url });
           }
         } else {
@@ -276,13 +300,31 @@ function SubmitModal({
     try {
       const result = await DocumentPicker.getDocumentAsync({ multiple: true, copyToCacheDirectory: true });
       if (!result.canceled && result.assets.length > 0) {
+        const batchId = ++uploadBatchCounterRef.current;
         const docs = result.assets.map(a => ({
           name: a.name,
           uri: a.uri,
           mimeType: a.mimeType ?? undefined,
           size: a.size ?? undefined,
           file: (a as unknown as { file?: File }).file ?? undefined,
+          batchId,
         }));
+        if (Platform.OS === "web") {
+          const sizes = docs.map(file => file.size ?? file.file?.size);
+          if (sizes.some(size => !Number.isSafeInteger(size) || size! < 0)) {
+            Alert.alert(t("Lỗi"), "Không xác định được dung lượng của một hoặc nhiều tệp.");
+            return;
+          }
+          if (sizes.some(size => size! > ASSIGNMENT_UPLOAD_MAX_FILE_SIZE)) {
+            Alert.alert(t("Chú ý"), "Mỗi tệp không được vượt quá 200 MB.");
+            return;
+          }
+          const batchTotalSize = sizes.reduce<number>((total, size) => total + (size ?? 0), 0);
+          if (batchTotalSize > ASSIGNMENT_UPLOAD_MAX_BATCH_SIZE) {
+            Alert.alert(t("Chú ý"), "Tổng dung lượng mỗi lượt chọn không được vượt quá 300 MB.");
+            return;
+          }
+        }
         setPickedFiles(prev => [...prev, ...docs]);
       }
     } catch {

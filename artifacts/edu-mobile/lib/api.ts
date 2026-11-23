@@ -303,6 +303,9 @@ export interface UploadedFile {
   mimetype?: string;
 }
 
+export const ASSIGNMENT_UPLOAD_MAX_FILE_SIZE = 209_715_200;
+export const ASSIGNMENT_UPLOAD_MAX_BATCH_SIZE = 314_572_800;
+
 export async function apiUpload(
   files: Array<{ uri: string; name: string; mimeType?: string; file?: File }>
 ): Promise<UploadedFile[]> {
@@ -353,32 +356,45 @@ export async function apiUpload(
  * Keep apiUpload unchanged because it is shared by unrelated upload flows.
  */
 export async function apiUploadAssignmentFile(
-  file: { uri: string; name: string; mimeType?: string; size?: number; file?: File }
+  file: { uri: string; name: string; mimeType?: string; size?: number; file?: File },
+  batchTotalSize: number,
 ): Promise<UploadedFile> {
   if (Platform.OS !== "web") {
     throw new Error("Streaming BTVN upload is available on web only");
   }
   if (!centerUrl) throw new Error("Center URL chưa được cài đặt");
 
+  const size = file.size ?? file.file?.size;
+  if (!Number.isSafeInteger(size) || size! < 0) {
+    throw new Error("Không xác định được dung lượng tệp");
+  }
+  if (size! > ASSIGNMENT_UPLOAD_MAX_FILE_SIZE) {
+    throw new Error("Tệp vượt quá giới hạn 200 MB");
+  }
+  if (!Number.isSafeInteger(batchTotalSize) || batchTotalSize < size! || batchTotalSize > ASSIGNMENT_UPLOAD_MAX_BATCH_SIZE) {
+    throw new Error("Tổng dung lượng lượt tải lên không hợp lệ");
+  }
+
   let body: Blob;
-  let size = file.size;
   if (file.file) {
     body = file.file;
-    size ??= file.file.size;
   } else {
     const fileResponse = await fetch(file.uri);
     if (!fileResponse.ok) {
       throw new Error(`Không thể đọc tệp đã chọn (lỗi ${fileResponse.status})`);
     }
     body = await fileResponse.blob();
-    size ??= body.size;
+    if (body.size !== size) {
+      throw new Error("Dung lượng tệp đã thay đổi sau khi chọn");
+    }
   }
 
   const mimeType = file.mimeType || file.file?.type || body.type || "application/octet-stream";
   const headers: Record<string, string> = {
     Accept: "application/json",
     "Content-Type": "application/octet-stream",
-    "X-Upload-File-Size": String(size ?? body.size),
+    "X-Upload-File-Size": String(size),
+    "X-Upload-Batch-Total-Size": String(batchTotalSize),
     "X-Upload-File-Name": encodeURIComponent(file.name),
     "X-Upload-Content-Type": mimeType,
   };
