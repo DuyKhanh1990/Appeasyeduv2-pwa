@@ -923,8 +923,6 @@ export default function HomeworkScreen() {
     fetchAssignments(true, currentPageRef.current + 1);
   }, [hasMore, loading, fetchAssignments]);
 
-  useEffect(() => { fetchAssignments(); }, [monthKey]);
-
   useEffect(() => {
     if (!deepLinkDate) return;
     const d = new Date(deepLinkDate + "T00:00:00");
@@ -951,7 +949,7 @@ export default function HomeworkScreen() {
         setActiveHighlightDate(dl.date.slice(0, 10));
       }
       if (dl?.classId) setActiveHighlightClassId(dl.classId);
-      fetchAssignments(true);
+      fetchAssignments();
       return () => {
         setActiveHighlightDate(null);
         setActiveHighlightClassId(null);
